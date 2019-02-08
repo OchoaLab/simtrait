@@ -1,0 +1,14 @@
+Package: simtrait
+Title: Simulate Complex Traits from Genotypes
+Version: 0.0.0.9000
+Authors@R:
+    person(given = "Alejandro",
+	   family = "Ochoa",
+	   role = c("aut", "cre"),
+	   email = "alejandro.ochoa@duke.edu")
+Description: Simulate a complex trait given a SNP genotype matrix and model parameters (the desired heritability and the true ancestral allele frequencies used to generate the genotypes).  Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.  The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1.9000
