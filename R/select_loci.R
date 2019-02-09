@@ -11,6 +11,6 @@ select_loci <- function(maf, m_causal, maf_cut=0.05) {
     
     # select random loci!
     # we might not want to pick extremely rare alleles, so set MAF thresholds
-    is <- which(maf_cut <= maf & maf <= 1 - maf_cut) # candidate locus indexes
-    sample(is, m_causal) # these are the chosen locus indeces!
+    i <- which(maf_cut <= maf & maf <= 1 - maf_cut) # candidate locus indexes
+    sample(i, m_causal) # these are the chosen locus indeces!
 }
