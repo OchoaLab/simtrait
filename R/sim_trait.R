@@ -33,7 +33,9 @@
 #' obj$beta
 #' 
 #' @export
-# TODO: make it work with BEDMatrix?
+# TODO:
+# - make it work with BEDMatrix?
+# - accept weights for p_anc_hat ?
 sim_trait <- function(X, m_causal, herit, p_anc, mean_kinship, maf_cut=0.05) {
     # check for missing parameters
     if (missing(X)) stop('Fatal: genotype matrix `X` must be specified (no default value)')

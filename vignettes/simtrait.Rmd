@@ -1,0 +1,171 @@
+---
+title: "`simtrait`: Simulate Complex Traits from Genotypes"
+author: "Alejandro Ochoa"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{simtrait: Simulate Complex Traits from Genotypes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r, cache=FALSE, include=FALSE}
+## copied from examples from the "simmer" R package
+## after: https://www.enchufa2.es/archives/suggests-and-vignettes.html
+## by Iñaki Úcar
+required <- c("popkin", "bnpsd") # only suggested since simtrait doesn't need them to run...
+
+if (!all(sapply(required, requireNamespace, quietly = TRUE)))
+  knitr::opts_chunk$set(eval = FALSE)
+```
+
+
+In this vignette we first simulated an admixed population usinb `bnpsd`, then we simulate traits using `simtrait`.
+In particular, we simulate a large number of traits to demonstrate that their sample covariance matrix is as expected.
+
+## Load libraries required for this vignette
+
+```{r}
+library(popkin)   # to create plots of our covariance matrices
+library(bnpsd)    # to simulate an admixed population
+library(simtrait) # this package
+```
+
+## Simulate an admixed population
+
+```{r}
+# dimensions of data/model
+m <- 10000 # number of loci
+n_ind <- 30 # number of individuals, smaller than usual for easier visualizations
+k <- 3 # number of intermediate subpops
+
+# define population structure
+F <- 1:k # FST values for k=3 subpopulations
+s <- 0.5 # bias coeff of standard Fst estimator
+Fst <- 0.3 # desired final Fst
+obj <- q1d(n_ind, k, s=s, F=F, Fst=Fst) # data
+# in this case return value is a named list with three items:
+Q <- obj$Q # admixture proportions
+F <- obj$F # rescaled Fst vector for intermediate subpops
+
+# get pop structure parameters of the admixed individuals
+Theta <- coanc(Q,F) # the coancestry matrix
+Phi <- coanc_to_kinship(Theta) # kinship matrix
+mean_kinship <- mean(Phi) # uniform weights
+
+# draw allele freqs and genotypes
+out <- rbnpsd(Q, F, m, wantP=FALSE, wantB=FALSE, noFixed=TRUE) # exclude variables not of interest
+X <- out$X # genotypes
+p_anc <- out$Pa # ancestral AFs
+```
+
+## Simulate a random trait
+
+First we simulate one trait:
+
+```{r}
+# parameters of simulation
+m_causal <- 100
+herit <- 0.8
+
+# create simulated trait
+# case of exact p_anc
+obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc)
+# trait vector
+length(obj$y)
+n_ind
+obj$y
+# randomly-picked causal locus index
+length( obj$i )
+m_causal
+head( obj$i ) # show partially...
+# locus effect size vector
+length( obj$beta )
+m
+# NOTE beta is non-zero only at obj$i indeces
+head( obj$beta[obj$i] ) # show partially...
+```
+
+## Compare sample covariance of trait to theoretical expectation
+
+The interesting validation is simulation a large number of random traits, from which we can estimate a sample covariance matrix to compare to the desired theoretical one.
+
+```{r}
+# the theoretical covariance matrix of the trait is calculated by cov_trait
+V <- cov_trait(kinship=Phi, herit=herit)
+
+# simulate these many traits
+n_traits <- 1000
+# store in this matrix, initialize with zeroes
+Y <- matrix(data=0, nrow=n_traits, ncol=n_ind)
+# start loop
+for (i in 1:n_traits) {
+    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc)
+    Y[i,] <- obj$y # store in i^th row
+}
+# estimate sample covariance
+V_sample <- cov(Y)
+```
+
+Now let's visualize the covariance matrices using `plotPopkin` from the `popkin` package..
+Since both have large diagonals, we shrink them using `inbrDiag` also from the `popkin` package.
+
+```{r, fig.width=6, fig.height=2.8, fig.align='center'}
+# set outer margin for axis labels (left and right are non-zero)
+par(oma=c(0,1.5,0,3))
+# set inner margin for subpopulation labels (bottom and left are non-zero), add padding
+# increase top margin for titles
+par(mar=c(2,2,2,0)+0.2)
+# now plot!
+plotPopkin(
+    list(inbrDiag(V), inbrDiag(V_sample)),
+    titles=c('Theoretical', 'Sample Estimate'),
+    legTitle='Covariance'
+)
+```
+
+## Simulated trait with alternative parametrization
+
+For real data, true ancestral allele frequencies are unknown.
+Fortunately the heritability can still be calibrated as long as the mean kinship can be estimated well, which it can be using `popkin`!
+
+For simplicity here we proceed using the true mean kinship rather than an estimate:
+```{r}
+# store this in new matrix
+Y2 <- matrix(data=0, nrow=n_traits, ncol=n_ind)
+# start loop
+for (i in 1:n_traits) {
+    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, mean_kinship=mean_kinship)
+    Y2[i,] <- obj$y # store in i^th row
+}
+# estimate sample covariance
+V_sample2 <- cov(Y2)
+```
+Now we compare all three matrices:
+```{r, fig.width=7, fig.height=2.8, fig.align='center'}
+# set outer margin for axis labels (left and right are non-zero)
+par(oma=c(0,1.5,0,3))
+# set inner margin for subpopulation labels (bottom and left are non-zero), add padding
+# increase top margin for titles
+par(mar=c(2,2,2,0)+0.2)
+# now plot!
+plotPopkin(
+    list(inbrDiag(V), inbrDiag(V_sample), inbrDiag(V_sample2)),
+    titles=c('Theoretical', 'Sample Estimate 1', 'Sample Estimate 2'),
+    legTitle='Covariance'
+)
+```
+
+### TODO
+
+- Actually estimate mean kinship using popkin
+- Report RMSEs?
+- For more randomness, genotypes should be drawn anew each time, right?
+
