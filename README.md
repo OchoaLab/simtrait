@@ -3,7 +3,7 @@
 The `simtrait` package enables simulation of complex traits with user-set number of causal loci and the desired heritability of the trait (the proportion of variance due to genetic effects).
 
 In all cases a genotype matrix is required, which may be simulated with other packages (such as `bnpsd`) or may consist of real data.
-Additionally, in order to scale the locus effect sizes to yield the desired the heritability, you will need to provide the true ancestral allele frequencies (most accurate, though only available for simulations) or the mean kinship (can be estimated for real data, though this is less accurate).
+Additionally, in order to scale the locus effect sizes to yield the desired the heritability, you will need to provide the true ancestral allele frequencies (most accurate, though only available for simulations) or the kinship matrix (can be estimated for real data, though this is less accurate).
 
 ## Installation
 
@@ -27,7 +27,7 @@ This is a basic example which shows you how to solve a common problem:
 
 ### Simulate an admixed population
 
-The first step is to simulate genotypes from an admixed population, to have an example where there is population structure (a non-trivial mean kinship parameter) and known ancestral allele frequencies.
+The first step is to simulate genotypes from an admixed population, to have an example where there is population structure (a non-trivial kinship matrix) and known ancestral allele frequencies.
 
 ``` r
 devtools::install_github("StoreyLab/bnpsd") # install development version
@@ -50,7 +50,6 @@ F <- obj$F # rescaled Fst vector for intermediate subpops
 # get pop structure parameters of the admixed individuals
 Theta <- coanc(Q,F) # the coancestry matrix
 Phi <- coanc_to_kinship(Theta) # kinship matrix
-mean_kinship <- mean(Phi) # uniform weights
 
 # draw allele freqs and genotypes
 out <- rbnpsd(Q, F, m, wantP=FALSE, wantB=FALSE, noFixed=TRUE) # exclude variables not of interest
@@ -72,8 +71,8 @@ herit <- 0.8
 
 # version 1: known p_anc (prefered, only applicable to simulated data)
 obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc)
-# version 2: known mean_kinship (can be estimated with popkin, so more broadly applicable but less precise control of heritability)
-obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, mean_kinship=mean_kinship)
+# version 2: known kinship (can be estimated with popkin, so more broadly applicable but less precise control of heritability)
+obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, kinship=Phi)
 
 # outputs in both versions:
 # trait vector

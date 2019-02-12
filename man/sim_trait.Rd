@@ -4,7 +4,8 @@
 \alias{sim_trait}
 \title{Simulate a complex trait from genotypes}
 \usage{
-sim_trait(X, m_causal, herit, p_anc, mean_kinship, maf_cut = 0.05)
+sim_trait(X, m_causal, herit, p_anc, kinship, mu = 0, sigmaSq = 1,
+  maf_cut = 0.05)
 }
 \arguments{
 \item{X}{The \eqn{m \times n}{m-by-n} genotype matrix.  This is a numeric matrix consisting of reference allele counts (in \code{c(0,1,2,NA)} for a diploid organism).}
@@ -13,21 +14,32 @@ sim_trait(X, m_causal, herit, p_anc, mean_kinship, maf_cut = 0.05)
 
 \item{herit}{The desired heritability (proportion of trait variance due to genetics).}
 
-\item{p_anc}{The length-\eqn{m} vector of true ancestral allele frequencies.  Recommended way to scale output parameters to achieve the desired heritability.  Either this or \code{mean_kinship} must be specified.}
+\item{p_anc}{The length-\eqn{m} vector of true ancestral allele frequencies.  Recommended way to adjust the simulated trait to achieve the desired heritability and covariance structure.  Either this or \code{kinship} must be specified.}
 
-\item{mean_kinship}{The mean kinship coefficient across all individuals in the data.  This offers an alternative way to scale output parameters to achieve the desired heritability, as \code{p_anc} is only known for simulated data.  Either this or \code{p_anc} must be specified.}
+\item{kinship}{The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data.  This offers an alternative way to adjust the simulated parameters parameters to partially achieve the desired covariance structure, since \code{p_anc} is only known for simulated data.  Either this or \code{p_anc} must be specified.}
 
-\item{maf_cut}{The optional minimum allele frequency threshold (default 5\%).  This prevents rare alleles from being causal in the simulation.}
+\item{mu}{The desired parametric mean value of the trait (default zero).  The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).}
+
+\item{sigmaSq}{The desired parametric variance factor of the trait (default 1).  This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).}
+
+\item{maf_cut}{The optional minimum allele frequency threshold (default 5\%).  This prevents rare alleles from being causal in the simulation.  Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.}
 }
 \value{
-A list containing the simulated trait \code{y} (length \eqn{n}), the vector of causal locus indeces \code{i} (length \eqn{m_causal}), and the locus effect size vector \code{beta} (length \eqn{m}, equals zero at every non-causal locus).
+A list containing the simulated trait \code{y} (length \eqn{n}), the vector of causal locus indeces \code{i} (length \eqn{m_causal}), and the locus effect size vector \code{beta} (length \eqn{m_causal}) at the causal loci.  However, if \code{herit==0} then \code{i} and \code{beta} will have zero length regardless of \code{m_causal}.
 }
 \description{
-Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability and either the true ancestral allele frequencies used to generate the genotypes or the mean kinship).  Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.  The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
+Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability and the true ancestral allele frequencies used to generate the genotypes).  Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.  The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
 Below let there be \eqn{m} loci and \eqn{n} individuals.
 }
 \details{
-In order to scale the locus effect size vector correctly to
+In order to center and scale the trait and locus effect size vector correctly to the desired parameters (mean, variance factor, and heritability), the parametric ancestral allele frequencies (\code{p_anc}) must be known.
+This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by \code{p_anc} and a covariance structure given by \code{p_anc} and the kinship matrix), so their parameters must be taken into account as well.
+If \code{p_anc} are indeed known, which they are when the genotypes were simulated, then the trait will have the specified mean and covariance matrix in agreement with \code{\link{cov_trait}}.
+
+If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, an imperfect compromise is possible as long as the kinship matrix (\code{kinship}) is known, and still the desired covariance structure is not exactly achieved.
+The trait is centered using its arithmetic mean, which overfits, which on average results in the desired mean but reduces the overall variance of the trait.
+The scaling is also performed using sample \code{p_anc} estimates, which causes a bias parametrized by \code{kinship}, so the bias can be partially adjusted for using \code{kinship} (see the \code{simtrait} package vignette).
+While the true \code{kinship} is unknown in real data, it can be estimated accurately using the \code{popkin} package!
 }
 \examples{
 # construct a dummy genotype matrix
@@ -36,13 +48,13 @@ X <- matrix(
            nrow=3,
            byrow=TRUE
            )
-# made up mean kinship for example
-mean_kinship <- 0.1
+# made up ancestral allele frequency vector for example
+p_anc <- c(0.5, 0.6, 0.2)
 # create simulated trait and associated data
-obj <- sim_trait(X=X, m_causal=1, herit=0.8, mean_kinship=mean_kinship)
+obj <- sim_trait(X=X, m_causal=2, herit=0.8, p_anc=p_anc)
 # trait vector
 obj$y
-# randomly-picked causal locus index
+# randomly-picked causal locus indeces
 obj$i
 # locus effect size vector
 obj$beta

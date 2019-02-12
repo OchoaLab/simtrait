@@ -58,7 +58,6 @@ F <- obj$F # rescaled Fst vector for intermediate subpops
 # get pop structure parameters of the admixed individuals
 Theta <- coanc(Q,F) # the coancestry matrix
 Phi <- coanc_to_kinship(Theta) # kinship matrix
-mean_kinship <- mean(Phi) # uniform weights
 
 # draw allele freqs and genotypes
 out <- rbnpsd(Q, F, m, wantP=FALSE, wantB=FALSE, noFixed=TRUE) # exclude variables not of interest
@@ -88,9 +87,8 @@ m_causal
 head( obj$i ) # show partially...
 # locus effect size vector
 length( obj$beta )
-m
-# NOTE beta is non-zero only at obj$i indeces
-head( obj$beta[obj$i] ) # show partially...
+m_causal
+head( obj$beta ) # show partially...
 ```
 
 ## Compare sample covariance of trait to theoretical expectation
@@ -114,7 +112,7 @@ for (i in 1:n_traits) {
 V_sample <- cov(Y)
 ```
 
-Now let's visualize the covariance matrices using `plotPopkin` from the `popkin` package..
+Now let's visualize the covariance matrices using `plotPopkin` from the `popkin` package.
 Since both have large diagonals, we shrink them using `inbrDiag` also from the `popkin` package.
 
 ```{r, fig.width=6, fig.height=2.8, fig.align='center'}
@@ -130,19 +128,25 @@ plotPopkin(
     legTitle='Covariance'
 )
 ```
+This plot verifies that the empirical covariance matches the theoretical expectation!
 
-## Simulated trait with alternative parametrization
+## Simulated trait without ancestral allele frequencies
 
 For real data, true ancestral allele frequencies are unknown.
-Fortunately the heritability can still be calibrated as long as the mean kinship can be estimated well, which it can be using `popkin`!
+A reasonable, though imperfect, trait can still be simulated in these cases, but it is no longer possible to preserve the desired covariance structure, as shown below.
+<!-- In particular, mean-centering the trait (done to set the desired mean) causes overfitting that not only reduces the overall covariance of the data, but introduces distortions to the covariance matrix. -->
+The current implementation of `sim_trait` without `p_anc` relies on a known kinship matrix to introduce additional adjustments to the trait in order to ameliorate the discrepancy between the theoretical and the desired covariances.
+However, the adjustments are not perfect.
+<!-- However, some of the distortions remain. -->
+A good kinship matrix estimate can be obtained using the `popkin` package.
 
-For simplicity here we proceed using the true mean kinship rather than an estimate:
+For simplicity here we proceed using the true kinship matrix rather than an estimate:
 ```{r}
 # store this in new matrix
 Y2 <- matrix(data=0, nrow=n_traits, ncol=n_ind)
 # start loop
 for (i in 1:n_traits) {
-    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, mean_kinship=mean_kinship)
+    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, kinship=Phi)
     Y2[i,] <- obj$y # store in i^th row
 }
 # estimate sample covariance
@@ -163,9 +167,10 @@ plotPopkin(
 )
 ```
 
-### TODO
-
-- Actually estimate mean kinship using popkin
-- Report RMSEs?
-- For more randomness, genotypes should be drawn anew each time, right?
-
+Here is a simple plot to compare scales, which shows 
+<!-- the average agreement but also the distortions. -->
+that the kinship is somewhat preserved but there is an excess overall covariance.
+```{r}
+plot(V, V_sample2)
+abline(0,1, col='gray')
+```

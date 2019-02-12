@@ -56,7 +56,7 @@ test_that("sim_trait works", {
     expect_true( all(X %in% c(0,1,2)) ) # sanity check for genotypes
     m_causal <- 5
     herit <- 0.8
-    mean_kinship <- 1/(2*n) # true mean kinship for unstructured data
+    Phi <- diag(1/2, n) # true kinship for unstructured data
     # test p_anc version
     obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc)
     y <- obj$y # trait vector
@@ -69,11 +69,10 @@ test_that("sim_trait works", {
     expect_true( all(i <= m) ) # range as expected
     expect_true( all(i >= 1) ) # range as expected
     # test effect sizes
-    expect_equal( length(beta), m) # length as expected
-    expect_true( all(beta[-i] == 0) ) # all betas outside of indeces are zero
+    expect_equal( length(beta), m_causal) # length as expected
     
-    # test mean_kinship version
-    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, mean_kinship=mean_kinship)
+    # test kinship version
+    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, kinship=Phi)
     y <- obj$y # trait vector
     i <- obj$i # causal locus indeces
     beta <- obj$beta # locus effect size vector
@@ -84,8 +83,7 @@ test_that("sim_trait works", {
     expect_true( all(i <= m) ) # range as expected
     expect_true( all(i >= 1) ) # range as expected
     # test effect sizes
-    expect_equal( length(beta), m) # length as expected
-    expect_true( all(beta[-i] == 0) ) # all betas outside of indeces are zero
+    expect_equal( length(beta), m_causal) # length as expected
 
     # throw in random missing values in X, repeat all tests
     missingness <- 0.01 # simulate a reasonably low proportion of missingness
@@ -104,11 +102,10 @@ test_that("sim_trait works", {
     expect_true( all(i <= m) ) # range as expected
     expect_true( all(i >= 1) ) # range as expected
     # test effect sizes
-    expect_equal( length(beta), m) # length as expected
-    expect_true( all(beta[-i] == 0) ) # all betas outside of indeces are zero
+    expect_equal( length(beta), m_causal) # length as expected
     
-    # test mean_kinship version
-    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, mean_kinship=mean_kinship)
+    # test kinship version
+    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, kinship=Phi)
     y <- obj$y # trait vector
     i <- obj$i # causal locus indeces
     beta <- obj$beta # locus effect size vector
@@ -119,6 +116,5 @@ test_that("sim_trait works", {
     expect_true( all(i <= m) ) # range as expected
     expect_true( all(i >= 1) ) # range as expected
     # test effect sizes
-    expect_equal( length(beta), m) # length as expected
-    expect_true( all(beta[-i] == 0) ) # all betas outside of indeces are zero
+    expect_equal( length(beta), m_causal) # length as expected
 })
