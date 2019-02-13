@@ -109,17 +109,13 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
             stop('Fatal: either `p_anc` or `kinship` must be specified!')
         }
         
-        # the genetic variance (in a vector of per-loci terms) is
-        varXB <- 2 * pq * beta^2
-        # that should equal:
-        # sum( varXB ) = herit * sigma^2
-        # Let's solve for sigma and divide it out:
-        sigma <- sqrt( sum( varXB ) / herit )
-        # adjust betas so final sigma=sqrt(sigmaSq) as desired!
-        beta <- beta * sqrt(sigmaSq) / sigma # scale by standard deviations
+        # the initial genetic variance is
+        sigma0 <- sqrt( 2 * sum( pq * beta^2 ) )
+        # adjust betas so final variance is sigmaSq*herit as desired!
+        beta <- beta * sqrt(sigmaSq*herit) / sigma0 # scale by standard deviations
         
         # construct genotype signal
-        Xi <- X[i,] - 1 # the subset of causal data, "centered" so heterozygotes are zero
+        Xi <- X[i,] # the subset of causal data, "centered" so heterozygotes are zero
         if (any(is.na(Xi))) {
             # if any of the causal loci are missing, let's treat them as zeroes
             # this isn't perfect but we must do something to apply this to real data
@@ -136,9 +132,9 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
         # calculate the mean of the genetic effect
         if ( !missing(p_anc) ) {
             # parametric solution
-            muXB <- drop( beta %*% (2*p_anc[i]-1) )
+            muXB <- 2 * drop( beta %*% p_anc[i] )
         } else {
-            muXB <- 0 # an experiment, assume this is nearly zero if p_anc is symmetric around 1/2 (and 
+            muXB <- 2 * sum( beta ) * mean( p_anc_hat[i] ) # assumes these are uncorrelated?
             ## # all other cases, whether kinship is present or otherwise
             ## # remove sample mean
             ## muXB <- mean(G)
