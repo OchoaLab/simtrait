@@ -16,7 +16,7 @@ sim_trait(X, m_causal, herit, p_anc, kinship, mu = 0, sigmaSq = 1,
 
 \item{p_anc}{The length-\eqn{m} vector of true ancestral allele frequencies.  Recommended way to adjust the simulated trait to achieve the desired heritability and covariance structure.  Either this or \code{kinship} must be specified.}
 
-\item{kinship}{The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data.  This offers an alternative way to adjust the simulated parameters parameters to partially achieve the desired covariance structure, since \code{p_anc} is only known for simulated data.  Either this or \code{p_anc} must be specified.}
+\item{kinship}{The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data.  This offers an alternative way to adjust the simulated parameters parameters to achieve the desired covariance structure for real genotypes, since \code{p_anc} is only known for simulated data.  Either this or \code{p_anc} must be specified.}
 
 \item{mu}{The desired parametric mean value of the trait (default zero).  The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).}
 
@@ -28,18 +28,18 @@ sim_trait(X, m_causal, herit, p_anc, kinship, mu = 0, sigmaSq = 1,
 A list containing the simulated trait \code{y} (length \eqn{n}), the vector of causal locus indeces \code{i} (length \eqn{m_causal}), and the locus effect size vector \code{beta} (length \eqn{m_causal}) at the causal loci.  However, if \code{herit==0} then \code{i} and \code{beta} will have zero length regardless of \code{m_causal}.
 }
 \description{
-Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability and the true ancestral allele frequencies used to generate the genotypes).  Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.  The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
+Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability and the true ancestral allele frequencies used to generate the genotypes, or alternatively the kinship matrix of the individuals).
+Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.
+The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
 Below let there be \eqn{m} loci and \eqn{n} individuals.
 }
 \details{
 In order to center and scale the trait and locus effect size vector correctly to the desired parameters (mean, variance factor, and heritability), the parametric ancestral allele frequencies (\code{p_anc}) must be known.
-This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by \code{p_anc} and a covariance structure given by \code{p_anc} and the kinship matrix), so their parameters must be taken into account as well.
-If \code{p_anc} are indeed known, which they are when the genotypes were simulated, then the trait will have the specified mean and covariance matrix in agreement with \code{\link{cov_trait}}.
+This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by \code{p_anc} and a covariance structure given by \code{p_anc} and the kinship matrix), so the parameters of the genotypes must be taken into account.
+If \code{p_anc} are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with \code{\link{cov_trait}}.
 
-If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, an imperfect compromise is possible as long as the kinship matrix (\code{kinship}) is known, and still the desired covariance structure is not exactly achieved.
-The trait is centered using its arithmetic mean, which overfits, which on average results in the desired mean but reduces the overall variance of the trait.
-The scaling is also performed using sample \code{p_anc} estimates, which causes a bias parametrized by \code{kinship}, so the bias can be partially adjusted for using \code{kinship} (see the \code{simtrait} package vignette).
-While the true \code{kinship} is unknown in real data, it can be estimated accurately using the \code{popkin} package!
+If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, a compromise that works well in practice is possible if the kinship matrix (\code{kinship}) is known (see package vignette).
+The kinship matrix can be estimated accurately using the \code{popkin} package!
 }
 \examples{
 # construct a dummy genotype matrix

@@ -3,6 +3,7 @@ title: "`simtrait`: Simulate Complex Traits from Genotypes"
 author: "Alejandro Ochoa"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
+bibliography: simtrait.bib
 vignette: >
   %\VignetteIndexEntry{simtrait: Simulate Complex Traits from Genotypes}
   %\VignetteEngine{knitr::rmarkdown}
@@ -61,10 +62,10 @@ library(simtrait) # this package
 # dimensions of data/model
 m <- 10000 # number of loci
 n_ind <- 30 # number of individuals, smaller than usual for easier visualizations
-k <- 3 # number of intermediate subpops
+k <- 3 # number of intermediate subpops (source populations for admixed individuals)
 
 # define population structure
-F <- 1:k # FST values for k=3 subpopulations
+F <- 1:k # FST values for k=3 subpopulations (proportional/unnormalized)
 s <- 0.5 # bias coeff of standard Fst estimator
 Fst <- 0.3 # desired final Fst
 obj <- q1d(n_ind, k, s=s, F=F, Fst=Fst) # data
@@ -90,10 +91,12 @@ First we simulate one trait:
 # parameters of simulation
 m_causal <- 100
 herit <- 0.8
+mu <- 1 # default 0, let's try a non-trivial case
+sigmaSq <- 1.5 # default 1, also let's see that this more complicated case works well
 
 # create simulated trait
 # case of exact p_anc
-obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc)
+obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc, mu=mu, sigmaSq=sigmaSq)
 # trait vector
 length(obj$y)
 n_ind
@@ -114,7 +117,7 @@ The interesting validation is simulation a large number of random traits, from w
 
 ```{r}
 # the theoretical covariance matrix of the trait is calculated by cov_trait
-V <- cov_trait(kinship=Phi, herit=herit)
+V <- cov_trait(kinship=Phi, herit=herit, sigmaSq=sigmaSq)
 
 # simulate these many traits
 n_traits <- 1000
@@ -122,11 +125,23 @@ n_traits <- 1000
 Y <- matrix(data=0, nrow=n_traits, ncol=n_ind)
 # start loop
 for (i in 1:n_traits) {
-    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc)
+    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc, mu=mu, sigmaSq=sigmaSq)
     Y[i,] <- obj$y # store in i^th row
 }
 # estimate sample covariance
 V_sample <- cov(Y)
+```
+
+First let's verify that the mean is as expected.
+Below the red line marks the desired mean.
+```{r, fig.width=3, fig.align='center'}
+par(mgp=c(2,0.5,0))
+# reduce margins from default
+par(mar=c(3.5,3,0,0)+0.2)
+# visualize distribution
+boxplot(rowMeans(Y), xlab="Simulation", ylab='Sample Mean')
+# red line marks expected mean
+abline(h=mu, col='red')
 ```
 
 Now let's visualize the covariance matrices using `plotPopkin` from the `popkin` package.
@@ -162,12 +177,27 @@ For simplicity here we proceed using the true kinship matrix rather than an esti
 Y2 <- matrix(data=0, nrow=n_traits, ncol=n_ind)
 # start loop
 for (i in 1:n_traits) {
-    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, kinship=Phi)
+    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, kinship=Phi, mu=mu, sigmaSq=sigmaSq)
     Y2[i,] <- obj$y # store in i^th row
 }
 # estimate sample covariance
 V_sample2 <- cov(Y2)
 ```
+First let's verify the means again.
+Recall the red line marks the desired mean.
+Below the original sample (simulated using the true `p_anc`) is shown first as "Sample 1", while the new sample based on the kinship matrix is "Sample 2":
+```{r, fig.width=3, fig.align='center'}
+par(mgp=c(2,0.5,0))
+# reduce margins from default
+par(mar=c(3.5,3,0,0)+0.2)
+# visualize distribution
+boxplot(
+    list("Sample 1"=rowMeans(Y), "Sample 2"=rowMeans(Y2)),
+    xlab="Simulation", ylab='Sample Mean')
+# red line marks expected mean
+abline(h=mu, col='red')
+```
+
 Now we compare all three matrices:
 ```{r, fig.width=7, fig.height=2.35, fig.align='center'}
 # set outer margin for axis labels (left and right are non-zero)
@@ -188,7 +218,7 @@ This plot shows again good agreement between the sample covariance matrix of tra
 
 Here is a brief summary of the trait model, which explains what this package does internally.
 
-Here there be $n$ individuals and $m$ (causal) loci.
+Suppose there are $n$ individuals and $m$ (causal) loci.
 For simplicity we shall assume that every locus has an effect size, although in practice many of these coefficients will be zero.
 The following variables are part of the model:
 
@@ -225,7 +255,7 @@ To analyze the covariance structure of the trait, we shall assume that $\mu_0$ a
 	,
 \end{align*}
 where $\mathbf{p} = (p_i)$.
-The mean of the trait is therefore:
+The expectation of the trait is therefore
 \begin{align*}
 	\E[\mathbf{y}]
 	&= \mu_0 \mathbf{1} + \E[\mathbf{X}] \mathbf{\beta} + \E[\mathbf{\epsilon}]
@@ -233,7 +263,7 @@ The mean of the trait is therefore:
 	&= \mu_0 \mathbf{1} + 2 \mathbf{1} \mathbf{p}^\intercal \mathbf{\beta}
 	,
 \end{align*}
-so the mean of the trait can be written as 
+which can be written as 
 \begin{align*}
 	\E[\mathbf{y}]
 	= \mu \mathbf{1}
@@ -254,7 +284,7 @@ The covariance matrix of the trait is
 	,
 \end{align*}
 where $\mathbf{\beta} = (\beta_i)$.
-Therefore, we can write the trait covariance parametrized in terms of the heritability and the overall variance scale:
+Therefore, we can write the covariance in terms of the heritability and the overall variance scale:
 \begin{align*}
 	\Cov(\mathbf{y})
 	&=
@@ -277,7 +307,7 @@ In all cases the user sets the heritability and other parameters but not the eff
 To choose $\mathbf{\beta}$, the algorithm initially draws random coefficients and scales them to yield the desired covariance structure, as follows.
 
 The user provides a genotype matrix and sets the number of causal loci.
-The algorithm selects random loci among the input data, by default restricted to loci with sample minor allele frequencies of at least 5\% (user can change this value).
+The algorithm selects random loci to be the causal ones, by default restricted to loci with sample minor allele frequencies of at least 5\% (the user can change this value).
 From this moment on $\mathbf{X}$ will contain only those causal loci.
 The initial effect sizes are drawn independently from a standard normal distribution:
 $$
@@ -294,12 +324,11 @@ Each step forks into two cases: whether the true ancestral allele frequencies ar
 
 Here we assume that $\mathbf{p} = (p_i)$ is provided by the user.
 The user has also provided the desired values of both $h^2$ and $\sigma^2$.
-
-Let the initial genetic variance factor be
+The initial genetic variance factor is
 $$
 \sigma^2_0 = \sum_{i=1}^m 2 p_i (1-p_i) \beta_i^2.
 $$
-Then it follows that we obtain the desired variance by dividing each $\beta_i$ by $\sigma_0$ (which results in a variance of 1) and then multiply by $h \sigma$ (which finally results in the desired variance of $h^2 \sigma^2$.
+We obtain the desired variance by dividing each $\beta_i$ by $\sigma_0$ (which results in a variance of 1) and then multiply by $h \sigma$ (which finally results in the desired variance of $h^2 \sigma^2$).
 Combining both steps, the update is
 $$
 \mathbf{\beta} \leftarrow \mathbf{\beta} \frac{ h \sigma }{\sigma_0}.
@@ -312,7 +341,7 @@ Let
 $$
 \hat{p}_i = \frac{1}{2n} \mathbf{1}^\intercal \mathbf{x}_i .
 $$
-Although this estimator is unbiased ($\E[\mathbf{\hat{p}}] = \mathbf{p}$), the resulting variance estimates of interest become downwardly biased:
+Although this estimator is unbiased ($\E[\mathbf{\hat{p}}] = \mathbf{p}$), the resulting variance estimates of interest become downwardly biased [@Ochoa083923]:
 $$
 \E \left[ \hat{p}_i \left( 1-\hat{p}_i \right) \right]
 = p_i(1-p_i) (1 - \bar{\varphi}),
@@ -355,29 +384,30 @@ The solution that this version of the algorithm takes is to choose the intercept
 	\hat{\bar{p}}
 	&=
 	\frac{1}{m} \mathbf{1}_m^\intercal \mathbf{\hat{p}}
-	\\
-	&=
+	=
 	\frac{1}{2mn} \mathbf{1}_m^\intercal \mathbf{X}^\intercal \mathbf{1}_n
+	=
+	\frac{1}{2} \bar{X}
 	,
 \end{align*}
 where $\mathbf{1}_m$ above are length-$m$ vectors of ones.
 This works very well in practice since $\mathbf{\beta}$ is drawn randomly, so it is uncorrelated with the true $\mathbf{p}$.
-In this setting it suffices to consider each effect size $\beta_i$ as acting on the average locus, which is treated as being random with a shared mean.
+In this setting it suffices to consider each effect size $\beta_i$ as acting on the average locus, which is treated as having a random ancestral allele frequency $p_i$, and all that matters is the global mean of $p_i$ values.
 
 ### How NOT to center the trait vector
 
 Now let's discuss why the obvious idea to center the trait without known ancestral allele frequencies doesn't work.
-Why not use the sample allele frequencies, namely
+Why not use the sample allele frequencies as
 $$
 \mu_0 
 =
-\mu - 2 \mathbf{\hat{p}}^\intercal \mathbf{\beta} ?
+\mu - 2 \mathbf{\hat{p}}^\intercal \mathbf{\beta} \quad ?
 $$
-It turns out that centering the trait this way is equivalent to centering the genotypes:
+Centering the trait this way is equivalent to centering genotypes at each locus:
 $$
 \mathbf{y} = \mu \mathbf{1} + \sum_{i=1}^m (\mathbf{x}_i - \hat{p}_i \mathbf{1}) \beta_i + \mathbf{\epsilon}.
 $$
-However, this operation introduces a distortion in the covariance of the genotypes (proven in Ochoa and Storey 2016 "Fst and Kinship for arbitrary population structures II: method of moments estimators" on bioRxiv), 
+However, this operation introduces a distortion in the covariance of the genotypes [@Ochoa083923]: 
 $$
 \Cov \left( \mathbf{x}_i - \hat{p}_i \mathbf{1} \right)
 =
@@ -389,6 +419,9 @@ p_i (1-p_i) \left(
 \right),
 $$
 where $\mathbf{\varphi} = \mathbf{\Phi} \mathbf{1}$.
-This undesireable distortion then propagates to the trait, which we confirmed in simulations (not shown).
+These undesireable distortions propagate to the trait, which we confirmed in simulations (not shown).
+It is not clear how these distortions can be corrected for after centering the trait as shown above.
 
-The intercept we chose instead does not induce this genotype centering, so the undesireable distortions are not induced.
+Note that the intercept version we chose instead does not induce this genotype centering, which prevents the undesireable distortions in the trait covariance.
+
+# References

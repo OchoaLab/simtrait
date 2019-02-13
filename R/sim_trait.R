@@ -1,22 +1,22 @@
 #' Simulate a complex trait from genotypes
 #'
-#' Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability and the true ancestral allele frequencies used to generate the genotypes).  Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.  The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
+#' Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability and the true ancestral allele frequencies used to generate the genotypes, or alternatively the kinship matrix of the individuals).
+#' Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.
+#' The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
 #' Below let there be \eqn{m} loci and \eqn{n} individuals.
 #'
 #' In order to center and scale the trait and locus effect size vector correctly to the desired parameters (mean, variance factor, and heritability), the parametric ancestral allele frequencies (\code{p_anc}) must be known.
-#' This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by \code{p_anc} and a covariance structure given by \code{p_anc} and the kinship matrix), so their parameters must be taken into account as well.
-#' If \code{p_anc} are indeed known, which they are when the genotypes were simulated, then the trait will have the specified mean and covariance matrix in agreement with \code{\link{cov_trait}}.
+#' This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by \code{p_anc} and a covariance structure given by \code{p_anc} and the kinship matrix), so the parameters of the genotypes must be taken into account.
+#' If \code{p_anc} are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with \code{\link{cov_trait}}.
 #'
-#' If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, an imperfect compromise is possible as long as the kinship matrix (\code{kinship}) is known, and still the desired covariance structure is not exactly achieved.
-#' The trait is centered using its arithmetic mean, which overfits, which on average results in the desired mean but reduces the overall variance of the trait.
-#' The scaling is also performed using sample \code{p_anc} estimates, which causes a bias parametrized by \code{kinship}, so the bias can be partially adjusted for using \code{kinship} (see the \code{simtrait} package vignette).
-#' While the true \code{kinship} is unknown in real data, it can be estimated accurately using the \code{popkin} package!
+#' If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, a compromise that works well in practice is possible if the kinship matrix (\code{kinship}) is known (see package vignette).
+#' The kinship matrix can be estimated accurately using the \code{popkin} package!
 #' 
 #' @param X The \eqn{m \times n}{m-by-n} genotype matrix.  This is a numeric matrix consisting of reference allele counts (in \code{c(0,1,2,NA)} for a diploid organism).
 #' @param m_causal The number of causal loci desired.
 #' @param herit The desired heritability (proportion of trait variance due to genetics).
 #' @param p_anc The length-\eqn{m} vector of true ancestral allele frequencies.  Recommended way to adjust the simulated trait to achieve the desired heritability and covariance structure.  Either this or \code{kinship} must be specified.
-#' @param kinship The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data.  This offers an alternative way to adjust the simulated parameters parameters to partially achieve the desired covariance structure, since \code{p_anc} is only known for simulated data.  Either this or \code{p_anc} must be specified.
+#' @param kinship The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data.  This offers an alternative way to adjust the simulated parameters parameters to achieve the desired covariance structure for real genotypes, since \code{p_anc} is only known for simulated data.  Either this or \code{p_anc} must be specified.
 #' @param mu The desired parametric mean value of the trait (default zero).  The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).
 #' @param sigmaSq The desired parametric variance factor of the trait (default 1).  This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).
 #' @param maf_cut The optional minimum allele frequency threshold (default 5\%).  This prevents rare alleles from being causal in the simulation.  Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.
@@ -134,14 +134,8 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
             # parametric solution
             muXB <- 2 * drop( beta %*% p_anc[i] )
         } else {
-            muXB <- 2 * sum( beta ) * mean( p_anc_hat[i] ) # assumes these are uncorrelated?
-            ## # all other cases, whether kinship is present or otherwise
-            ## # remove sample mean
-            ## muXB <- mean(G)
-            ## # the prev. step dramatically reduces the covariance of the data
-            ## # to make things look a tiny bit better, add back some MVN noise!
-            ## # NOTE: this particular version adds a single constant to the muXB vector, which corrects for the mean difference between covariance matrices, but does not correct for the "Standard Kinship distortions".
-            ## muXB <- muXB + stats::rnorm(1, 0, sqrt(mean_kinship * 2 * sum(beta^2 * pq)) ) # is this right?
+            # works very well assuming beta and p_anc are uncorrelated!
+            muXB <- 2 * sum( beta ) * mean( p_anc_hat[i] )
         }
         # in all cases:
         # - remove the mean from the genotypes (muXB)
