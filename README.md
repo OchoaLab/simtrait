@@ -20,7 +20,8 @@ install.packages("simtrait")
 
 Install the latest development version from GitHub:
 ``` r
-library(devtools) # install if needed
+install.packages("devtools") # if needed
+library(devtools)
 devtools::install_github("OchoaLab/simtrait", build_opts=c())
 ```
 
