@@ -22,8 +22,14 @@ install.packages("simtrait")
 Install the latest development version from GitHub:
 ``` r
 library(devtools) # install if needed
-devtools::install_github("OchoaLab/simtrait")
+devtools::install_github("OchoaLab/simtrait", build_opts=c())
 ```
+
+You can see the package vignette, which has additional documentation, by typing this into your R session:
+``` r
+vignette('simtrait')
+```
+
 
 ## Example
 
