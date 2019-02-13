@@ -59,10 +59,6 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
     if (herit > 1) stop('Fatal: `herit` cannot be greater than 1!')
     if (sigmaSq <= 0) stop('Fatal: `sigmaSq` must be positive!')
 
-    # data dimensions (will be transposed if X is a BEDMatrix object)
-    m <- nrow(X)
-    n <- ncol(X)
-
     if (herit == 0) {
         # lots of work can be avoided in this edge case
         # the index and coefficients vectors are empty
@@ -70,6 +66,10 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
         beta <- c()
         G <- 0 # construct a trivial genotype effect of zero (becomes vector automatically later)
     } else {
+        
+        ###################
+        ### CAUSAL LOCI ###
+        ###################
         
         # compute marginal allele frequencies
         p_anc_hat <- rowMeans(X, na.rm=TRUE)/2
@@ -80,6 +80,13 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
         
         # draw random SNP coefficients for selected loci
         beta <- stats::rnorm(m_causal, 0, 1)
+
+        # subset data to consider causal loci only
+        p_anc_hat <- p_anc_hat[i]
+        if (!missing(p_anc)) {
+            p_anc <- p_anc[i] # subset if available
+        }
+        X <- X[i,] # the subset of causal data
         
         ###############
         ### KINSHIP ###
@@ -96,14 +103,13 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
         
         # to scale beta to give correct heritability, we need to estimate the pq = p(1-p) vector
         # calculate pq = p_anc * (1 - p_anc) in one of two ways
-        # (NOTE only causal loci are needed, subset for speed and memory)
         if ( !missing(p_anc) ) { # this takes precedence, it should be most accurate
             # direct calculation
-            pq <- p_anc[i] * (1 - p_anc[i])
+            pq <- p_anc * (1 - p_anc)
         } else if ( !missing(kinship) ) {
             # indirect, infer from genotypes and mean kinship
             # recall E[ p_anc_hat * (1 - p_anc_hat) ] = pq * (1 - mean_kinship), so we solve for pq:
-            pq <- p_anc_hat[i] * (1 - p_anc_hat[i]) / (1 - mean_kinship)
+            pq <- p_anc_hat * (1 - p_anc_hat) / (1 - mean_kinship)
         } else {
             # a redundant check (if this were so, it should have died earlier)
             stop('Fatal: either `p_anc` or `kinship` must be specified!')
@@ -115,13 +121,12 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
         beta <- beta * sqrt(sigmaSq*herit) / sigma0 # scale by standard deviations
         
         # construct genotype signal
-        Xi <- X[i,] # the subset of causal data, "centered" so heterozygotes are zero
-        if (any(is.na(Xi))) {
+        if (any(is.na(X))) {
             # if any of the causal loci are missing, let's treat them as zeroes
             # this isn't perfect but we must do something to apply this to real data
-            Xi[is.na(Xi)] <- 0
+            X[is.na(X)] <- 0
         }
-        G <- drop( beta %*% Xi ) # this is a vector
+        G <- drop( beta %*% X ) # this is a vector
         # NOTE by construction:
         # Cov(G) = 2 * herit * Phi
         
@@ -132,10 +137,10 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
         # calculate the mean of the genetic effect
         if ( !missing(p_anc) ) {
             # parametric solution
-            muXB <- 2 * drop( beta %*% p_anc[i] )
+            muXB <- 2 * drop( beta %*% p_anc )
         } else {
             # works very well assuming beta and p_anc are uncorrelated!
-            muXB <- 2 * sum( beta ) * mean( p_anc_hat[i] )
+            muXB <- 2 * sum( beta ) * mean( p_anc_hat )
         }
         # in all cases:
         # - remove the mean from the genotypes (muXB)
@@ -146,6 +151,8 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
     if (herit == 1) {
         E <- 0 # in this edge case there is no "noise", just genotype effects
     } else {
+        # length of E
+        n <- ncol(X)
         # draw noise
         E <- stats::rnorm(n, 0, (1 - herit) * sigmaSq ) # noise has mean zero but variance ((1-herit) * sigmaSq)
         # NOTE by construction:
