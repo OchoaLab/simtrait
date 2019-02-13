@@ -37,6 +37,7 @@ The code below has two parts: (1) simulate genotypes, and (2) simulate the trait
 ### Simulate an admixed population
 
 The first step is to simulate genotypes from an admixed population, to have an example where there is population structure and known ancestral allele frequencies.
+We use the external package `bnpsd` to achieve this.
 
 ``` r
 library(bnpsd) # to simulate an admixed population
@@ -67,7 +68,7 @@ p_anc <- out$Pa # ancestral AFs
 
 ### Simulate a random trait
 
-Here we apply our package to this simulated data.
+Here we apply our package to this simulated genotype data.
 
 ``` r
 library(simtrait) # load this package
