@@ -6,8 +6,7 @@ The main function requires a simulated genotype matrix, including the true ances
 These parameters are necessary to correctly specify the desired correlation structure.
 See the package `bnpsd` for simulating genotypes for admixed individuals (example below).
 
-Simulating a trait from real genotypes is possible, but the trait mean cannot be controlled, since the true ancestral allele frequencies are not known.
-Nevertheless, the kinship matrix of the data allows for some adjustments that help approximate the desired covariance structure.
+Simulating a trait from real genotypes is possible with a good kinship matrix estimate.
 See the package `popkin` for accurate kinship estimation.
 
 ## Installation
@@ -81,7 +80,7 @@ herit <- 0.8
 
 # version 1: known p_anc (prefered, only applicable to simulated data)
 obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc)
-# version 2: known kinship (more broadly applicable but less control of model parameters)
+# version 2: known kinship (more broadly applicable but fewer guarantees)
 obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, kinship=Phi)
 
 # outputs in both versions:
