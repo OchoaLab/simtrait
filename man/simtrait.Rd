@@ -6,7 +6,7 @@
 \alias{simtrait-package}
 \title{simtrait: a package for simulating complex traits from genotypes}
 \description{
-This package enables simulation of complex (polygenic) quantitative (continuous) traits from a simulated or real genotype matrix.
+This package enables simulation of complex (polygenic and continuous) traits from a simulated or real genotype matrix.
 The focus is on controling the mean and covariance structure of the data to yield the desired heritability under arbitrary population structures (any underlying kinship matrix).
 The main function is \code{\link{sim_trait}}, which returns the simulated trait and the vector of causal loci (randomly selected) and their effect sizes (randomly drawn and scaled appropriately).
 The function \code{\link{cov_trait}} computes the expected covariance matrix of the trait given the model parameters (namely the desired heritability and the true kinship matrix).
