@@ -86,7 +86,7 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu=0, sigmaSq=1, maf_c
         if (!missing(p_anc)) {
             p_anc <- p_anc[i] # subset if available
         }
-        X <- X[i,] # the subset of causal data
+        X <- X[i, , drop=FALSE] # the subset of causal data (keep as a matrix even if m_causal == 1)
         
         ###############
         ### KINSHIP ###
