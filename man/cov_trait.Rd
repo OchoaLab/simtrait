@@ -4,14 +4,14 @@
 \alias{cov_trait}
 \title{The model covariance matrix of the trait}
 \usage{
-cov_trait(kinship, herit, sigmaSq = 1)
+cov_trait(kinship, herit, sigma_sq = 1)
 }
 \arguments{
 \item{kinship}{The \eqn{n \times n}{n-by-n} kinship matrix \eqn{\Phi} of the individuals.  This may be the true matrix of the genotype simulation or a good estimate of empirical data obtained via the package \code{popkin}.}
 
 \item{herit}{The heritability \eqn{h^2} (proportion of trait variance due to genetics).}
 
-\item{sigmaSq}{Overall variance multiplicative factor \eqn{\sigma^2} (default 1).  This factor corresponds to the variance of an outbred individual.}
+\item{sigma_sq}{Overall variance multiplicative factor \eqn{\sigma^2} (default 1).  This factor corresponds to the variance of an outbred individual.}
 }
 \value{
 The \eqn{n \times n}{n-by-n} trait covariance matrix equal to
@@ -25,11 +25,11 @@ Below let there be \eqn{n} individuals.
 \examples{
 # create a dummy kinship matrix
 Phi <- matrix(
-             data=c(0.6,0.1,0, 0.1,0.6,0.1, 0,0.1,0.6),
-             nrow=3,
-             byrow=TRUE
+             data = c(0.6,0.1,0, 0.1,0.6,0.1, 0,0.1,0.6),
+             nrow = 3,
+             byrow = TRUE
              )
 # covariance of simulated traits
-V <- cov_trait(kinship=Phi, herit=0.8)
+V <- cov_trait(kinship = Phi, herit = 0.8)
 
 }

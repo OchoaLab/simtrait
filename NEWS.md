@@ -6,3 +6,12 @@
 
 * Fixed `m_causal=1` bug (used to die, now works correctly).
 
+# 2019-04-10 - simtrait 1.0.2.9000
+
+* Renamed argument `sigmaSq` to `sigma_sq` (parameter of `sim_trait` and `cov_trait`).
+* `sim_trait` return list has more descriptive names:
+  * `trait` (old `y`)
+  * `causal_indexes` (old `i`)
+  * `causal_coeffs` (old `beta`)
+* Overall coding style changes.
+* Vignette changes in parallel with popkin 1.2.0.9000 changes.

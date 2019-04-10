@@ -14,31 +14,31 @@
 #' @examples
 #' # construct a dummy genotype matrix
 #' X <- matrix(
-#'            data=c(0,1,2,1,2,1,0,0,1),
-#'            nrow=3,
-#'            byrow=TRUE
+#'            data = c(0,1,2,1,2,1,0,0,1),
+#'            nrow = 3,
+#'            byrow = TRUE
 #'            )
 #' # made up ancestral allele frequency vector for example
 #' p_anc <- c(0.5, 0.6, 0.2)
 #' # desired heritability
 #' herit <- 0.8
 #' # create simulated trait and associated data
-#' obj <- sim_trait(X=X, m_causal=2, herit=herit, p_anc=p_anc)
+#' obj <- sim_trait(X = X, m_causal = 2, herit = herit, p_anc = p_anc)
 #' # trait vector
-#' obj$y
+#' obj$trait
 #' # randomly-picked causal locus indeces
-#' obj$i
+#' obj$causal_indexes
 #' # locus effect size vector
-#' obj$beta
+#' obj$causal_coeffs
 #'
 #' # create a dummy kinship matrix for example
-#' Phi <- matrix(
-#'              data=c(0.6,0.1,0, 0.1,0.6,0.1, 0,0.1,0.6),
-#'              nrow=3,
-#'              byrow=TRUE
+#' kinship <- matrix(
+#'              data = c(0.6,0.1,0, 0.1,0.6,0.1, 0,0.1,0.6),
+#'              nrow = 3,
+#'              byrow = TRUE
 #'              )
 #' # covariance of simulated traits
-#' V <- cov_trait(kinship=Phi, herit=herit)
+#' V <- cov_trait(kinship = kinship, herit = herit)
 #' 
 #' @docType package
 #' @name simtrait

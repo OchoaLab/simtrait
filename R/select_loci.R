@@ -1,13 +1,16 @@
 # internal function
-select_loci <- function(maf, m_causal, maf_cut=0.05) {
+select_loci <- function(maf, m_causal, maf_cut = 0.05) {
     # check for missing parameters
-    if (missing(maf)) stop('Fatal: marginal allele frequency vector `maf` must be specified (no default value)')
-    if (missing(m_causal)) stop('Fatal: the number of causal loci `m_causal` must be specified (no default value)')
+    if (missing(maf))
+        stop('marginal allele frequency vector `maf` is required!')
+    if (missing(m_causal))
+        stop('the number of causal loci `m_causal` is required!')
     
     # data dimensions
     m <- length(maf)
     # other checks
-    if (m_causal > m) stop('Fatal: the number of causal loci selected cannot be larger than the total number of loci (', m_causal, ' > ', m, ')')
+    if (m_causal > m)
+        stop('the number of causal loci cannot be larger than the total number of loci (', m_causal, ' > ', m, ')')
     
     # select random loci!
     # we might not want to pick extremely rare alleles, so set MAF thresholds

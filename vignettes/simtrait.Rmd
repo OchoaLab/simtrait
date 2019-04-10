@@ -45,7 +45,7 @@ However, more painful details are necessary when ancestral allele frequencies mu
 
 # Sample usage
 
-In this section we first simulated an admixed population usinb `bnpsd`, then we simulate traits using `simtrait`.
+In this section we first simulated an admixed population using `bnpsd`, then we simulate traits using `simtrait`.
 In particular, we simulate a large number of traits to demonstrate that their sample covariance matrix is as expected.
 
 ## Load libraries required for this vignette
@@ -68,17 +68,17 @@ k <- 3 # number of intermediate subpops (source populations for admixed individu
 F <- 1:k # FST values for k=3 subpopulations (proportional/unnormalized)
 s <- 0.5 # bias coeff of standard Fst estimator
 Fst <- 0.3 # desired final Fst
-obj <- q1d(n_ind, k, s=s, F=F, Fst=Fst) # data
+obj <- q1d(n_ind, k, s = s, F = F, Fst = Fst) # data
 # in this case return value is a named list with three items:
 Q <- obj$Q # admixture proportions
 F <- obj$F # rescaled Fst vector for intermediate subpops
 
 # get pop structure parameters of the admixed individuals
 Theta <- coanc(Q,F) # the coancestry matrix
-Phi <- coanc_to_kinship(Theta) # kinship matrix
+kinship <- coanc_to_kinship(Theta) # kinship matrix
 
 # draw allele freqs and genotypes
-out <- rbnpsd(Q, F, m, wantP=FALSE, wantB=FALSE, noFixed=TRUE) # exclude variables not of interest
+out <- rbnpsd(Q, F, m, wantP = FALSE, wantB = FALSE, noFixed = TRUE) # exclude variables not of interest
 X <- out$X # genotypes
 p_anc <- out$Pa # ancestral AFs
 ```
@@ -92,23 +92,30 @@ First we simulate one trait:
 m_causal <- 100
 herit <- 0.8
 mu <- 1 # default 0, let's try a non-trivial case
-sigmaSq <- 1.5 # default 1, also let's see that this more complicated case works well
+sigma_sq <- 1.5 # default 1, also let's see that this more complicated case works well
 
 # create simulated trait
 # case of exact p_anc
-obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc, mu=mu, sigmaSq=sigmaSq)
+obj <- sim_trait(
+    X = X,
+    m_causal = m_causal,
+    herit = herit,
+    p_anc = p_anc,
+    mu = mu,
+    sigma_sq = sigma_sq
+)
 # trait vector
-length(obj$y)
+length(obj$trait)
 n_ind
-obj$y
+obj$trait
 # randomly-picked causal locus index
-length( obj$i )
+length( obj$causal_indexes )
 m_causal
-head( obj$i ) # show partially...
+head( obj$causal_indexes ) # show partially...
 # locus effect size vector
-length( obj$beta )
+length( obj$causal_coeffs )
 m_causal
-head( obj$beta ) # show partially...
+head( obj$causal_coeffs ) # show partially...
 ```
 
 ## Compare sample covariance of trait to theoretical expectation
@@ -117,16 +124,23 @@ The interesting validation is simulation a large number of random traits, from w
 
 ```{r}
 # the theoretical covariance matrix of the trait is calculated by cov_trait
-V <- cov_trait(kinship=Phi, herit=herit, sigmaSq=sigmaSq)
+V <- cov_trait(kinship = kinship, herit = herit, sigma_sq = sigma_sq)
 
 # simulate these many traits
 n_traits <- 1000
 # store in this matrix, initialize with zeroes
-Y <- matrix(data=0, nrow=n_traits, ncol=n_ind)
+Y <- matrix(data = 0, nrow = n_traits, ncol = n_ind)
 # start loop
 for (i in 1:n_traits) {
-    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc, mu=mu, sigmaSq=sigmaSq)
-    Y[i,] <- obj$y # store in i^th row
+    obj <- sim_trait(
+        X = X,
+        m_causal = m_causal,
+        herit = herit,
+        p_anc = p_anc,
+        mu = mu,
+        sigma_sq = sigma_sq
+    )
+    Y[i,] <- obj$trait # store in i^th row
 }
 # estimate sample covariance
 V_sample <- cov(Y)
@@ -134,29 +148,29 @@ V_sample <- cov(Y)
 
 First let's verify that the mean is as expected.
 Below the red line marks the desired mean.
-```{r, fig.width=3, fig.align='center'}
-par(mgp=c(2,0.5,0))
+```{r, fig.width = 3, fig.align = 'center'}
+par(mgp = c(2,0.5,0))
 # reduce margins from default
-par(mar=c(3.5,3,0,0)+0.2)
+par(mar = c(3.5,3,0,0)+0.2)
 # visualize distribution
-boxplot(rowMeans(Y), xlab="Simulation", ylab='Sample Mean')
+boxplot(rowMeans(Y), xlab = "Simulation", ylab = 'Sample Mean')
 # red line marks expected mean
-abline(h=mu, col='red')
+abline(h = mu, col = 'red')
 ```
 
-Now let's visualize the covariance matrices using `plotPopkin` from the `popkin` package.
-Since both matrices have large diagonals, we shrink them somewhat using `inbrDiag` also from the `popkin` package.
+Now let's visualize the covariance matrices using `plot_popkin` from the `popkin` package.
+Since both matrices have large diagonals, we shrink them somewhat using `inbr_diag` also from the `popkin` package.
 
-```{r, fig.width=6, fig.height=2.8, fig.align='center'}
+```{r, fig.width = 6, fig.height = 2.8, fig.align = 'center'}
 # set outer margin for axis labels (left and right are non-zero)
-par(oma=c(0,1.5,0,3))
+par(oma = c(0,1.5,0,3))
 # set inner margin for title (top is non-zero), add padding
-par(mar=c(0,0,2,0)+0.2)
+par(mar = c(0,0,2,0) + 0.2)
 # now plot!
-plotPopkin(
-    list(inbrDiag(V), inbrDiag(V_sample)),
-    titles=c('Theoretical', 'Sample Estimate'),
-    legTitle='Covariance'
+plot_popkin(
+    inbr_diag(list(V, V_sample)),
+    titles = c('Theoretical', 'Sample Estimate'),
+    leg_title = 'Covariance'
 )
 ```
 
@@ -174,11 +188,18 @@ A good kinship matrix estimate can be obtained using the `popkin` package.
 For simplicity here we proceed using the true kinship matrix rather than an estimate:
 ```{r}
 # store this in new matrix
-Y2 <- matrix(data=0, nrow=n_traits, ncol=n_ind)
+Y2 <- matrix(data = 0, nrow = n_traits, ncol = n_ind)
 # start loop
 for (i in 1:n_traits) {
-    obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, kinship=Phi, mu=mu, sigmaSq=sigmaSq)
-    Y2[i,] <- obj$y # store in i^th row
+    obj <- sim_trait(
+        X = X,
+        m_causal = m_causal,
+        herit = herit,
+        kinship = kinship,
+        mu = mu,
+        sigma_sq = sigma_sq
+    )
+    Y2[i,] <- obj$trait # store in i^th row
 }
 # estimate sample covariance
 V_sample2 <- cov(Y2)
@@ -186,29 +207,34 @@ V_sample2 <- cov(Y2)
 First let's verify the means again.
 Recall the red line marks the desired mean.
 Below the original sample (simulated using the true `p_anc`) is shown first as "Sample 1", while the new sample based on the kinship matrix is "Sample 2":
-```{r, fig.width=3, fig.align='center'}
-par(mgp=c(2,0.5,0))
+```{r, fig.width = 3, fig.align = 'center'}
+par(mgp = c(2,0.5,0))
 # reduce margins from default
-par(mar=c(3.5,3,0,0)+0.2)
+par(mar = c(3.5,3,0,0)+0.2)
 # visualize distribution
 boxplot(
-    list("Sample 1"=rowMeans(Y), "Sample 2"=rowMeans(Y2)),
-    xlab="Simulation", ylab='Sample Mean')
+    list(
+        "Sample 1" = rowMeans(Y),
+        "Sample 2" = rowMeans(Y2)
+    ),
+    xlab = "Simulation",
+    ylab = 'Sample Mean'
+)
 # red line marks expected mean
-abline(h=mu, col='red')
+abline(h = mu, col = 'red')
 ```
 
 Now we compare all three matrices:
-```{r, fig.width=7, fig.height=2.35, fig.align='center'}
+```{r, fig.width = 7, fig.height = 2.35, fig.align = 'center'}
 # set outer margin for axis labels (left and right are non-zero)
-par(oma=c(0,1.5,0,3))
+par(oma = c(0,1.5,0,3))
 # set inner margin for title (top is non-zero), add padding
-par(mar=c(0,0,2,0)+0.2)
+par(mar = c(0,0,2,0)+0.2)
 # now plot!
-plotPopkin(
-    list(inbrDiag(V), inbrDiag(V_sample), inbrDiag(V_sample2)),
-    titles=c('Theoretical', 'Sample Estimate 1', 'Sample Estimate 2'),
-    legTitle='Covariance'
+plot_popkin(
+    inbr_diag(list(V, V_sample, V_sample2)),
+    titles = c('Theoretical', 'Sample Estimate 1', 'Sample Estimate 2'),
+    leg_title = 'Covariance'
 )
 ```
 
@@ -227,7 +253,7 @@ The following variables are part of the model:
 | $\mathbf{X}$        | $n \times m$ | Genotypes                             |
 | $\mathbf{x}_i$      | $n \times 1$ | Genotype vector at locus $i$          |
 | $\mathbf{y}$        | $n \times 1$ | Trait                                 |
-| $\mathbf{\beta}$    | $m \times 1$ | Effect size                           |
+| $\mathbf{\beta}$    | $m \times 1$ | Effect size coefficients              |
 | $\mathbf{\epsilon}$ | $n \times 1$ | Non-genetic effects                   |
 | $\mathbf{p}$        | $m \times 1$ | Ancestral allele frequencies          |
 | $\mathbf{\Phi}$     | $n \times n$ | Kinship matrix                        |
@@ -396,7 +422,7 @@ In this setting it suffices to consider each effect size $\beta_i$ as acting on 
 
 ### How NOT to center the trait vector
 
-Now let's discuss why the obvious idea to center the trait without known ancestral allele frequencies doesn't work.
+Now let's discuss why the obvious way of centering the trait without known ancestral allele frequencies doesn't work.
 Why not use the sample allele frequencies as
 $$
 \mu_0 

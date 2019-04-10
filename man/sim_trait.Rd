@@ -4,28 +4,38 @@
 \alias{sim_trait}
 \title{Simulate a complex trait from genotypes}
 \usage{
-sim_trait(X, m_causal, herit, p_anc, kinship, mu = 0, sigmaSq = 1,
+sim_trait(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1,
   maf_cut = 0.05)
 }
 \arguments{
-\item{X}{The \eqn{m \times n}{m-by-n} genotype matrix.  This is a numeric matrix consisting of reference allele counts (in \code{c(0,1,2,NA)} for a diploid organism).}
+\item{X}{The \eqn{m \times n}{m-by-n} genotype matrix.
+This is a numeric matrix consisting of reference allele counts (in \code{c(0,1,2,NA)} for a diploid organism).}
 
 \item{m_causal}{The number of causal loci desired.}
 
 \item{herit}{The desired heritability (proportion of trait variance due to genetics).}
 
-\item{p_anc}{The length-\eqn{m} vector of true ancestral allele frequencies.  Recommended way to adjust the simulated trait to achieve the desired heritability and covariance structure.  Either this or \code{kinship} must be specified.}
+\item{p_anc}{The length-\eqn{m} vector of true ancestral allele frequencies.
+Recommended way to adjust the simulated trait to achieve the desired heritability and covariance structure.
+Either this or \code{kinship} must be specified.}
 
-\item{kinship}{The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data.  This offers an alternative way to adjust the simulated parameters parameters to achieve the desired covariance structure for real genotypes, since \code{p_anc} is only known for simulated data.  Either this or \code{p_anc} must be specified.}
+\item{kinship}{The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data.
+This offers an alternative way to adjust the simulated parameters parameters to achieve the desired covariance structure for real genotypes, since \code{p_anc} is only known for simulated data.
+Either this or \code{p_anc} must be specified.}
 
-\item{mu}{The desired parametric mean value of the trait (default zero).  The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).}
+\item{mu}{The desired parametric mean value of the trait (default zero).
+The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).}
 
-\item{sigmaSq}{The desired parametric variance factor of the trait (default 1).  This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).}
+\item{sigma_sq}{The desired parametric variance factor of the trait (default 1).
+This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).}
 
-\item{maf_cut}{The optional minimum allele frequency threshold (default 5\%).  This prevents rare alleles from being causal in the simulation.  Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.}
+\item{maf_cut}{The optional minimum allele frequency threshold (default 5\%).
+This prevents rare alleles from being causal in the simulation.
+Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.}
 }
 \value{
-A list containing the simulated trait \code{y} (length \eqn{n}), the vector of causal locus indeces \code{i} (length \eqn{m_causal}), and the locus effect size vector \code{beta} (length \eqn{m_causal}) at the causal loci.  However, if \code{herit==0} then \code{i} and \code{beta} will have zero length regardless of \code{m_causal}.
+A list containing the simulated \code{trait} (length \eqn{n}), the vector of causal locus indexes \code{causal_indexes} (length \eqn{m_causal}), and the locus effect size vector \code{causal_coeffs} (length \eqn{m_causal}) at the causal loci.
+However, if \code{herit = 0} then \code{causal_indexes} and \code{causal_coeffs} will have zero length regardless of \code{m_causal}.
 }
 \description{
 Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability and the true ancestral allele frequencies used to generate the genotypes, or alternatively the kinship matrix of the individuals).
@@ -44,19 +54,21 @@ The kinship matrix can be estimated accurately using the \code{popkin} package!
 \examples{
 # construct a dummy genotype matrix
 X <- matrix(
-           data=c(0,1,2,1,2,1,0,0,1),
-           nrow=3,
-           byrow=TRUE
+           data = c(0,1,2,1,2,1,0,0,1),
+           nrow = 3,
+           byrow = TRUE
            )
 # made up ancestral allele frequency vector for example
 p_anc <- c(0.5, 0.6, 0.2)
+
 # create simulated trait and associated data
-obj <- sim_trait(X=X, m_causal=2, herit=0.8, p_anc=p_anc)
+obj <- sim_trait(X = X, m_causal = 2, herit = 0.8, p_anc = p_anc)
+
 # trait vector
-obj$y
-# randomly-picked causal locus indeces
-obj$i
+obj$trait
+# randomly-picked causal locus indexes
+obj$causal_indexes
 # locus effect size vector
-obj$beta
+obj$causal_coeffs
 
 }
