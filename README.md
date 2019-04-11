@@ -22,7 +22,7 @@ Install the latest development version from GitHub:
 ``` r
 install.packages("devtools") # if needed
 library(devtools)
-devtools::install_github("OchoaLab/simtrait", build_opts=c())
+devtools::install_github("OchoaLab/simtrait", build_opts = c())
 ```
 
 You can see the package vignette, which has additional documentation, by typing this into your R session:
@@ -49,20 +49,20 @@ n_ind <- 30 # number of individuals, smaller than usual for easier visualization
 k <- 3 # number of intermediate subpops
 
 # define population structure
-F <- 1:k # FST values for k=3 subpopulations
+F <- 1:k # FST values for k = 3 subpopulations
 s <- 0.5 # bias coeff of standard Fst estimator
 Fst <- 0.3 # desired final Fst
-obj <- q1d(n_ind, k, s=s, F=F, Fst=Fst) # data
+obj <- q1d(n_ind, k, s = s, F = F, Fst = Fst) # data
 # in this case return value is a named list with three items:
 Q <- obj$Q # admixture proportions
 F <- obj$F # rescaled Fst vector for intermediate subpops
 
 # get pop structure parameters of the admixed individuals
 Theta <- coanc(Q,F) # the coancestry matrix
-Phi <- coanc_to_kinship(Theta) # kinship matrix
+kinship <- coanc_to_kinship(Theta) # kinship matrix
 
 # draw allele freqs and genotypes
-out <- rbnpsd(Q, F, m, wantP=FALSE, wantB=FALSE, noFixed=TRUE) # exclude variables not of interest
+out <- rbnpsd(Q, F, m, wantP = FALSE, wantB = FALSE, noFixed = TRUE) # exclude variables not of interest
 X <- out$X # genotypes
 p_anc <- out$Pa # ancestral AFs
 ```
@@ -81,18 +81,18 @@ herit <- 0.8
 # create simulated trait and associated data
 
 # version 1: known p_anc (prefered, only applicable to simulated data)
-obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, p_anc=p_anc)
+obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc)
 # version 2: known kinship (more broadly applicable but fewer guarantees)
-obj <- sim_trait(X=X, m_causal=m_causal, herit=herit, kinship=Phi)
+obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, kinship = kinship)
 
 # outputs in both versions:
 # trait vector
-obj$y
+obj$trait
 # randomly-picked causal locus index
-obj$i
+obj$causal_indexes
 # locus effect size vector
-obj$beta
+obj$causal_coeffs
 
 # theoretical covariance of the simulated traits
-V <- cov_trait(kinship=Phi, herit=herit)
+V <- cov_trait(kinship = kinship, herit = herit)
 ```

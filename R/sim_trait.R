@@ -149,7 +149,7 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1, 
         }
         G <- drop( causal_coeffs %*% X ) # this is a vector
         # NOTE by construction:
-        # Cov(G) = 2 * herit * Phi
+        # Cov(G) = 2 * herit * kinship
         
         ##############
         ### CENTER ###

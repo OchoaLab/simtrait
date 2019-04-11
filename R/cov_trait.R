@@ -13,13 +13,13 @@
 #'
 #' @examples
 #' # create a dummy kinship matrix
-#' Phi <- matrix(
+#' kinship <- matrix(
 #'              data = c(0.6,0.1,0, 0.1,0.6,0.1, 0,0.1,0.6),
 #'              nrow = 3,
 #'              byrow = TRUE
 #'              )
 #' # covariance of simulated traits
-#' V <- cov_trait(kinship = Phi, herit = 0.8)
+#' V <- cov_trait(kinship = kinship, herit = 0.8)
 #'
 #' @export
 cov_trait <- function(kinship, herit, sigma_sq = 1) {
