@@ -1,6 +1,6 @@
 # simtrait
 
-The `simtrait` package enables simulation of complex traits with user-set number of causal loci and the desired heritability of the trait (the proportion of variance due to genetic effects).
+The `simtrait` R package enables simulation of complex traits with user-set number of causal loci and the desired heritability of the trait (the proportion of variance due to genetic effects).
 
 The main function requires a simulated genotype matrix, including the true ancestral allele frequencies.
 These parameters are necessary to correctly specify the desired correlation structure.
@@ -19,14 +19,14 @@ install.packages("simtrait")
 -->
 
 Install the latest development version from GitHub:
-``` r
+```R
 install.packages("devtools") # if needed
 library(devtools)
-devtools::install_github("OchoaLab/simtrait", build_opts = c())
+install_github("OchoaLab/simtrait", build_opts = c())
 ```
 
-You can see the package vignette, which has additional documentation, by typing this into your R session:
-``` r
+You can see the package vignette, which has more detailed documentation, by typing this into your R session:
+```R
 vignette('simtrait')
 ```
 
@@ -40,7 +40,7 @@ The code below has two parts: (1) simulate genotypes, and (2) simulate the trait
 The first step is to simulate genotypes from an admixed population, to have an example where there is population structure and known ancestral allele frequencies.
 We use the external package `bnpsd` to achieve this.
 
-``` r
+```R
 library(bnpsd) # to simulate an admixed population
 
 # dimensions of data/model
@@ -71,7 +71,7 @@ p_anc <- out$Pa # ancestral AFs
 
 Here we apply our package to this simulated genotype data.
 
-``` r
+```R
 library(simtrait) # load this package
 
 # parameters of simulation
