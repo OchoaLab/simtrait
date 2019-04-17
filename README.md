@@ -44,27 +44,41 @@ We use the external package `bnpsd` to achieve this.
 library(bnpsd) # to simulate an admixed population
 
 # dimensions of data/model
-m <- 10000 # number of loci
-n_ind <- 30 # number of individuals, smaller than usual for easier visualizations
-k <- 3 # number of intermediate subpops
+# number of loci
+m_loci <- 10000
+# number of individuals, smaller than usual for easier visualizations
+n_ind <- 30
+# number of intermediate subpops
+k_subpops <- 3
 
 # define population structure
-F <- 1:k # FST values for k = 3 subpopulations
-s <- 0.5 # bias coeff of standard Fst estimator
-Fst <- 0.3 # desired final Fst
-obj <- q1d(n_ind, k, s = s, F = F, Fst = Fst) # data
-# in this case return value is a named list with three items:
-Q <- obj$Q # admixture proportions
-F <- obj$F # rescaled Fst vector for intermediate subpops
+# FST values for k = 3 subpopulations
+inbr_subpops <- 1 : k_subpops
+# bias coeff of standard Fst estimator
+bias_coeff <- 0.5
+# desired final Fst of admixed individuals
+Fst <- 0.3
+obj <- admix_prop_1d_linear(
+    n_ind,
+    k_subpops,
+    bias_coeff = bias_coeff,
+    coanc_subpops = inbr_subpops,
+    fst = Fst
+)
+admix_proportions <- obj$admix_proportions
+# rescaled Fst vector for intermediate subpops
+inbr_subpops <- obj$coanc_subpops
 
 # get pop structure parameters of the admixed individuals
-Theta <- coanc(Q,F) # the coancestry matrix
-kinship <- coanc_to_kinship(Theta) # kinship matrix
+concestry <- coanc_admix(admix_proportions, inbr_subpops)
+kinship <- coanc_to_kinship(concestry)
 
 # draw allele freqs and genotypes
-out <- rbnpsd(Q, F, m, wantP = FALSE, wantB = FALSE, noFixed = TRUE) # exclude variables not of interest
-X <- out$X # genotypes
-p_anc <- out$Pa # ancestral AFs
+out <- draw_all_admix(admix_proportions, inbr_subpops, m_loci)
+# genotypes
+X <- out$X
+# ancestral allele frequencies
+p_anc <- out$p_anc
 ```
 
 ### Simulate a random trait
