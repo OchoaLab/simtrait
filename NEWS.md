@@ -15,3 +15,7 @@
   * `causal_coeffs` (old `beta`)
 * Overall coding style changes.
 * Vignette changes in parallel with popkin 1.2.0.9000 changes.
+
+# 2019-04-16 - simtrait 1.0.3.9000
+
+* Vignette and README changes in parallel with bnpsd 1.1.0.9000 changes.
