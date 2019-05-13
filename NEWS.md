@@ -19,3 +19,4 @@
 # 2019-04-16 - simtrait 1.0.3.9000
 
 * Vignette and README changes in parallel with bnpsd 1.1.0.9000 changes.
+* 2019-05-13: added ORCID to author info

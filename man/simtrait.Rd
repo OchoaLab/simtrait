@@ -49,6 +49,6 @@ V <- cov_trait(kinship = kinship, herit = herit)
 
 }
 \author{
-\strong{Maintainer}: Alejandro Ochoa \email{alejandro.ochoa@duke.edu}
+\strong{Maintainer}: Alejandro Ochoa \email{alejandro.ochoa@duke.edu} (0000-0003-4928-3403)
 
 }
