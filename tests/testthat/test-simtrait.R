@@ -1,5 +1,31 @@
 context("test-simtrait")
 
+test_that("allele_freqs works", {
+    # Construct toy data
+    X <- matrix(
+        c(0, 1, 2,
+          1, 0, 1,
+          1, NA, 2),
+        nrow = 3,
+        byrow = TRUE
+    )
+    # known values
+    maf_rows <- c(1/2, 1/3, 3/4)
+    maf_cols <- c(1/3, 1/4, 5/6)
+    
+    # row means
+    expect_equal(
+        allele_freqs(X),
+        maf_rows
+    )
+    
+    # col means
+    expect_equal(
+        allele_freqs(X, loci_on_cols = TRUE),
+        maf_cols
+    )
+})
+
 test_that("select_loci works", {
     # construct some simple data for test
     maf <- (1:999)/1000

@@ -20,3 +20,9 @@
 
 * Vignette and README changes in parallel with bnpsd 1.1.0.9000 changes.
 * 2019-05-13: added ORCID to author info
+
+# 2019-07-19 - simtrait 1.0.4.9000
+
+* Added `allele_freqs`, which handles `BEDMatrix` objects correctly.
+  Rest of `sim_trait` doesn't handle `BEDMatrix` objects yet.
+

@@ -5,7 +5,7 @@
 \title{Simulate a complex trait from genotypes}
 \usage{
 sim_trait(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1,
-  maf_cut = 0.05)
+  maf_cut = 0.05, loci_on_cols = FALSE)
 }
 \arguments{
 \item{X}{The \eqn{m \times n}{m-by-n} genotype matrix.
@@ -32,6 +32,9 @@ This factor corresponds to the variance of an outbred individual (see \code{\lin
 \item{maf_cut}{The optional minimum allele frequency threshold (default 5\%).
 This prevents rare alleles from being causal in the simulation.
 Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.}
+
+\item{loci_on_cols}{If \code{TRUE}, \eqn{X} has loci on columns and individuals on rows; if false (the default), loci are on rows and individuals on columns.
+If \eqn{X} is a BEDMatrix object, loci are taken to be on the columns (regardless of the value of \code{loci_on_cols}).}
 }
 \value{
 A list containing the simulated \code{trait} (length \eqn{n}), the vector of causal locus indexes \code{causal_indexes} (length \eqn{m_causal}), and the locus effect size vector \code{causal_coeffs} (length \eqn{m_causal}) at the causal loci.
