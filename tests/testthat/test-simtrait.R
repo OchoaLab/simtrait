@@ -27,10 +27,15 @@ test_that("allele_freqs works", {
 })
 
 test_that("select_loci works", {
+    
     # construct some simple data for test
     maf <- (1:999)/1000
     maf_cut <- 0.05
     m_causal <- 50
+    # first cause an error on purpose
+    # (ask for more causal loci than there are loci)
+    expect_error( select_loci(maf = maf, m_causal = 10000) )
+    # now a proper runx
     i <- select_loci(maf = maf, m_causal = m_causal, maf_cut = maf_cut)
     # the length of the index vector equals desired m_causal
     expect_equal( length(i), m_causal )
@@ -82,7 +87,13 @@ test_that("sim_trait works", {
     expect_true( all(X %in% c(0,1,2)) ) # sanity check for genotypes
     m_causal <- 5
     herit <- 0.8
-    kinship <- diag(1/2, n) # true kinship for unstructured data
+    # true kinship for unstructured data
+    kinship <- diag(n) / 2
+    
+    # first cause an error on purpose
+    # (ask for more causal loci than there are loci)
+    expect_error( sim_trait(X = X, m_causal = 1000, herit = herit, p_anc = p_anc) )
+    
     # test p_anc version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc)
     trait <- obj$trait # trait vector

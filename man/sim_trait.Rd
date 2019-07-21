@@ -8,7 +8,7 @@ sim_trait(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1,
   maf_cut = 0.05, loci_on_cols = FALSE)
 }
 \arguments{
-\item{X}{The \eqn{m \times n}{m-by-n} genotype matrix.
+\item{X}{The \eqn{m \times n}{m-by-n} genotype matrix (if \code{loci_on_cols = FALSE}, transposed otherwise), or a BEDMatrix object`.
 This is a numeric matrix consisting of reference allele counts (in \code{c(0,1,2,NA)} for a diploid organism).}
 
 \item{m_causal}{The number of causal loci desired.}

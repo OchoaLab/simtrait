@@ -7,10 +7,10 @@ select_loci <- function(maf, m_causal, maf_cut = 0.05) {
         stop('the number of causal loci `m_causal` is required!')
     
     # data dimensions
-    m <- length(maf)
+    m_loci <- length(maf)
     # other checks
-    if (m_causal > m)
-        stop('the number of causal loci cannot be larger than the total number of loci (', m_causal, ' > ', m, ')')
+    if (m_causal > m_loci)
+        stop('the number of causal loci cannot be larger than the total number of loci (', m_causal, ' > ', m_loci, ')')
     
     # select random loci!
     # we might not want to pick extremely rare alleles, so set MAF thresholds

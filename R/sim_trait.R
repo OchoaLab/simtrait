@@ -12,7 +12,7 @@
 #' If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, a compromise that works well in practice is possible if the kinship matrix (\code{kinship}) is known (see package vignette).
 #' The kinship matrix can be estimated accurately using the \code{popkin} package!
 #' 
-#' @param X The \eqn{m \times n}{m-by-n} genotype matrix.
+#' @param X The \eqn{m \times n}{m-by-n} genotype matrix (if `loci_on_cols = FALSE`, transposed otherwise), or a BEDMatrix object`.
 #' This is a numeric matrix consisting of reference allele counts (in \code{c(0,1,2,NA)} for a diploid organism).
 #' @param m_causal The number of causal loci desired.
 #' @param herit The desired heritability (proportion of trait variance due to genetics).
@@ -56,8 +56,6 @@
 #' obj$causal_coeffs
 #' 
 #' @export
-# TODO:
-# - make it work with BEDMatrix?
 sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1, maf_cut = 0.05, loci_on_cols = FALSE) {
     # check for missing parameters
     if (missing(X))
@@ -82,6 +80,15 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1, 
         stop('`herit` cannot be greater than 1!')
     if (sigma_sq <= 0)
         stop('`sigma_sq` must be positive!')
+
+    # simplifies subsetting downstream
+    if (class(X) == 'BEDMatrix')
+        loci_on_cols <- TRUE
+
+    # get m_loci to check m_causal before more heavy computations
+    m_loci <- if (loci_on_cols) ncol(X) else nrow(X)
+    if (m_causal > m_loci)
+        stop('m_causal (', m_causal, ') exceeds the number of loci (', m_loci, ')!')
     
     if (herit == 0) {
         # lots of work can be avoided in this edge case
@@ -109,7 +116,14 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1, 
         p_anc_hat <- p_anc_hat[causal_indexes]
         if (!missing(p_anc))
             p_anc <- p_anc[causal_indexes] # subset if available
-        X <- X[causal_indexes, , drop = FALSE] # the subset of causal data (keep as a matrix even if m_causal == 1)
+        # the subset of causal data
+        # (drop = FALSE for keeping as a matrix even if m_causal == 1)
+        if (loci_on_cols) {
+            # also transpose for consistent behavior downstream
+            X <- t( X[, causal_indexes, drop = FALSE] )
+        } else{
+            X <- X[causal_indexes, , drop = FALSE]
+        }
         
         ###############
         ### KINSHIP ###
@@ -175,9 +189,9 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1, 
         E <- 0 # in this edge case there is no "noise", just genotype effects
     } else {
         # length of E
-        n <- ncol(X)
+        n_ind <- ncol(X)
         # draw noise
-        E <- stats::rnorm(n, 0, (1 - herit) * sigma_sq ) # noise has mean zero but variance ((1-herit) * sigma_sq)
+        E <- stats::rnorm(n_ind, 0, (1 - herit) * sigma_sq ) # noise has mean zero but variance ((1-herit) * sigma_sq)
         # NOTE by construction:
         # Cov(E) = (1-herit) * sigma_sq * I
     }

@@ -26,3 +26,7 @@
 * Added `allele_freqs`, which handles `BEDMatrix` objects correctly.
   Rest of `sim_trait` doesn't handle `BEDMatrix` objects yet.
 
+# 2019-07-20 - simtrait 1.0.5.9000
+
+* Now `sim_trait`, and consequently the whole package, supports `BEDMatrix` objects.
+  This is ideal for simulating traits from real and potentially very large genotype data.
