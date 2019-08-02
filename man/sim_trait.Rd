@@ -5,7 +5,8 @@
 \title{Simulate a complex trait from genotypes}
 \usage{
 sim_trait(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1,
-  maf_cut = 0.05, loci_on_cols = FALSE)
+  maf_cut = 0.05, loci_on_cols = FALSE, mem_factor = 0.7,
+  mem_lim = NA)
 }
 \arguments{
 \item{X}{The \eqn{m \times n}{m-by-n} genotype matrix (if \code{loci_on_cols = FALSE}, transposed otherwise), or a BEDMatrix object`.
@@ -35,6 +36,12 @@ Note that this threshold is applied to the sample allele frequencies and not the
 
 \item{loci_on_cols}{If \code{TRUE}, \eqn{X} has loci on columns and individuals on rows; if false (the default), loci are on rows and individuals on columns.
 If \eqn{X} is a BEDMatrix object, loci are taken to be on the columns (regardless of the value of \code{loci_on_cols}).}
+
+\item{mem_factor}{BEDMatrix-specific, sets proportion of available memory to use loading genotypes.
+Ignored if \code{mem_lim} is not \code{NA}.}
+
+\item{mem_lim}{BEDMatrix-specific, sets total memory to use loading genotypes, in GB.
+If \code{NA} (default), a proportion \code{mem_factor} of the available memory will be used.}
 }
 \value{
 A list containing the simulated \code{trait} (length \eqn{n}), the vector of causal locus indexes \code{causal_indexes} (length \eqn{m_causal}), and the locus effect size vector \code{causal_coeffs} (length \eqn{m_causal}) at the causal loci.

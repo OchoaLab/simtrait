@@ -30,3 +30,8 @@
 
 * Now `sim_trait`, and consequently the whole package, supports `BEDMatrix` objects.
   This is ideal for simulating traits from real and potentially very large genotype data.
+
+# 2019-08-02 - simtrait 1.0.6.9000
+
+* Improved `allele_freqs` to load genotype chunks from a `BEDMatrix` object more efficiently, using as much available memory as possible.
+  Requires an updated `popkin` package (>= 1.2.6.9000).
