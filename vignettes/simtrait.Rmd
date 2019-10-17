@@ -174,15 +174,12 @@ Now let's visualize the covariance matrices using `plot_popkin` from the `popkin
 Since both matrices have large diagonals, we shrink them somewhat using `inbr_diag` also from the `popkin` package.
 
 ```{r, fig.width = 6, fig.height = 2.8, fig.align = 'center'}
-# set outer margin for axis labels (left and right are non-zero)
-par(oma = c(0, 1.5, 0, 3))
-# set inner margin for title (top is non-zero), add padding
-par(mar = c(0, 0, 2, 0) + 0.2)
-# now plot!
 plot_popkin(
     inbr_diag(list(V, V_sample)),
     titles = c('Theoretical', 'Sample Estimate'),
-    leg_title = 'Covariance'
+    leg_title = 'Covariance',
+    # set margin for title (top is non-zero)
+    mar = c(0, 2)
 )
 ```
 
@@ -238,15 +235,11 @@ abline(h = mu, col = 'red')
 
 Now we compare all three matrices:
 ```{r, fig.width = 7, fig.height = 2.35, fig.align = 'center'}
-# set outer margin for axis labels (left and right are non-zero)
-par(oma = c(0, 1.5, 0, 3))
-# set inner margin for title (top is non-zero), add padding
-par(mar = c(0, 0, 2, 0) + 0.2)
-# now plot!
 plot_popkin(
     inbr_diag(list(V, V_sample, V_sample2)),
     titles = c('Theoretical', 'Sample Estimate 1', 'Sample Estimate 2'),
-    leg_title = 'Covariance'
+    leg_title = 'Covariance',
+    mar = c(0, 2)
 )
 ```
 
