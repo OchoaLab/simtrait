@@ -1,6 +1,4 @@
-<img src="logo.png" alt="simtrait" align="right" />
-
-# simtrait
+# simtrait <img src="man/figures/logo.png" alt="simtrait" align="right" />
 
 The `simtrait` R package enables simulation of complex traits with user-set number of causal loci and the desired heritability of the trait (the proportion of variance due to genetic effects).
 

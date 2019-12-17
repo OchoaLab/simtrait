@@ -39,5 +39,6 @@
 # 2019-12-17 - simtrait 1.0.7.9000
 
 * Preemptively updated `class` usage now that matrices return a two-element array in R-devel
+* Moved logo to `man/figures/`
 * Minor Roxygen-related updates
 
