@@ -36,7 +36,7 @@
 #' @export
 allele_freqs <- function(X, loci_on_cols = FALSE, mem_factor = 0.7, mem_lim = NA) {
     # behavior depends on class
-    if (class(X) == 'BEDMatrix') {
+    if ('BEDMatrix' %in% class(X)) {
         # extract data dimensions
         m_loci <- ncol(X)
         n_ind <- nrow(X)
@@ -83,7 +83,7 @@ allele_freqs <- function(X, loci_on_cols = FALSE, mem_factor = 0.7, mem_lim = NA
             p_anc_hat <- rowMeans(X, na.rm = TRUE)/2
         }
     } else
-        stop('Only matrix and BEDMatrix supported!  class: ', class(X))
+        stop('Only matrix and BEDMatrix supported!  Instead, class was: ', toString( class(X) ) )
     
     # return the vector whichever way it was computed
     return( p_anc_hat )

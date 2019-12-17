@@ -35,3 +35,9 @@
 
 * Improved `allele_freqs` to load genotype chunks from a `BEDMatrix` object more efficiently, using as much available memory as possible.
   Requires an updated `popkin` package (>= 1.2.6.9000).
+
+# 2019-12-17 - simtrait 1.0.7.9000
+
+* Preemptively updated `class` usage now that matrices return a two-element array in R-devel
+* Minor Roxygen-related updates
+

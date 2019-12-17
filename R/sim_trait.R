@@ -86,7 +86,7 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1, 
         stop('`sigma_sq` must be positive!')
 
     # simplifies subsetting downstream
-    if (class(X) == 'BEDMatrix')
+    if ('BEDMatrix' %in% class(X))
         loci_on_cols <- TRUE
 
     # get m_loci to check m_causal before more heavy computations
