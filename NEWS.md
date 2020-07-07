@@ -42,3 +42,7 @@
 * Moved logo to `man/figures/`
 * Minor Roxygen-related updates
 
+# 2020-07-07 - simtrait 1.0.8.9000
+
+* Function `sim_trait` changed default `maf_cut` from 0.05 to `NA`, and in that case code no longer computes marginal allele frequencies unless they are needed because `p_anc` is missing (and `kinship` is provided).
+  This is much faster and memory efficient in extremely large simulations, and just makes more sense to me generally (the MAF threshold was a quirky feature, still available but non-default now).

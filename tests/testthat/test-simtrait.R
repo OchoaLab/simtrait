@@ -27,25 +27,37 @@ test_that("allele_freqs works", {
 })
 
 test_that("select_loci works", {
+    # cause errors with missing args
+    expect_error( select_loci() )
+    
+    m_loci <- 1000
+    m_causal <- 50
+    # test simple version without MAF thresholds
+    indexes <- select_loci( m_causal = m_causal, m_loci = m_loci )
+    # the length of the index vector equals desired m_causal
+    expect_equal( length( indexes ), m_causal )
+    # all indexes are equal or smaller than m_loci
+    expect_true( all( indexes <= m_loci ) )
+    # all indexes are equal or larger than 1
+    expect_true( all( indexes >= 1 ) )
     
     # construct some simple data for test
-    maf <- (1:999)/1000
+    maf <- ( 1 : m_loci ) / m_loci
     maf_cut <- 0.05
-    m_causal <- 50
     # first cause an error on purpose
     # (ask for more causal loci than there are loci)
-    expect_error( select_loci(maf = maf, m_causal = 10000) )
-    # now a proper runx
-    i <- select_loci(maf = maf, m_causal = m_causal, maf_cut = maf_cut)
+    expect_error( select_loci( m_causal = 10000, maf = maf ) )
+    # now a proper run
+    indexes <- select_loci( m_causal = m_causal, maf = maf, maf_cut = maf_cut )
     # the length of the index vector equals desired m_causal
-    expect_equal( length(i), m_causal )
+    expect_equal( length( indexes ), m_causal )
     # all indexes are equal or smaller than m=length(maf)
-    expect_true( all(i <= length(maf)) )
+    expect_true( all( indexes <= length( maf ) ) )
     # all indexes are equal or larger than 1
-    expect_true( all(i >= 1) )
+    expect_true( all( indexes >= 1 ) )
     # test that MAF filter works
-    expect_true( all(maf[i] >= maf_cut) ) # test bottom of range
-    expect_true( all(maf[i] <= 1-maf_cut) ) # test top of range
+    expect_true( all( maf[ indexes ] >= maf_cut ) ) # test bottom of range
+    expect_true( all( maf[ indexes ] <= 1 - maf_cut ) ) # test top of range
 })
 
 test_that("cov_trait works", {
@@ -143,6 +155,37 @@ test_that("sim_trait works", {
     
     # test kinship version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, kinship = kinship)
+    trait <- obj$trait # trait vector
+    causal_indexes <- obj$causal_indexes # causal locus indeces
+    causal_coeffs <- obj$causal_coeffs # locus effect size vector
+    # test trait
+    expect_equal( length(trait), n) # length as expected
+    # test causal locus indeces
+    expect_equal( length(causal_indexes), m_causal ) # length as expected
+    expect_true( all(causal_indexes <= m) ) # range as expected
+    expect_true( all(causal_indexes >= 1) ) # range as expected
+    # test effect sizes
+    expect_equal( length(causal_coeffs), m_causal) # length as expected
+
+    # test with MAF threshold
+    maf_cut <- 0.05
+    
+    # test p_anc version
+    obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, maf_cut = maf_cut)
+    trait <- obj$trait # trait vector
+    causal_indexes <- obj$causal_indexes # causal locus indeces
+    causal_coeffs <- obj$causal_coeffs # locus effect size vector
+    # test trait
+    expect_equal( length(trait), n) # length as expected
+    # test causal locus indeces
+    expect_equal( length(causal_indexes), m_causal ) # length as expected
+    expect_true( all(causal_indexes <= m) ) # range as expected
+    expect_true( all(causal_indexes >= 1) ) # range as expected
+    # test effect sizes
+    expect_equal( length(causal_coeffs), m_causal) # length as expected
+    
+    # test kinship version
+    obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, kinship = kinship, maf_cut = maf_cut)
     trait <- obj$trait # trait vector
     causal_indexes <- obj$causal_indexes # causal locus indeces
     causal_coeffs <- obj$causal_coeffs # locus effect size vector

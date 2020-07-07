@@ -12,7 +12,7 @@ sim_trait(
   kinship,
   mu = 0,
   sigma_sq = 1,
-  maf_cut = 0.05,
+  maf_cut = NA,
   loci_on_cols = FALSE,
   mem_factor = 0.7,
   mem_lim = NA
@@ -40,7 +40,7 @@ The sample mean of the trait will not be exactly zero, but instead have an expec
 \item{sigma_sq}{The desired parametric variance factor of the trait (default 1).
 This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).}
 
-\item{maf_cut}{The optional minimum allele frequency threshold (default 5\\%).
+\item{maf_cut}{The optional minimum allele frequency threshold (default NA, no threshold).
 This prevents rare alleles from being causal in the simulation.
 Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.}
 

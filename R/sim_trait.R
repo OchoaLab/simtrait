@@ -26,7 +26,7 @@
 #' The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).
 #' @param sigma_sq The desired parametric variance factor of the trait (default 1).
 #' This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).
-#' @param maf_cut The optional minimum allele frequency threshold (default 5\%).
+#' @param maf_cut The optional minimum allele frequency threshold (default NA, no threshold).
 #' This prevents rare alleles from being causal in the simulation.
 #' Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.
 #' @param loci_on_cols If \code{TRUE}, \eqn{X} has loci on columns and individuals on rows; if false (the default), loci are on rows and individuals on columns.
@@ -60,7 +60,19 @@
 #' obj$causal_coeffs
 #' 
 #' @export
-sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1, maf_cut = 0.05, loci_on_cols = FALSE, mem_factor = 0.7, mem_lim = NA) {
+sim_trait <- function(
+                      X,
+                      m_causal,
+                      herit,
+                      p_anc,
+                      kinship,
+                      mu = 0,
+                      sigma_sq = 1,
+                      maf_cut = NA,
+                      loci_on_cols = FALSE,
+                      mem_factor = 0.7,
+                      mem_lim = NA
+                      ) {
     # check for missing parameters
     if (missing(X))
         stop('genotype matrix `X` is required!')
@@ -102,24 +114,51 @@ sim_trait <- function(X, m_causal, herit, p_anc, kinship, mu = 0, sigma_sq = 1, 
         G <- 0 # construct a trivial genotype effect of zero (becomes vector automatically later)
     } else {
         
+        ###################################
+        ### MARGINAL ALLELE FREQUENCIES ###
+        ###################################
+
+        # may not need this
+        p_anc_hat <- NULL
+        # these are used to select loci, or to simulate from real genotypes
+        if ( !is.na( maf_cut ) || missing( p_anc ) ) {
+            # compute marginal allele frequencies
+            p_anc_hat <- allele_freqs(
+                X,
+                loci_on_cols = loci_on_cols,
+                mem_factor = mem_factor,
+                mem_lim = mem_lim
+            )
+        }
+        
         ###################
         ### CAUSAL LOCI ###
         ###################
         
-        # compute marginal allele frequencies
-        p_anc_hat <- allele_freqs(X, loci_on_cols = loci_on_cols, mem_factor = mem_factor, mem_lim = mem_lim)
-        
-        # select random SNPs! this performs the magic...
-        # also runs additional checks
-        causal_indexes <- select_loci(p_anc_hat, m_causal, maf_cut)
+        if ( !is.na( maf_cut ) ) {
+            # select random SNPs! this performs the magic...
+            # also runs additional checks
+            causal_indexes <- select_loci(
+                m_causal = m_causal,
+                maf = p_anc_hat,
+                maf_cut = maf_cut
+            )
+        } else {
+            # select indexes regardless of MAF in this case (faster, less memory!)
+            causal_indexes <- select_loci(
+                m_causal = m_causal,
+                m_loci = m_loci
+            )
+        }
         
         # draw random SNP coefficients for selected loci
         causal_coeffs <- stats::rnorm(m_causal, 0, 1)
 
         # subset data to consider causal loci only
-        p_anc_hat <- p_anc_hat[causal_indexes]
-        if (!missing(p_anc))
-            p_anc <- p_anc[causal_indexes] # subset if available
+        if ( !is.null( p_anc_hat ) )
+            p_anc_hat <- p_anc_hat[ causal_indexes ]
+        if ( !missing( p_anc ) )
+            p_anc <- p_anc[ causal_indexes ] # subset if available
         # the subset of causal data
         # (drop = FALSE for keeping as a matrix even if m_causal == 1)
         if (loci_on_cols) {
