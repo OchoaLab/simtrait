@@ -262,7 +262,7 @@ The following variables are part of the model:
 | $\mathbf{\epsilon}$ | $n \times 1$ | Non-genetic effects                   |
 | $\mathbf{p}$        | $m \times 1$ | Ancestral allele frequencies          |
 | $\mathbf{\Phi}$     | $n \times n$ | Kinship matrix                        |
-| $\mu_0$             | $1 \times 1$ | Intercept (excludes genetic effects)  |
+| $\alpha$             | $1 \times 1$ | Intercept (excludes genetic effects)  |
 | $\mu$               | $1 \times 1$ | Trait mean (includes genetic effects) |
 | $h^2$               | $1 \times 1$ | Heritability                          |
 | $\sigma^2$          | $1 \times 1$ | Trait variance factor                 |
@@ -272,9 +272,9 @@ The following variables are part of the model:
 
 We assume the linear polygenic model for a quantitative trait:
 $$
-\mathbf{y} = \mu_0 \mathbf{1} + \mathbf{X} \mathbf{\beta} + \mathbf{\epsilon}.
+\mathbf{y} = \alpha \mathbf{1} + \mathbf{X} \mathbf{\beta} + \mathbf{\epsilon}.
 $$
-To analyze the covariance structure of the trait, we shall assume that $\mu_0$ and $\mathbf{\beta}$ are fixed parameters, while $\mathbf{X} = (\mathbf{x}_i)$ and $\mathbf{\epsilon}$ are random with expectations and covariances of
+To analyze the covariance structure of the trait, we shall assume that $\alpha$ and $\mathbf{\beta}$ are fixed parameters, while $\mathbf{X} = (\mathbf{x}_i)$ and $\mathbf{\epsilon}$ are random with expectations and covariances of
 \begin{align*}
 	\E[\mathbf{X}] &= 2 \mathbf{1} \mathbf{p}^\intercal
 	, \\
@@ -289,9 +289,9 @@ where $\mathbf{p} = (p_i)$.
 The expectation of the trait is therefore
 \begin{align*}
 	\E[\mathbf{y}]
-	&= \mu_0 \mathbf{1} + \E[\mathbf{X}] \mathbf{\beta} + \E[\mathbf{\epsilon}]
+	&= \alpha \mathbf{1} + \E[\mathbf{X}] \mathbf{\beta} + \E[\mathbf{\epsilon}]
 	\\
-	&= \mu_0 \mathbf{1} + 2 \mathbf{1} \mathbf{p}^\intercal \mathbf{\beta}
+	&= \alpha \mathbf{1} + 2 \mathbf{1} \mathbf{p}^\intercal \mathbf{\beta}
 	,
 \end{align*}
 which can be written as 
@@ -301,7 +301,7 @@ which can be written as
 	, \quad \text{where} \quad 
 	\mu 
 	=
-	\mu_0 + 2 \mathbf{p}^\intercal \mathbf{\beta}
+	\alpha + 2 \mathbf{p}^\intercal \mathbf{\beta}
 	.
 \end{align*}
 The covariance matrix of the trait is
@@ -338,7 +338,7 @@ In all cases the user sets the heritability and other parameters but not the eff
 To choose $\mathbf{\beta}$, the algorithm initially draws random coefficients and scales them to yield the desired covariance structure, as follows.
 
 The user provides a genotype matrix and sets the number of causal loci.
-The algorithm selects random loci to be the causal ones, by default restricted to loci with sample minor allele frequencies of at least 5\% (the user can change this value).
+The algorithm selects random loci to be the causal ones.
 From this moment on $\mathbf{X}$ will contain only those causal loci.
 The initial effect sizes are drawn independently from a standard normal distribution:
 $$
@@ -399,7 +399,7 @@ also results in the desired variance.
 This is the prefered approach as it is the only case that guarantees success.
 Given our model, we obtain the desired overall trait mean $\mu$ by choosing the intercept to be
 $$
-\mu_0 
+\alpha 
 =
 \mu - 2 \mathbf{p}^\intercal \mathbf{\beta}
 $$
@@ -408,7 +408,7 @@ $$
 
 The solution that this version of the algorithm takes is to choose the intercept
 \begin{align*}
-	\mu_0 
+	\alpha 
 	&=
 	\mu - 2 \hat{\bar{p}} \mathbf{1}_m^\intercal \mathbf{\beta}
 	, \quad \text{where} \\
@@ -430,17 +430,17 @@ In this setting it suffices to consider each effect size $\beta_i$ as acting on 
 Now let's discuss why the obvious way of centering the trait without known ancestral allele frequencies doesn't work.
 Why not use the sample allele frequencies as
 $$
-\mu_0 
+\alpha 
 =
 \mu - 2 \mathbf{\hat{p}}^\intercal \mathbf{\beta} \quad ?
 $$
 Centering the trait this way is equivalent to centering genotypes at each locus:
 $$
-\mathbf{y} = \mu \mathbf{1} + \sum_{i=1}^m (\mathbf{x}_i - \hat{p}_i \mathbf{1}) \beta_i + \mathbf{\epsilon}.
+\mathbf{y} = \alpha \mathbf{1} + \sum_{i=1}^m (\mathbf{x}_i - 2 \hat{p}_i \mathbf{1}) \beta_i + \mathbf{\epsilon}.
 $$
 However, this operation introduces a distortion in the covariance of the genotypes [@Ochoa083923]: 
 $$
-\Cov \left( \mathbf{x}_i - \hat{p}_i \mathbf{1} \right)
+\Cov \left( \mathbf{x}_i - 2 \hat{p}_i \mathbf{1} \right)
 =
 p_i (1-p_i) \left( 
 \mathbf{\Phi} 
@@ -449,7 +449,7 @@ p_i (1-p_i) \left(
 - \mathbf{1} \mathbf{\varphi}^\intercal 
 \right),
 $$
-where $\mathbf{\varphi} = \mathbf{\Phi} \mathbf{1}$.
+where $\mathbf{\varphi} = \frac{1}{n} \mathbf{\Phi} \mathbf{1}$.
 These undesireable distortions propagate to the trait, which we confirmed in simulations (not shown).
 It is not clear how these distortions can be corrected for after centering the trait as shown above.
 

@@ -51,3 +51,4 @@
 
 * Function `sim_trait` now delays calculating allele frequencies if `maf_cut = NA` and `p_anc` is missing (and `kinship` is provided), so that these frequencies are only calculated on the small subset of loci selected to be causal (rather than the whole genome, which was the original behavior).
   This is expected to speed-up trait simulations from real genotypes.
+* Vignette had minor corrections and edits (focused on model and algorithm description).
