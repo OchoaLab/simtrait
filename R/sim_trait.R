@@ -120,8 +120,9 @@ sim_trait <- function(
 
         # may not need this
         p_anc_hat <- NULL
-        # these are used to select loci, or to simulate from real genotypes
-        if ( !is.na( maf_cut ) || missing( p_anc ) ) {
+        # these are needed here to select loci, if there's a MAF threshold
+        # (they are also needed in real datasets, but if that's the only need then let's wait until we've subset the genotype matrix)
+        if ( !is.na( maf_cut ) ) {
             # compute marginal allele frequencies
             p_anc_hat <- allele_freqs(
                 X,
@@ -155,7 +156,7 @@ sim_trait <- function(
         causal_coeffs <- stats::rnorm(m_causal, 0, 1)
 
         # subset data to consider causal loci only
-        if ( !is.null( p_anc_hat ) )
+        if ( !is.null( p_anc_hat ) ) # if we had this already
             p_anc_hat <- p_anc_hat[ causal_indexes ]
         if ( !missing( p_anc ) )
             p_anc <- p_anc[ causal_indexes ] # subset if available
@@ -166,6 +167,24 @@ sim_trait <- function(
             X <- t( X[, causal_indexes, drop = FALSE] )
         } else{
             X <- X[causal_indexes, , drop = FALSE]
+        }
+        
+        ###################################
+        ### MARGINAL ALLELE FREQUENCIES ###
+        ###################################
+
+        # do here if we don't already have them and need them
+        # this will be faster now, if done on the subset of causal genotypes only
+
+        # these are used to select loci, or to simulate from real genotypes
+        if ( missing( p_anc ) && is.null( p_anc_hat ) ) {
+            # compute marginal allele frequencies
+            p_anc_hat <- allele_freqs(
+                X,
+#                loci_on_cols = loci_on_cols, # now that genotypes are extracted, they are in default orientation (no need for passing this, plus passing it messes things up)
+                mem_factor = mem_factor,
+                mem_lim = mem_lim
+            )
         }
         
         ###############
@@ -243,5 +262,9 @@ sim_trait <- function(
     trait <- G + E
 
     # return all these things
-    list(trait = trait, causal_indexes = causal_indexes, causal_coeffs = causal_coeffs)
+    list(
+        trait = trait,
+        causal_indexes = causal_indexes,
+        causal_coeffs = causal_coeffs
+    )
 }
