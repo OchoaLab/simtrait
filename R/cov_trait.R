@@ -44,9 +44,11 @@ cov_trait <- function(kinship, herit, sigma_sq = 1) {
         stop('`sigma_sq` must be positive!')
 
     # identity matrix of same dimension as kinship
-    I <- diag(rep.int(1, nrow(kinship)))
+    I <- diag( nrow( kinship ) )
     # desired covariance matrix (except for overall scale)
     V <- 2 * herit * kinship + (1-herit) * I
-    # multiply by scale and return
-    V * sigma_sq
+    # multiply by scale
+    V <- V * sigma_sq
+    # return
+    return( V )
 }

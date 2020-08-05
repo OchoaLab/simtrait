@@ -3,3 +3,4 @@
 export(allele_freqs)
 export(cov_trait)
 export(sim_trait)
+export(sim_trait_mvn)

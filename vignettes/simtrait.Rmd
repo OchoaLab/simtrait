@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: simtrait.bib
 vignette: >
-  %\VignetteIndexEntry{simtrait: Simulate Complex Traits from Genotypes}
+  %\VignetteIndexEntry{`simtrait`: Simulate Complex Traits from Genotypes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -244,6 +244,61 @@ plot_popkin(
 ```
 
 This plot shows again good agreement between the sample covariance matrix of traits simulated without true ancestral allele frequencies ("Sample Estimator 2") and the desired "theoretical" covariance matrix.
+
+## Simulated trait from infinitesimal model
+
+An alternative approach for simulating traits is by drawing them from a multivariate model with the desired mean and covariance structure.
+This is often called the *infinitesimal* model, since it follows from the central limit theorem under the assumption that there are infinite causal loci, each with an infinitesimal effect size.
+A trait simulated this way has no use in GWAS tests, as there are no causal loci (in other words, the null hypothesis holds across the genome).
+However, these traits have a heritability that can be estimated, and in fact this infinitesimal model is assumed by approaches that estimate heritability by fitting variance components, such as GCTA [@yang_gcta:_2011].
+
+For simplicity here we proceed using the true kinship matrix rather than an estimate:
+```{r}
+# This function simulates trait replicates in one call,
+# generating a matrix comparable to the previous ones.
+Y3 <- sim_trait_mvn(
+    rep = n_traits,
+    kinship = kinship,
+    herit = herit,
+    mu = mu,
+    sigma_sq = sigma_sq
+)
+# estimate sample covariance
+V_sample3 <- cov(Y3)
+```
+First let's verify the means again.
+Recall the red line marks the desired mean.
+The new sample is denoted as "Sample 3", and the other two are as in the previous sections (traits simulated from genotypes, using the true `p_anc` or with bias corrections from the kinship matrix):
+```{r, fig.width = 4, fig.align = 'center'}
+par(mgp = c(2, 0.5, 0))
+# reduce margins from default
+par(mar = c(3.5, 3, 0, 0) + 0.2)
+# visualize distribution
+boxplot(
+    list(
+        "Sample 1" = rowMeans(Y),
+        "Sample 2" = rowMeans(Y2),
+        "Sample 3" = rowMeans(Y3)
+    ),
+    xlab = "Simulation",
+    ylab = 'Sample Mean'
+)
+# red line marks expected mean
+abline(h = mu, col = 'red')
+```
+
+Now we compare all four covariance matrices:
+```{r, fig.width = 7, fig.height = 2, fig.align = 'center'}
+plot_popkin(
+    inbr_diag(list(V, V_sample, V_sample2, V_sample3)),
+    titles = c('Theoretical', 'Sample Est. 1', 'Sample Est. 2', 'Sample Est. 3'),
+    leg_title = 'Covariance',
+    mar = c(0, 2),
+    leg_width = 0.4
+)
+```
+
+This plot shows again good agreement between the sample covariance matrix of traits simulated under the infinitesimal model ("Sample Est. 3") and the desired "theoretical" covariance matrix and first two simulations.
 
 # Model
 

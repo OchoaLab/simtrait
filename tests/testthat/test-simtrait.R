@@ -198,3 +198,57 @@ test_that("sim_trait works", {
     # test effect sizes
     expect_equal( length(causal_coeffs), m_causal) # length as expected
 })
+
+test_that( "sqrt_matrix works", {
+    # create a random positive semidefinite matrix
+    m <- 20
+    n <- 10
+    X <- matrix(
+        rnorm( m*n ),
+        nrow = m,
+        ncol = n
+    )
+    V <- tcrossprod( X )
+    expect_equal( ncol( V ), m )
+    expect_equal( nrow( V ), m )
+
+    # now use function
+    expect_silent( 
+        V_sqrt <- sqrt_matrix( V )
+    )
+    # this is the important property we require of the matrix square root
+    expect_equal( V, tcrossprod( V_sqrt ) )
+})
+
+test_that("sim_trait_mvn works", {
+    # create unstructured data for test
+    n <- 10
+    herit <- 0.8
+    # true kinship for unstructured data
+    kinship <- diag(n) / 2
+    # trait replicates
+    rep <- 10
+    
+    # make sure function stops if crucial parameters are missing
+    expect_error( sim_trait_mvn() )
+    expect_error( sim_trait_mvn( rep = rep ) )
+    expect_error( sim_trait_mvn( kinship = kinship ) )
+    expect_error( sim_trait_mvn( herit = herit ) )
+    expect_error( sim_trait_mvn( rep = rep, kinship = kinship ) )
+    expect_error( sim_trait_mvn( rep = rep, herit = herit ) )
+    expect_error( sim_trait_mvn( kinship = kinship, herit = herit ) )
+
+    # complete invocation
+    expect_silent(
+        traits <- sim_trait_mvn(
+            rep = rep,
+            kinship = kinship,
+            herit = herit
+        )
+    )
+    expect_true( is.matrix( traits ) )
+    expect_true( is.numeric( traits ) )
+    expect_equal( nrow( traits ), rep )
+    expect_equal( ncol( traits ), n )
+})
+

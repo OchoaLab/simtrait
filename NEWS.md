@@ -52,3 +52,9 @@
 * Function `sim_trait` now delays calculating allele frequencies if `maf_cut = NA` and `p_anc` is missing (and `kinship` is provided), so that these frequencies are only calculated on the small subset of loci selected to be causal (rather than the whole genome, which was the original behavior).
   This is expected to speed-up trait simulations from real genotypes.
 * Vignette had minor corrections and edits (focused on model and algorithm description).
+
+# 2020-08-05 - simtrait 1.0.10.9000
+
+* Added function `sim_trait_mvn`, which draws traits from the multivariate normal distribution with covariance structure matching that of genetic traits (also called "infinitesimal" model).
+  These traits are useful for testing heritability estimation.
+  A visual validation of these simulated traits is available in the vignette.
