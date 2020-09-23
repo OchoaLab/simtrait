@@ -5,7 +5,7 @@
 #' Below \eqn{n} is the number of individuals.
 #'
 #' @param rep The number of replicate traits to simulate.
-#' Simulating all you need at once is more efficient than simulating each separately, as the kinship matrix is eigendecomposed each time.
+#' Simulating all you need at once is more efficient than simulating each separately (the kinship matrix is eigendecomposed once per run, shared across replicates).
 #' @param kinship The \eqn{n \times n}{n-by-n} kinship matrix of the individuals to simulate from.
 #' @param herit The desired heritability (proportion of trait variance due to genetics).
 #' @param mu The desired parametric mean value of the trait (default zero).
@@ -16,7 +16,7 @@
 #' Procedure fails if any eigenvalues are smaller than `-tol` times the absolute value of the largest eigenvalue.
 #' Increase this value only if you are getting errors but you're sure your covariance matrix (the output of `\link{cov_trait}`) is positive semi-definite.
 #'
-#' @return A list containing the simulated \code{trait} (length \eqn{n}).
+#' @return A `rep`-by-`n` matrix containing the simulated traits along the rows, individuals along the columns.
 #'
 #' @examples
 #' # create a dummy kinship matrix

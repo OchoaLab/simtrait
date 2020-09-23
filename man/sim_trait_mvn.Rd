@@ -8,7 +8,7 @@ sim_trait_mvn(rep, kinship, herit, mu = 0, sigma_sq = 1, tol = 1e-06)
 }
 \arguments{
 \item{rep}{The number of replicate traits to simulate.
-Simulating all you need at once is more efficient than simulating each separately, as the kinship matrix is eigendecomposed each time.}
+Simulating all you need at once is more efficient than simulating each separately (the kinship matrix is eigendecomposed once per run, shared across replicates).}
 
 \item{kinship}{The \eqn{n \times n}{n-by-n} kinship matrix of the individuals to simulate from.}
 
@@ -25,7 +25,7 @@ Procedure fails if any eigenvalues are smaller than \code{-tol} times the absolu
 Increase this value only if you are getting errors but you're sure your covariance matrix (the output of \verb{\link{cov_trait}}) is positive semi-definite.}
 }
 \value{
-A list containing the simulated \code{trait} (length \eqn{n}).
+A \code{rep}-by-\code{n} matrix containing the simulated traits along the rows, individuals along the columns.
 }
 \description{
 Simulate matrix of trait replicates \eqn{Y} given a kinship matrix and model parameters (the desired heritability, total variance scale, and mean).
