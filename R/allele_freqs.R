@@ -56,11 +56,12 @@ allele_freqs <- function(
             indexes_loci_chunk <- i_chunk : min(i_chunk + m_chunk_max - 1, m_loci) # range of SNPs to extract in this chunk
 
             # Only loci_on_cols==TRUE cases is supported here, this is only for BEDMatrix
-            # transpose for our usual setup
-            Xi <- t(X[, indexes_loci_chunk, drop = FALSE])
+            # DO NOT transpose for our usual setup (this is faster)
+            Xi <- X[, indexes_loci_chunk, drop = FALSE]
             
             # compute and store the values we want!
-            p_anc_hat[ indexes_loci_chunk ] <- rowMeans(Xi, na.rm = TRUE)/2
+            # because we didn't transpose, use colMeans here istead of rowMeans! 
+            p_anc_hat[ indexes_loci_chunk ] <- colMeans(Xi, na.rm = TRUE)/2
             
             # update starting point for next chunk! (overshoots at the end, that's ok)
             i_chunk <- i_chunk + m_chunk_max
