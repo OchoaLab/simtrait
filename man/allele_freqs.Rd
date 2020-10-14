@@ -4,7 +4,7 @@
 \alias{allele_freqs}
 \title{Compute locus allele frequencies}
 \usage{
-allele_freqs(X, loci_on_cols = FALSE, mem_factor = 0.7, mem_lim = NA)
+allele_freqs(X, loci_on_cols = FALSE, m_chunk_max = 1000)
 }
 \arguments{
 \item{X}{The genotype matrix (regular R matrix or BEDMatrix object).
@@ -13,11 +13,8 @@ Missing values are ignored in averages.}
 \item{loci_on_cols}{If \code{TRUE}, \eqn{X} has loci on columns and individuals on rows; if false (the default), loci are on rows and individuals on columns.
 If \eqn{X} is a BEDMatrix object, columns are averaged to yield locus allele frequencies (regardless of the value of \code{loci_on_cols}).}
 
-\item{mem_factor}{BEDMatrix-specific, sets proportion of available memory to use loading genotypes.
-Ignored if \code{mem_lim} is not \code{NA}.}
-
-\item{mem_lim}{BEDMatrix-specific, sets total memory to use loading genotypes, in GB.
-If \code{NA} (default), a proportion \code{mem_factor} of the available memory will be used.}
+\item{m_chunk_max}{BEDMatrix-specific, sets the maximum number of loci to process at the time.
+If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).}
 }
 \value{
 The vector of allele frequencies, one per locus.

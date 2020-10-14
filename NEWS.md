@@ -58,3 +58,10 @@
 * Added function `sim_trait_mvn`, which draws traits from the multivariate normal distribution with covariance structure matching that of genetic traits (also called "infinitesimal" model).
   These traits are useful for testing heritability estimation.
   A visual validation of these simulated traits is available in the vignette.
+
+# 2020-10-14 - simtrait 1.0.11.9000
+
+* Function `alelle_freq` was modified to reduce memory usage for the BEDMatrix case.
+  - For both this function and `sim_trait`, the BEDMatrix-specific options `mem_factor` and `mem_lim` were replaced by the option `m_chunk_max`.
+  - As a consequence of the changes, `popkin` is no longer a dependency of this `simtrait` package.
+    However, `popkin` is still recommended for estimating the kinship matrices required by some of the functions of this `simtrait` package.

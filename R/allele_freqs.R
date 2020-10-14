@@ -7,10 +7,8 @@
 #' Missing values are ignored in averages.
 #' @param loci_on_cols If \code{TRUE}, \eqn{X} has loci on columns and individuals on rows; if false (the default), loci are on rows and individuals on columns.
 #' If \eqn{X} is a BEDMatrix object, columns are averaged to yield locus allele frequencies (regardless of the value of \code{loci_on_cols}).
-#' @param mem_factor BEDMatrix-specific, sets proportion of available memory to use loading genotypes.
-#' Ignored if `mem_lim` is not `NA`.
-#' @param mem_lim BEDMatrix-specific, sets total memory to use loading genotypes, in GB.
-#' If `NA` (default), a proportion `mem_factor` of the available memory will be used.
+#' @param m_chunk_max BEDMatrix-specific, sets the maximum number of loci to process at the time.
+#' If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).
 #'
 #' @return The vector of allele frequencies, one per locus.
 #' Names are set to the locus names, if present.
@@ -34,7 +32,11 @@
 #' c(1/3, 1/4, 5/6)
 #'
 #' @export
-allele_freqs <- function(X, loci_on_cols = FALSE, mem_factor = 0.7, mem_lim = NA) {
+allele_freqs <- function(
+                         X,
+                         loci_on_cols = FALSE,
+                         m_chunk_max = 1000 # optimal value not tested directly
+                         ) {
     # behavior depends on class
     if ('BEDMatrix' %in% class(X)) {
         # extract data dimensions
@@ -42,15 +44,6 @@ allele_freqs <- function(X, loci_on_cols = FALSE, mem_factor = 0.7, mem_lim = NA
         n_ind <- nrow(X)
         # allocate desired vector of allele frequencies
         p_anc_hat <- vector('numeric', m_loci)
-        
-        # given fixed n, solve for m:
-        # get maximum m (number of SNPs) given n and the memory requested
-        m_chunk <- popkin:::solve_m_mem_lim(
-                                mem = mem_lim,
-                                n = n_ind,
-                                m = m_loci,
-                                mat_m_n = 1, # just this one matrix!
-                                )$m_chunk
         
         # navigate chunks
         i_chunk <- 1 # start of first chunk (needed for matrix inputs only; as opposed to function inputs)
@@ -60,7 +53,7 @@ allele_freqs <- function(X, loci_on_cols = FALSE, mem_factor = 0.7, mem_lim = NA
                 break
             
             # indexes to extract loci, and also so save to FstTs and FstBs vectors
-            indexes_loci_chunk <- i_chunk : min(i_chunk + m_chunk - 1, m_loci) # range of SNPs to extract in this chunk
+            indexes_loci_chunk <- i_chunk : min(i_chunk + m_chunk_max - 1, m_loci) # range of SNPs to extract in this chunk
 
             # Only loci_on_cols==TRUE cases is supported here, this is only for BEDMatrix
             # transpose for our usual setup
@@ -70,7 +63,7 @@ allele_freqs <- function(X, loci_on_cols = FALSE, mem_factor = 0.7, mem_lim = NA
             p_anc_hat[ indexes_loci_chunk ] <- rowMeans(Xi, na.rm = TRUE)/2
             
             # update starting point for next chunk! (overshoots at the end, that's ok)
-            i_chunk <- i_chunk + m_chunk
+            i_chunk <- i_chunk + m_chunk_max
         }
 
         # set names to be SNP names

@@ -13,9 +13,18 @@ if (suppressMessages(suppressWarnings(require(BEDMatrix)))) {
     m <- ncol(X)
     
     test_that("allele_freqs works with BEDMatrix", {
+        p_anc_hat <- allele_freqs(X_R)
+        
+        # this is kinda trivial because the whole (tiny) dataset is loaded in one go
         expect_equal(
-            allele_freqs(X_R),
+            p_anc_hat,
             allele_freqs(X)
+        )
+
+        # repeat setting chunk size to something smaller, for a more stringent test
+        expect_equal(
+            p_anc_hat,
+            allele_freqs( X, m_chunk_max = 11 )
         )
     })
     

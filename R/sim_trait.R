@@ -1,6 +1,6 @@
 #' Simulate a complex trait from genotypes
 #'
-#' Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability and the true ancestral allele frequencies used to generate the genotypes, or alternatively the kinship matrix of the individuals).
+#' Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability, and either the true ancestral allele frequencies used to generate the genotypes, or the kinship matrix of the individuals).
 #' Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.
 #' The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
 #' Below let there be \eqn{m} loci and \eqn{n} individuals.
@@ -19,7 +19,8 @@
 #' @param p_anc The length-\eqn{m} vector of true ancestral allele frequencies.
 #' Recommended way to adjust the simulated trait to achieve the desired heritability and covariance structure.
 #' Either this or \code{kinship} must be specified.
-#' @param kinship The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data.
+#' @param kinship The mean kinship value of the individuals in the data.
+#' The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data is also accepted.
 #' This offers an alternative way to adjust the simulated parameters parameters to achieve the desired covariance structure for real genotypes, since \code{p_anc} is only known for simulated data.
 #' Either this or \code{p_anc} must be specified.
 #' @param mu The desired parametric mean value of the trait (default zero).
@@ -31,10 +32,8 @@
 #' Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.
 #' @param loci_on_cols If \code{TRUE}, \eqn{X} has loci on columns and individuals on rows; if false (the default), loci are on rows and individuals on columns.
 #' If \eqn{X} is a BEDMatrix object, loci are taken to be on the columns (regardless of the value of \code{loci_on_cols}).
-#' @param mem_factor BEDMatrix-specific, sets proportion of available memory to use loading genotypes.
-#' Ignored if `mem_lim` is not `NA`.
-#' @param mem_lim BEDMatrix-specific, sets total memory to use loading genotypes, in GB.
-#' If `NA` (default), a proportion `mem_factor` of the available memory will be used.
+#' @param m_chunk_max BEDMatrix-specific, sets the maximum number of loci to process at the time.
+#' If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).
 #'
 #' @return A list containing the simulated \code{trait} (length \eqn{n}), the vector of causal locus indexes \code{causal_indexes} (length \eqn{m_causal}), and the locus effect size vector \code{causal_coeffs} (length \eqn{m_causal}) at the causal loci.
 #' However, if \code{herit = 0} then \code{causal_indexes} and \code{causal_coeffs} will have zero length regardless of \code{m_causal}.
@@ -70,8 +69,7 @@ sim_trait <- function(
                       sigma_sq = 1,
                       maf_cut = NA,
                       loci_on_cols = FALSE,
-                      mem_factor = 0.7,
-                      mem_lim = NA
+                      m_chunk_max = 1000
                       ) {
     # check for missing parameters
     if (missing(X))
@@ -127,8 +125,7 @@ sim_trait <- function(
             p_anc_hat <- allele_freqs(
                 X,
                 loci_on_cols = loci_on_cols,
-                mem_factor = mem_factor,
-                mem_lim = mem_lim
+                m_chunk_max = m_chunk_max
             )
         }
         
@@ -182,8 +179,7 @@ sim_trait <- function(
             p_anc_hat <- allele_freqs(
                 X,
 #                loci_on_cols = loci_on_cols, # now that genotypes are extracted, they are in default orientation (no need for passing this, plus passing it messes things up)
-                mem_factor = mem_factor,
-                mem_lim = mem_lim
+                m_chunk_max = m_chunk_max
             )
         }
         
