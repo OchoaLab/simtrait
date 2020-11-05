@@ -252,3 +252,31 @@ test_that("sim_trait_mvn works", {
     expect_equal( ncol( traits ), n )
 })
 
+test_that( "rmsd works", {
+    # random data to test on
+    x <- rnorm(10)
+    y <- rnorm(10)
+    # introduce a little missingess
+    x[ 5 ] <- NA
+    y[ 8 ] <- NA
+    
+    # trigger failures on purpose
+    # (missing arguments)
+    expect_error( rmsd( ) )
+    expect_error( rmsd( x ) )
+    expect_error( rmsd( y = y ) )
+    # arguments of different lengths
+    expect_error( rmsd( x, 1 ) )
+    expect_error( rmsd( x, y[ 1:5 ] ) )
+
+    # now the proper run
+    expect_silent( d <- rmsd( x, y ) )
+    expect_equal( length( d ), 1 )
+    expect_true( !is.na( d ) )
+    expect_true( d > 0 )
+
+    # other obvious checks
+    expect_equal( rmsd( x, x ), 0 )
+    expect_equal( rmsd( y, y ), 0 )
+    expect_equal( rmsd( x, y ), rmsd( y, x ) ) # transitivity
+})

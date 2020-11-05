@@ -65,3 +65,8 @@
   - For both this function and `sim_trait`, the BEDMatrix-specific options `mem_factor` and `mem_lim` were replaced by the option `m_chunk_max`.
   - As a consequence of the changes, `popkin` is no longer a dependency of this `simtrait` package.
     However, `popkin` is still recommended for estimating the kinship matrices required by some of the functions of this `simtrait` package.
+
+# 2020-11-05 - simtrait 1.0.12.9000
+
+* Added functions used for benchmarking genetic association methods based on traits simulated with `simtrait`:
+  - `rmsd`: general root-mean-square deviation function
