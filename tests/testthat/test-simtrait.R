@@ -280,3 +280,49 @@ test_that( "rmsd works", {
     expect_equal( rmsd( y, y ), 0 )
     expect_equal( rmsd( x, y ), rmsd( y, x ) ) # transitivity
 })
+
+test_that( "pval_srmsd works", {
+    # random data to test on
+    n <- 10
+    n_null <- 8 # must be strictly smaller than n for things to work
+    p_miss <- 0.2 # add missingness too
+    # all p-values are uniform
+    pvals <- runif( n )
+    # select a random few to be NA
+    pvals[ sample.int( n, n * p_miss ) ] <- NA
+    # pick a few random ones to be causal (to be removed inside)
+    causal_loci <- sample.int( n, n - n_null )
+    
+    # trigger failures on purpose
+    # (missing arguments)
+    expect_error( pval_srmsd( ) )
+    expect_error( pval_srmsd( pvals ) )
+    expect_error( pval_srmsd( causal_loci = causal_loci ) )
+    # p-values out of range cause errors
+    expect_error( pval_srmsd( c(pvals, -1), causal_loci ) )
+    expect_error( pval_srmsd( c(pvals, 10), causal_loci ) )
+    # empty causal_loci trigger a specific error
+    expect_error( pval_srmsd( pvals, c() ) )
+    # and all loci being causal (no nulls) also triggers errors
+    expect_error( pval_srmsd( pvals, 1:length(pvals) ) )
+
+    # now the successful run
+    expect_silent( data <- pval_srmsd( pvals, causal_loci ) )
+    expect_equal( class(data), 'list' )
+    expect_equal( length(data), 3 )
+    expect_equal( names(data), c('srmsd', 'pvals_null', 'pvals_unif') )
+    expect_equal( length( data$srmsd ), 1 )
+    expect_true( !is.na( data$srmsd ) )
+    # equal lengths
+    expect_equal( length( data$pvals_null ), length( data$pvals_unif ) )
+    # inequality because NAs get things removed too
+    expect_true( length( data$pvals_null ) <= n_null )
+    expect_true( length( data$pvals_unif ) <= n_null )
+    # all p-values should be between zero and one (NAs were removed by sorting!)
+    expect_true( !anyNA( data$pvals_null ) )
+    expect_true( !anyNA( data$pvals_unif ) )
+    expect_true( all( data$pvals_unif >= 0 ) )
+    expect_true( all( data$pvals_null >= 0 ) )
+    expect_true( all( data$pvals_unif <= 1 ) )
+    expect_true( all( data$pvals_null <= 1 ) )
+})

@@ -70,3 +70,4 @@
 
 * Added functions used for benchmarking genetic association methods based on traits simulated with `simtrait`:
   - `rmsd`: general root-mean-square deviation function
+  - `pval_srmsd`: signed RMSD between observed and expected (uniform) p-values
