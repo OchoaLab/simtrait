@@ -14,15 +14,19 @@
 #' Values of `causal_indexes` as returned by `sim_trait` work.
 #' There must be at least one causal index.
 #' This parameter is required to prevent use of this function except when the true status of every test (null vs alternative) is known.
+#' @param detailed If `FALSE` (default) only SRMSD is returned.
+#' If `TRUE`, sorted null p-values without NAs and their expectations are returned (useful for plots).
 #'
-#' @return A named list containing:
+#' @return If `detailed` is `FALSE`, returns the signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
+#'
+#' If `detailed` is `TRUE`, returns a named list containing:
 #' - `srmsd`: The signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
 #' - `pvals_null`: Sorted null p-values (observed order statistics).  If any input null p-values were `NA`, these have been removed here (removed by `sort`).
 #' - `pvals_unif`: Expected order statistics assuming uniform distribution, same length as `pvals_null`.
 #'
 #' The detailed data is returned as it is useful for plots.
 #' 
-#' However, if the input `pvals` is `NULL` (taken for case of singular association test, which is rare but may happen), then the returned list contains `NA`, `NULL` and `NULL` for the above three items.
+#' However, if the input `pvals` is `NULL` (taken for case of singular association test, which is rare but may happen), then the returned value is `NA` if `detailed` was `FALSE`, or otherwise the list contains `NA`, `NULL` and `NULL` for the above three items.
 #'
 #' @examples
 #' # simulate truly null p-values, which should be uniform
@@ -36,7 +40,7 @@
 #' `\link[rmsd]` for the generic root-mean-square deviation function.
 #'
 #' @export
-pval_srmsd <- function(pvals, causal_indexes) {
+pval_srmsd <- function(pvals, causal_indexes, detailed = FALSE) {
     if ( missing( pvals ) )
         stop( '`pvals` is required!' )
     if ( missing( causal_indexes ) )
@@ -46,14 +50,17 @@ pval_srmsd <- function(pvals, causal_indexes) {
     
     # in some cases there is nothing to do (LMM has singular information matrix)
     if (is.null(pvals))
-        return(
-            list(
-                srmsd = NA, # NA is best value to return in that case (scalar)
-                pvals_null = NULL, # NULL for vectors
-                pvals_unif = NULL
+        if (detailed) {
+            return(
+                list(
+                    srmsd = NA, # NA is best value to return in that case (scalar)
+                    pvals_null = NULL, # NULL for vectors
+                    pvals_unif = NULL
+                )
             )
-        )
-
+        } else
+            return(NA)
+    
     # remove causal loci from vector
     pvals_null <- pvals[ -causal_indexes ]
 
@@ -79,14 +86,17 @@ pval_srmsd <- function(pvals, causal_indexes) {
     # negative means conservative (good)
     if ( stats::median( pvals_null ) > 0.5 )
         srmsd <- - srmsd
-    
-    # return items of interest in a list
-    return(
-        list(
-            srmsd = srmsd,
-            pvals_null = pvals_null, # sorted!
-            pvals_unif = pvals_unif
+
+    if ( detailed ) {
+        # return items of interest in a list
+        return(
+            list(
+                srmsd = srmsd,
+                pvals_null = pvals_null, # sorted!
+                pvals_unif = pvals_unif
+            )
         )
-    )
+    } else
+        return( srmsd )
 }
 

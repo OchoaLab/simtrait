@@ -306,8 +306,13 @@ test_that( "pval_srmsd works", {
     # and all loci being causal (no nulls) also triggers errors
     expect_error( pval_srmsd( pvals, 1:length(pvals) ) )
 
-    # now the successful run
-    expect_silent( data <- pval_srmsd( pvals, causal_loci ) )
+    # now the successful run, simple version
+    expect_silent( srmsd <- pval_srmsd( pvals, causal_loci ) )
+    expect_equal( length( srmsd ), 1 )
+    expect_true( !is.na( srmsd ) )
+    
+    # now the successful run, detailed version
+    expect_silent( data <- pval_srmsd( pvals, causal_loci, detailed = TRUE ) )
     expect_equal( class(data), 'list' )
     expect_equal( length(data), 3 )
     expect_equal( names(data), c('srmsd', 'pvals_null', 'pvals_unif') )

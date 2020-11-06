@@ -4,7 +4,7 @@
 \alias{pval_srmsd}
 \title{Signed RMSD measure of null p-value uniformity}
 \usage{
-pval_srmsd(pvals, causal_indexes)
+pval_srmsd(pvals, causal_indexes, detailed = FALSE)
 }
 \arguments{
 \item{pvals}{The vector of association p-values to analyze.
@@ -16,9 +16,14 @@ Non-\code{NA} values outside of [0,1] will trigger an error.}
 Values of \code{causal_indexes} as returned by \code{sim_trait} work.
 There must be at least one causal index.
 This parameter is required to prevent use of this function except when the true status of every test (null vs alternative) is known.}
+
+\item{detailed}{If \code{FALSE} (default) only SRMSD is returned.
+If \code{TRUE}, sorted null p-values without NAs and their expectations are returned (useful for plots).}
 }
 \value{
-A named list containing:
+If \code{detailed} is \code{FALSE}, returns the signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
+
+If \code{detailed} is \code{TRUE}, returns a named list containing:
 \itemize{
 \item \code{srmsd}: The signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
 \item \code{pvals_null}: Sorted null p-values (observed order statistics).  If any input null p-values were \code{NA}, these have been removed here (removed by \code{sort}).
@@ -27,7 +32,7 @@ A named list containing:
 
 The detailed data is returned as it is useful for plots.
 
-However, if the input \code{pvals} is \code{NULL} (taken for case of singular association test, which is rare but may happen), then the returned list contains \code{NA}, \code{NULL} and \code{NULL} for the above three items.
+However, if the input \code{pvals} is \code{NULL} (taken for case of singular association test, which is rare but may happen), then the returned value is \code{NA} if \code{detailed} was \code{FALSE}, or otherwise the list contains \code{NA}, \code{NULL} and \code{NULL} for the above three items.
 }
 \description{
 Quantifies null p-value uniformity by computing the RMSD (root mean square deviation) between the sorted observed null (truly non-causal) p-values and their expected quantiles under a uniform distribution.
