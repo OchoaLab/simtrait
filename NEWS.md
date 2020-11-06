@@ -69,5 +69,7 @@
 # 2020-11-05 - simtrait 1.0.12.9000
 
 * Added functions used for benchmarking genetic association methods based on traits simulated with `simtrait`:
-  - `rmsd`: general root-mean-square deviation function
-  - `pval_srmsd`: signed RMSD between observed and expected (uniform) p-values
+  - `rmsd`: General root-mean-square deviation (RMSD) function
+  - `pval_srmsd`: Signed RMSD between observed and expected (uniform) p-values
+  - `pval_aucpr`: Area under the curve (AUC) of precision-recall (PR) curve
+    - Added `PRROC` package dependency

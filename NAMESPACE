@@ -2,6 +2,7 @@
 
 export(allele_freqs)
 export(cov_trait)
+export(pval_aucpr)
 export(pval_srmsd)
 export(rmsd)
 export(sim_trait)
