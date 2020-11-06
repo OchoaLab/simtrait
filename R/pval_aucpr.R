@@ -66,7 +66,7 @@ pval_aucpr <- function(pvals, causal_indexes, curve = FALSE) {
         stop( 'There were no null (non-causal) cases!' )
     
     # generate data, skip curve (default)
-    pr <- PRROC::pr.curve( scores_alt, scores_nul )
+    pr <- PRROC::pr.curve( scores_alt, scores_nul, curve = curve )
     
     # return either the full object for plotting, or the AUC only (default)
     return( if (curve) pr else pr$auc.integral )
