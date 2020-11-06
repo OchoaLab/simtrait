@@ -357,8 +357,17 @@ test_that( "pval_aucpr works", {
     # and all loci being causal (no nulls) also triggers errors
     expect_error( pval_aucpr( pvals, 1:length(pvals) ) )
 
-    # now a successful case
+    # now a successful case, simple version
     expect_silent( auc <- pval_aucpr( pvals, causal_loci ) )
+    expect_equal( length(auc), 1 )
+    expect_true( !is.na(auc) )
+    expect_true( auc >= 0 )
+    expect_true( auc <= 1 )
+
+    # now a successful case, curve version
+    expect_silent( obj <- pval_aucpr( pvals, causal_loci, curve = TRUE ) )
+    expect_equal( class( obj ), 'PRROC' )
+    auc <- obj$auc.integral
     expect_equal( length(auc), 1 )
     expect_true( !is.na(auc) )
     expect_true( auc >= 0 )

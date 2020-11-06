@@ -9,8 +9,11 @@
 #' @param causal_indexes The vector of causal indexes, defining the true classes used for AUC calculation.
 #' Values of `causal_indexes` as returned by `sim_trait` work.
 #' There must be at least one causal index and at least one non-causal case.
+#' @param curve If `FALSE` (default), only scalar AUC is returned.
+#' If `TRUE`, then `curve = TRUE` is passed to `PRROC::pr.curve` and the full object (class PRROC) is returned (see below).
 #'
-#' @return The PR AUC scalar value.
+#' @return If `curve` is `FALSE`, returns the PR AUC scalar value.
+#' If `curve` is `TRUE`, returns the PRROC object as returned by `PRROC::pr.curve`, which can be plotted directly, and which contains the AUC under the named value `auc.integral`.
 #'
 #' However, if the input `pvals` is `NULL` (taken for case of singular association test, which is rare but may happen), then the returned value is `NA`.
 #'
@@ -26,7 +29,7 @@
 #' The function `pr.curve` from the `PRROC` package, which is used internally by `pval_aucpr`.
 #' 
 #' @export
-pval_aucpr <- function(pvals, causal_indexes) {
+pval_aucpr <- function(pvals, causal_indexes, curve = FALSE) {
     if ( missing( pvals ) )
         stop( '`pvals` is required!' )
     if ( missing( causal_indexes ) )
@@ -65,6 +68,6 @@ pval_aucpr <- function(pvals, causal_indexes) {
     # generate data, skip curve (default)
     pr <- PRROC::pr.curve( scores_alt, scores_nul )
     
-    # return the AUC only!
-    return( pr$auc.integral )
+    # return either the full object for plotting, or the AUC only (default)
+    return( if (curve) pr else pr$auc.integral )
 }

@@ -4,7 +4,7 @@
 \alias{pval_aucpr}
 \title{Area under the precision-recall curve}
 \usage{
-pval_aucpr(pvals, causal_indexes)
+pval_aucpr(pvals, causal_indexes, curve = FALSE)
 }
 \arguments{
 \item{pvals}{The vector of association p-values to analyze.
@@ -14,9 +14,13 @@ Non-\code{NA} values outside of [0,1] will trigger an error.}
 \item{causal_indexes}{The vector of causal indexes, defining the true classes used for AUC calculation.
 Values of \code{causal_indexes} as returned by \code{sim_trait} work.
 There must be at least one causal index and at least one non-causal case.}
+
+\item{curve}{If \code{FALSE} (default), only scalar AUC is returned.
+If \code{TRUE}, then \code{curve = TRUE} is passed to \code{PRROC::pr.curve} and the full object (class PRROC) is returned (see below).}
 }
 \value{
-The PR AUC scalar value.
+If \code{curve} is \code{FALSE}, returns the PR AUC scalar value.
+If \code{curve} is \code{TRUE}, returns the PRROC object as returned by \code{PRROC::pr.curve}, which can be plotted directly, and which contains the AUC under the named value \code{auc.integral}.
 
 However, if the input \code{pvals} is \code{NULL} (taken for case of singular association test, which is rare but may happen), then the returned value is \code{NA}.
 }
