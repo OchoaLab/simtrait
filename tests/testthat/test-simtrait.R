@@ -332,6 +332,36 @@ test_that( "pval_srmsd works", {
     expect_true( all( data$pvals_null <= 1 ) )
 })
 
+test_that( "pval_infl works", {
+    # random data to test on
+    n <- 10
+    p_miss <- 0.2 # add missingness too
+    # all p-values are uniform
+    pvals <- runif( n )
+    # select a random few to be NA
+    pvals[ sample.int( n, n * p_miss ) ] <- NA
+    
+    # trigger failures on purpose
+    # (missing arguments)
+    expect_error( pval_infl( ) )
+    # p-values out of range cause errors
+    expect_error( pval_infl( c(pvals, -1) ) )
+    expect_error( pval_infl( c(pvals, 10) ) )
+
+    # now the successful run, simple version
+    expect_silent( infl <- pval_infl( pvals ) )
+    expect_equal( length( infl ), 1 )
+    expect_true( !is.na( infl ) )
+
+    # other sanity checks
+    # perfect non-inflation
+    expect_equal( pval_infl( 0.5 ), 1 )
+    # inflation
+    expect_true( pval_infl( 0.4 ) > 1 )
+    # deflation
+    expect_true( pval_infl( 0.6 ) < 1 )
+})
+
 test_that( "pval_aucpr works", {
     # random data to test on
     n <- 10

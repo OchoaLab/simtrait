@@ -52,4 +52,6 @@ pval_srmsd( pvals, causal_indexes )
 }
 \seealso{
 \verb{\link[rmsd]} for the generic root-mean-square deviation function.
+
+\verb{\link[pval_infl]} for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
 }

@@ -73,3 +73,8 @@
   - `pval_srmsd`: Signed RMSD between observed and expected (uniform) p-values
   - `pval_aucpr`: Area under the curve (AUC) of precision-recall (PR) curve
     - Added `PRROC` package dependency
+
+# 2020-11-06 - simtrait 1.0.13.9000
+
+* Added function `pval_infl` (classic inflation factor, but from p-values) to complement yesterday's new functions
+

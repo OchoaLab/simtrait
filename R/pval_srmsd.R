@@ -39,6 +39,8 @@
 #' @seealso
 #' `\link[rmsd]` for the generic root-mean-square deviation function.
 #'
+#' `\link[pval_infl]` for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
+#'
 #' @export
 pval_srmsd <- function(pvals, causal_indexes, detailed = FALSE) {
     if ( missing( pvals ) )
