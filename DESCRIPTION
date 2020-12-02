@@ -1,6 +1,6 @@
 Package: simtrait
 Title: Simulate Complex Traits from Genotypes
-Version: 1.0.13.9000
+Version: 1.0.14.9000
 Authors@R: 
     person(given = "Alejandro",
 	   family = "Ochoa",

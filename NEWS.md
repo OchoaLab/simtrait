@@ -78,3 +78,7 @@
 
 * Added function `pval_infl` (classic inflation factor, but from p-values) to complement yesterday's new functions
 
+# 2020-12-02 - simtrait 1.0.14.9000
+
+* Function `allele_freqs` added option `fold`, which if `TRUE` returns *folded* i.e. *minor* allele frequencies.
+  Default is `FALSE`, to return allele frequencies for the alternative allele (the allele counted as it given in the genotype matrix, whether it is the minor or major allele).

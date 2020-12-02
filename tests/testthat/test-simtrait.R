@@ -1,5 +1,21 @@
 context("test-simtrait")
 
+test_that( "fold_allele_freqs works", {
+    # dies without arguments
+    expect_error( fold_allele_freqs() )
+
+    # create some data for test
+    # first create a case where there's no flipping at all because everything is already small enough
+    m_loci <- 10
+    ps <- runif( m_loci, max = 0.5 )
+    expect_equal( ps, fold_allele_freqs( ps ) )
+    # conversely, we know what to expect when everything was flipped to be on the other side
+    expect_equal( ps, fold_allele_freqs( 1 - ps ) )
+
+    # toy case, fully manually constructed
+    expect_equal( c(0.1, 0.5, 0.2), fold_allele_freqs( c(0.1, 0.5, 0.8) ) )
+})
+
 test_that("allele_freqs works", {
     # Construct toy data
     X <- matrix(
@@ -24,6 +40,24 @@ test_that("allele_freqs works", {
         allele_freqs(X, loci_on_cols = TRUE),
         maf_cols
     )
+
+    # repeat with folded allele frequencies option
+    # known values (modified to be *minor* allele frequencies)
+    maf_rows <- c(1/2, 1/3, 1/4)
+    maf_cols <- c(1/3, 1/4, 1/6)
+    
+    # row means
+    expect_equal(
+        allele_freqs(X, fold = TRUE),
+        maf_rows
+    )
+    
+    # col means
+    expect_equal(
+        allele_freqs(X, fold = TRUE, loci_on_cols = TRUE),
+        maf_cols
+    )
+
 })
 
 test_that("select_loci works", {
