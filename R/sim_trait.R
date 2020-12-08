@@ -1,42 +1,49 @@
 #' Simulate a complex trait from genotypes
 #'
-#' Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability, and either the true ancestral allele frequencies used to generate the genotypes, or the kinship matrix of the individuals).
+#' Simulate a complex trait given a SNP genotype matrix and model parameters (the desired heritability, and either the true ancestral allele frequencies used to generate the genotypes, or the kinship matrix of the individuals).
 #' Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.
 #' The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
-#' Below let there be \eqn{m} loci and \eqn{n} individuals.
+#' Suppose there are `m` loci and `n` individuals.
 #'
-#' In order to center and scale the trait and locus effect size vector correctly to the desired parameters (mean, variance factor, and heritability), the parametric ancestral allele frequencies (\code{p_anc}) must be known.
-#' This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by \code{p_anc} and a covariance structure given by \code{p_anc} and the kinship matrix), so the parameters of the genotypes must be taken into account.
-#' If \code{p_anc} are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with \code{\link{cov_trait}}.
+#' In order to center and scale the trait and locus effect size vector correctly to the desired parameters (mean, variance factor, and heritability), the parametric ancestral allele frequencies (`p_anc`) must be known.
+#' This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by `p_anc` and a covariance structure given by `p_anc` and the kinship matrix), so the parameters of the genotypes must be taken into account.
+#' If `p_anc` are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with `\link{cov_trait}`.
 #'
-#' If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, a compromise that works well in practice is possible if the kinship matrix (\code{kinship}) is known (see package vignette).
-#' The kinship matrix can be estimated accurately using the \code{popkin} package!
+#' If the desire is to simulate a trait using real genotypes, where `p_anc` is unknown, a compromise that works well in practice is possible if the `kinship` matrix is known (see package vignette).
+#' The kinship matrix can be estimated accurately using the `popkin` package!
 #' 
-#' @param X The \eqn{m \times n}{m-by-n} genotype matrix (if `loci_on_cols = FALSE`, transposed otherwise), or a BEDMatrix object`.
-#' This is a numeric matrix consisting of reference allele counts (in \code{c(0,1,2,NA)} for a diploid organism).
+#' @param X The `m`-by-`n` genotype matrix (if `loci_on_cols = FALSE`, transposed otherwise), or a BEDMatrix object.
+#' This is a numeric matrix consisting of reference allele counts (in `c(0, 1, 2, NA)` for a diploid organism).
 #' @param m_causal The number of causal loci desired.
 #' @param herit The desired heritability (proportion of trait variance due to genetics).
-#' @param p_anc The length-\eqn{m} vector of true ancestral allele frequencies.
+#' @param p_anc The length-`m` vector of true ancestral allele frequencies.
 #' Recommended way to adjust the simulated trait to achieve the desired heritability and covariance structure.
-#' Either this or \code{kinship} must be specified.
+#' Either this or `kinship` must be specified.
 #' @param kinship The mean kinship value of the individuals in the data.
-#' The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data is also accepted.
-#' This offers an alternative way to adjust the simulated parameters parameters to achieve the desired covariance structure for real genotypes, since \code{p_anc} is only known for simulated data.
-#' Either this or \code{p_anc} must be specified.
+#' The `n`-by-`n` kinship matrix of the individuals in the data is also accepted.
+#' This offers an alternative way to adjust the simulated parameters parameters to achieve the desired covariance structure for real genotypes, since `p_anc` is only known for simulated data.
+#' Either this or `p_anc` must be specified.
 #' @param mu The desired parametric mean value of the trait (default zero).
-#' The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).
+#' The sample mean of the trait will not be exactly zero, but instead have an expectation of `mu` (with potentially large variance depending on the kinship matrix and the heritability).
 #' @param sigma_sq The desired parametric variance factor of the trait (default 1).
-#' This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).
-#' @param maf_cut The optional minimum allele frequency threshold (default NA, no threshold).
+#' This factor corresponds to the variance of an outbred individual (see `\link{cov_trait}`).
+#' @param maf_cut The optional minimum allele frequency threshold (default `NA`, no threshold).
 #' This prevents rare alleles from being causal in the simulation.
-#' Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.
-#' @param loci_on_cols If \code{TRUE}, \eqn{X} has loci on columns and individuals on rows; if false (the default), loci are on rows and individuals on columns.
-#' If \eqn{X} is a BEDMatrix object, loci are taken to be on the columns (regardless of the value of \code{loci_on_cols}).
+#' Note that this threshold is applied to the sample allele frequencies and not their true parametric values (`p_anc`), even if these are available.
+#' @param loci_on_cols If `TRUE`, `X` has loci on columns and individuals on rows; if `FALSE` (the default), loci are on rows and individuals on columns.
+#' If `X` is a BEDMatrix object, loci are taken to be on the columns (regardless of the value of `loci_on_cols`).
 #' @param m_chunk_max BEDMatrix-specific, sets the maximum number of loci to process at the time.
 #' If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).
+#' @param const_herit_loci If `TRUE`, causal coefficients are inversely proportional to the square root of `p*(1-p)`, where `p` is the ancestral allele frequency, which ensures equal per-causal-locus contribution to trait variance.
+#' If `FALSE` (the default), draws causal coefficients randomly from a standard normal distribution, rescaled to result in the desired heritability.
 #'
-#' @return A list containing the simulated \code{trait} (length \eqn{n}), the vector of causal locus indexes \code{causal_indexes} (length \eqn{m_causal}), and the locus effect size vector \code{causal_coeffs} (length \eqn{m_causal}) at the causal loci.
-#' However, if \code{herit = 0} then \code{causal_indexes} and \code{causal_coeffs} will have zero length regardless of \code{m_causal}.
+#' @return A named list containing:
+#'
+#' - `trait`: length-`n` vector of the simulated trait
+#' - `causal_indexes`: length-`m_causal` vector of causal locus indexes
+#' - `causal_coeffs`: length-`m_causal` vector of locus effect sizes at the causal loci
+#' 
+#' However, if `herit = 0` then `causal_indexes` and `causal_coeffs` will have zero length regardless of `m_causal`.
 #'
 #' @examples
 #' # construct a dummy genotype matrix
@@ -69,7 +76,8 @@ sim_trait <- function(
                       sigma_sq = 1,
                       maf_cut = NA,
                       loci_on_cols = FALSE,
-                      m_chunk_max = 1000
+                      m_chunk_max = 1000,
+                      const_herit_loci = FALSE
                       ) {
     # check for missing parameters
     if (missing(X))
@@ -133,24 +141,14 @@ sim_trait <- function(
         ### CAUSAL LOCI ###
         ###################
         
-        if ( !is.na( maf_cut ) ) {
-            # select random SNPs! this performs the magic...
-            # also runs additional checks
-            causal_indexes <- select_loci(
-                m_causal = m_causal,
-                maf = p_anc_hat,
-                maf_cut = maf_cut
-            )
-        } else {
-            # select indexes regardless of MAF in this case (faster, less memory!)
-            causal_indexes <- select_loci(
-                m_causal = m_causal,
-                m_loci = m_loci
-            )
-        }
-        
-        # draw random SNP coefficients for selected loci
-        causal_coeffs <- stats::rnorm(m_causal, 0, 1)
+        # select random SNPs! this performs the magic...
+        # also runs additional checks
+        causal_indexes <- select_loci(
+            m_causal = m_causal,
+            m_loci = m_loci,
+            maf = p_anc_hat, # NULL if is.na( maf_cut )
+            maf_cut = maf_cut # may be NA
+        )
 
         # subset data to consider causal loci only
         if ( !is.null( p_anc_hat ) ) # if we had this already
@@ -210,16 +208,26 @@ sim_trait <- function(
             stop('either `p_anc` or `kinship` must be specified!')
         }
         
-        # the initial genetic variance is
-        sigma_0 <- sqrt( 2 * sum( pq * causal_coeffs^2 ) )
-        # adjust causal_coeffss so final variance is sigma_sq*herit as desired!
-        causal_coeffs <- causal_coeffs * sqrt( sigma_sq * herit ) / sigma_0 # scale by standard deviations
+        # construct SNP coefficients for selected loci
+        if ( const_herit_loci ) {
+            # make them inverse to the pq
+            # in this case no scale corrections are needed, direct formula works!
+            causal_coeffs <- sqrt( herit * sigma_sq / ( 2 * pq * m_causal ) )
+        } else {
+            # draw them randomly (standard normal)
+            causal_coeffs <- stats::rnorm(m_causal, 0, 1)
+            
+            # the initial genetic variance is
+            sigma_0 <- sqrt( 2 * sum( pq * causal_coeffs^2 ) )
+            # adjust causal_coeffs so final variance is sigma_sq*herit as desired!
+            causal_coeffs <- causal_coeffs * sqrt( sigma_sq * herit ) / sigma_0 # scale by standard deviations
+        }
         
         # construct genotype signal
-        if (any(is.na(X))) {
+        if ( anyNA( X ) ) {
             # if any of the causal loci are missing, let's treat them as zeroes
             # this isn't perfect but we must do something to apply this to real data
-            X[is.na(X)] <- 0
+            X[ is.na( X ) ] <- 0
         }
         G <- drop( causal_coeffs %*% X ) # this is a vector
         # NOTE by construction:

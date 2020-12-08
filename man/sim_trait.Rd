@@ -14,23 +14,24 @@ sim_trait(
   sigma_sq = 1,
   maf_cut = NA,
   loci_on_cols = FALSE,
-  m_chunk_max = 1000
+  m_chunk_max = 1000,
+  const_herit_loci = FALSE
 )
 }
 \arguments{
-\item{X}{The \eqn{m \times n}{m-by-n} genotype matrix (if \code{loci_on_cols = FALSE}, transposed otherwise), or a BEDMatrix object`.
-This is a numeric matrix consisting of reference allele counts (in \code{c(0,1,2,NA)} for a diploid organism).}
+\item{X}{The \code{m}-by-\code{n} genotype matrix (if \code{loci_on_cols = FALSE}, transposed otherwise), or a BEDMatrix object.
+This is a numeric matrix consisting of reference allele counts (in \code{c(0, 1, 2, NA)} for a diploid organism).}
 
 \item{m_causal}{The number of causal loci desired.}
 
 \item{herit}{The desired heritability (proportion of trait variance due to genetics).}
 
-\item{p_anc}{The length-\eqn{m} vector of true ancestral allele frequencies.
+\item{p_anc}{The length-\code{m} vector of true ancestral allele frequencies.
 Recommended way to adjust the simulated trait to achieve the desired heritability and covariance structure.
 Either this or \code{kinship} must be specified.}
 
 \item{kinship}{The mean kinship value of the individuals in the data.
-The \eqn{n \times n}{n-by-n} kinship matrix of the individuals in the data is also accepted.
+The \code{n}-by-\code{n} kinship matrix of the individuals in the data is also accepted.
 This offers an alternative way to adjust the simulated parameters parameters to achieve the desired covariance structure for real genotypes, since \code{p_anc} is only known for simulated data.
 Either this or \code{p_anc} must be specified.}
 
@@ -38,34 +39,43 @@ Either this or \code{p_anc} must be specified.}
 The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).}
 
 \item{sigma_sq}{The desired parametric variance factor of the trait (default 1).
-This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).}
+This factor corresponds to the variance of an outbred individual (see \verb{\link{cov_trait}}).}
 
-\item{maf_cut}{The optional minimum allele frequency threshold (default NA, no threshold).
+\item{maf_cut}{The optional minimum allele frequency threshold (default \code{NA}, no threshold).
 This prevents rare alleles from being causal in the simulation.
 Note that this threshold is applied to the sample allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.}
 
-\item{loci_on_cols}{If \code{TRUE}, \eqn{X} has loci on columns and individuals on rows; if false (the default), loci are on rows and individuals on columns.
-If \eqn{X} is a BEDMatrix object, loci are taken to be on the columns (regardless of the value of \code{loci_on_cols}).}
+\item{loci_on_cols}{If \code{TRUE}, \code{X} has loci on columns and individuals on rows; if \code{FALSE} (the default), loci are on rows and individuals on columns.
+If \code{X} is a BEDMatrix object, loci are taken to be on the columns (regardless of the value of \code{loci_on_cols}).}
 
 \item{m_chunk_max}{BEDMatrix-specific, sets the maximum number of loci to process at the time.
 If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).}
+
+\item{const_herit_loci}{If \code{TRUE}, causal coefficients are inversely proportional to the square root of \code{p*(1-p)}, where \code{p} is the ancestral allele frequency, which ensures equal per-causal-locus contribution to trait variance.
+If \code{FALSE} (the default), draws causal coefficients randomly from a standard normal distribution, rescaled to result in the desired heritability.}
 }
 \value{
-A list containing the simulated \code{trait} (length \eqn{n}), the vector of causal locus indexes \code{causal_indexes} (length \eqn{m_causal}), and the locus effect size vector \code{causal_coeffs} (length \eqn{m_causal}) at the causal loci.
+A named list containing:
+\itemize{
+\item \code{trait}: length-\code{n} vector of the simulated trait
+\item \code{causal_indexes}: length-\code{m_causal} vector of causal locus indexes
+\item \code{causal_coeffs}: length-\code{m_causal} vector of locus effect sizes at the causal loci
+}
+
 However, if \code{herit = 0} then \code{causal_indexes} and \code{causal_coeffs} will have zero length regardless of \code{m_causal}.
 }
 \description{
-Simulate a complex trait \eqn{y} given a SNP genotype matrix and model parameters (the desired heritability, and either the true ancestral allele frequencies used to generate the genotypes, or the kinship matrix of the individuals).
+Simulate a complex trait given a SNP genotype matrix and model parameters (the desired heritability, and either the true ancestral allele frequencies used to generate the genotypes, or the kinship matrix of the individuals).
 Users can choose the number of causal loci and minimum marginal allele frequency requirements for the causal loci.
 The code selects random loci to be causal, draws random Normal effect sizes for these loci (scaled appropriately) and random independent non-genetic effects.
-Below let there be \eqn{m} loci and \eqn{n} individuals.
+Suppose there are \code{m} loci and \code{n} individuals.
 }
 \details{
 In order to center and scale the trait and locus effect size vector correctly to the desired parameters (mean, variance factor, and heritability), the parametric ancestral allele frequencies (\code{p_anc}) must be known.
 This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by \code{p_anc} and a covariance structure given by \code{p_anc} and the kinship matrix), so the parameters of the genotypes must be taken into account.
-If \code{p_anc} are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with \code{\link{cov_trait}}.
+If \code{p_anc} are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with \verb{\link{cov_trait}}.
 
-If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, a compromise that works well in practice is possible if the kinship matrix (\code{kinship}) is known (see package vignette).
+If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, a compromise that works well in practice is possible if the \code{kinship} matrix is known (see package vignette).
 The kinship matrix can be estimated accurately using the \code{popkin} package!
 }
 \examples{

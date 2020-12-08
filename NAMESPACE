@@ -2,6 +2,7 @@
 
 export(allele_freqs)
 export(cov_trait)
+export(herit_loci)
 export(pval_aucpr)
 export(pval_infl)
 export(pval_srmsd)

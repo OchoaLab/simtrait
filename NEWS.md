@@ -82,3 +82,11 @@
 
 * Function `allele_freqs` added option `fold`, which if `TRUE` returns *folded* i.e. *minor* allele frequencies.
   Default is `FALSE`, to return allele frequencies for the alternative allele (the allele counted as it given in the genotype matrix, whether it is the minor or major allele).
+
+# 2020-12-07 - simtrait 1.0.15.9000
+
+* Function `sim_trait` added option `const_herit_loci`, which when `TRUE` constructs causal coefficients as inversely proportional to the square root of `p*(1-p)`, where `p` is the ancestral allele frequency.
+  This ensures equal per-causal-locus contribution to trait variance.
+  Default draws causal coefficients randomly from a standard normal distribution, rescaled to result in the desired heritability, for unequal per-locus contribution to trait variance.
+* Added function `herit_loci`, which calculates per-locus heritabilities based on variance formula (in terms of allele frequencies, coefficients, and overall trait variance factor).
+  * Used to validate function `sim_trait` in unit tests.
