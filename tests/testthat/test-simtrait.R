@@ -347,6 +347,12 @@ test_that("sim_trait works", {
         herit,
         sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs ) )
     )
+    # in this case, the per-locus heritabilities are all equal, test that further
+    expect_equal(
+        herit_loci( p_anc[ causal_indexes ], causal_coeffs ),
+        rep.int( herit / m_causal, m_causal ),
+    )
+    
 })
 
 test_that( "sqrt_matrix works", {
