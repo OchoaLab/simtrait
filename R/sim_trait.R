@@ -35,6 +35,7 @@
 #' @param m_chunk_max BEDMatrix-specific, sets the maximum number of loci to process at the time.
 #' If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).
 #' @param const_herit_loci If `TRUE`, causal coefficients are inversely proportional to the square root of `p*(1-p)`, where `p` is the ancestral allele frequency, which ensures equal per-causal-locus contribution to trait variance.
+#' Causal coefficient signs (+/-) are drawn randomly with equal probability.
 #' If `FALSE` (the default), draws causal coefficients randomly from a standard normal distribution, rescaled to result in the desired heritability.
 #'
 #' @return A named list containing:
@@ -213,6 +214,8 @@ sim_trait <- function(
             # make them inverse to the pq
             # in this case no scale corrections are needed, direct formula works!
             causal_coeffs <- sqrt( herit * sigma_sq / ( 2 * pq * m_causal ) )
+            # best results are obtained when signs are random too
+            causal_coeffs <- causal_coeffs * sample( c(1, -1), m_causal, replace = TRUE )
         } else {
             # draw them randomly (standard normal)
             causal_coeffs <- stats::rnorm(m_causal, 0, 1)
@@ -238,7 +241,7 @@ sim_trait <- function(
         ##############
 
         # calculate the mean of the genetic effect
-        if ( !missing(p_anc) ) {
+        if ( !missing( p_anc ) ) {
             # parametric solution
             muXB <- 2 * drop( causal_coeffs %*% p_anc )
         } else {

@@ -52,6 +52,7 @@ If \code{X} is a BEDMatrix object, loci are taken to be on the columns (regardle
 If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).}
 
 \item{const_herit_loci}{If \code{TRUE}, causal coefficients are inversely proportional to the square root of \code{p*(1-p)}, where \code{p} is the ancestral allele frequency, which ensures equal per-causal-locus contribution to trait variance.
+Causal coefficient signs (+/-) are drawn randomly with equal probability.
 If \code{FALSE} (the default), draws causal coefficients randomly from a standard normal distribution, rescaled to result in the desired heritability.}
 }
 \value{
