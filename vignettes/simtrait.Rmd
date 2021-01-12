@@ -133,6 +133,8 @@ head( obj$causal_coeffs ) # show partially...
 ## Compare sample covariance of trait to theoretical expectation
 
 The interesting validation is simulation a large number of random traits, from which we can estimate a sample covariance matrix to compare to the desired theoretical one.
+We shall compare this to other versions of the simulation.
+We distinguish this version as having "random" effect size coefficients and employing true allele frequencies `p_anc`.
 
 ```{r}
 # the theoretical covariance matrix of the trait is calculated by cov_trait
@@ -141,7 +143,7 @@ V <- cov_trait(kinship = kinship, herit = herit, sigma_sq = sigma_sq)
 # simulate these many traits
 n_traits <- 1000
 # store in this matrix, initialize with zeroes
-Y <- matrix(data = 0, nrow = n_traits, ncol = n_ind)
+Y_rand_freq <- matrix(data = 0, nrow = n_traits, ncol = n_ind)
 # start loop
 for (i in 1 : n_traits) {
     obj <- sim_trait(
@@ -152,10 +154,10 @@ for (i in 1 : n_traits) {
         mu = mu,
         sigma_sq = sigma_sq
     )
-    Y[i,] <- obj$trait # store in i^th row
+    Y_rand_freq[i,] <- obj$trait # store in i^th row
 }
 # estimate sample covariance
-V_sample <- cov(Y)
+V_rand_freq <- cov(Y_rand_freq)
 ```
 
 First let's verify that the mean is as expected.
@@ -165,7 +167,13 @@ par(mgp = c(2, 0.5, 0))
 # reduce margins from default
 par(mar = c(3.5, 3, 0, 0) + 0.2)
 # visualize distribution
-boxplot(rowMeans(Y), xlab = "Simulation", ylab = 'Sample Mean')
+boxplot(
+    list(
+        'Rand freq' = rowMeans(Y_rand_freq)
+    ),
+    xlab = "Trait Type",
+    ylab = 'Sample Mean'
+)
 # red line marks expected mean
 abline(h = mu, col = 'red')
 ```
@@ -175,8 +183,8 @@ Since both matrices have large diagonals, we shrink them somewhat using `inbr_di
 
 ```{r, fig.width = 6, fig.height = 2.8, fig.align = 'center'}
 plot_popkin(
-    inbr_diag(list(V, V_sample)),
-    titles = c('Theoretical', 'Sample Estimate'),
+    inbr_diag(list(V, V_rand_freq)),
+    titles = c('Theoretical', 'Rand freq'),
     leg_title = 'Covariance',
     # set margin for title (top is non-zero)
     mar = c(0, 2)
@@ -197,7 +205,7 @@ A good kinship matrix estimate can be obtained using the `popkin` package.
 For simplicity here we proceed using the true kinship matrix rather than an estimate:
 ```{r}
 # store this in new matrix
-Y2 <- matrix(data = 0, nrow = n_traits, ncol = n_ind)
+Y_rand_kin <- matrix(data = 0, nrow = n_traits, ncol = n_ind)
 # start loop
 for (i in 1 : n_traits) {
     obj <- sim_trait(
@@ -208,10 +216,10 @@ for (i in 1 : n_traits) {
         mu = mu,
         sigma_sq = sigma_sq
     )
-    Y2[i,] <- obj$trait # store in i^th row
+    Y_rand_kin[i,] <- obj$trait # store in i^th row
 }
 # estimate sample covariance
-V_sample2 <- cov(Y2)
+V_rand_kin <- cov(Y_rand_kin)
 ```
 First let's verify the means again.
 Recall the red line marks the desired mean.
@@ -223,10 +231,10 @@ par(mar = c(3.5, 3, 0, 0) + 0.2)
 # visualize distribution
 boxplot(
     list(
-        "Sample 1" = rowMeans(Y),
-        "Sample 2" = rowMeans(Y2)
+        "Rand freq" = rowMeans(Y_rand_freq),
+        "Rand kinship" = rowMeans(Y_rand_kin)
     ),
-    xlab = "Simulation",
+    xlab = "Trait Type",
     ylab = 'Sample Mean'
 )
 # red line marks expected mean
@@ -236,8 +244,8 @@ abline(h = mu, col = 'red')
 Now we compare all three matrices:
 ```{r, fig.width = 7, fig.height = 2.35, fig.align = 'center'}
 plot_popkin(
-    inbr_diag(list(V, V_sample, V_sample2)),
-    titles = c('Theoretical', 'Sample Estimate 1', 'Sample Estimate 2'),
+    inbr_diag(list(V, V_rand_freq, V_rand_kin)),
+    titles = c('Theoretical', 'Rand freq', 'Rand kinship'),
     leg_title = 'Covariance',
     mar = c(0, 2)
 )
@@ -247,7 +255,7 @@ This plot shows again good agreement between the sample covariance matrix of tra
 
 ## Simulated trait from infinitesimal model
 
-An alternative approach for simulating traits is by drawing them from a multivariate model with the desired mean and covariance structure.
+An alternative approach for simulating traits is by drawing them from a Multivariate Normal (MVN) model with the desired mean and covariance structure.
 This is often called the *infinitesimal* model, since it follows from the central limit theorem under the assumption that there are infinite causal loci, each with an infinitesimal effect size.
 A trait simulated this way has no use in GWAS tests, as there are no causal loci (in other words, the null hypothesis holds across the genome).
 However, these traits have a heritability that can be estimated, and in fact this infinitesimal model is assumed by approaches that estimate heritability by fitting variance components, such as GCTA [@yang_gcta:_2011].
@@ -256,7 +264,7 @@ We draw the MVN traits this way:
 ```{r}
 # This function simulates trait replicates in one call,
 # generating a matrix comparable to the previous ones.
-Y3 <- sim_trait_mvn(
+Y_mvn <- sim_trait_mvn(
     rep = n_traits,
     kinship = kinship,
     herit = herit,
@@ -264,11 +272,11 @@ Y3 <- sim_trait_mvn(
     sigma_sq = sigma_sq
 )
 # estimate sample covariance
-V_sample3 <- cov(Y3)
+V_mvn <- cov(Y_mvn)
 ```
 First let's verify the means again.
 Recall the red line marks the desired mean.
-The new sample is denoted as "Sample 3", and the other two are as in the previous sections (traits simulated from genotypes, using the true `p_anc` or with bias corrections from the kinship matrix):
+The new sample is denoted as "MVN", and the other two are as in the previous sections (traits simulated from genotypes, using the true `p_anc` or with bias corrections from the kinship matrix):
 ```{r, fig.width = 4, fig.align = 'center'}
 par(mgp = c(2, 0.5, 0))
 # reduce margins from default
@@ -276,11 +284,11 @@ par(mar = c(3.5, 3, 0, 0) + 0.2)
 # visualize distribution
 boxplot(
     list(
-        "Sample 1" = rowMeans(Y),
-        "Sample 2" = rowMeans(Y2),
-        "Sample 3" = rowMeans(Y3)
+        "Rand freq" = rowMeans(Y_rand_freq),
+        "Rand kinship" = rowMeans(Y_rand_kin),
+        "MVN" = rowMeans(Y_mvn)
     ),
-    xlab = "Simulation",
+    xlab = "Trait Type",
     ylab = 'Sample Mean'
 )
 # red line marks expected mean
@@ -290,15 +298,15 @@ abline(h = mu, col = 'red')
 Now we compare all four covariance matrices:
 ```{r, fig.width = 7, fig.height = 2, fig.align = 'center'}
 plot_popkin(
-    inbr_diag(list(V, V_sample, V_sample2, V_sample3)),
-    titles = c('Theoretical', 'Sample Est. 1', 'Sample Est. 2', 'Sample Est. 3'),
+    inbr_diag(list(V, V_rand_freq, V_rand_kin, V_mvn)),
+    titles = c('Theoretical', 'Rand freq', 'Rand kinship', 'MVN'),
     leg_title = 'Covariance',
     mar = c(0, 2),
     leg_width = 0.4
 )
 ```
 
-This plot shows again good agreement between the sample covariance matrix of traits simulated under the infinitesimal model ("Sample Est. 3") and the desired "theoretical" covariance matrix and first two simulations.
+This plot shows again good agreement between the sample covariance matrix of traits simulated under the infinitesimal model ("MVN") and the desired "theoretical" covariance matrix and first two simulations.
 
 ## Simulated trait from constant per-locus heritability model
 
@@ -307,10 +315,12 @@ Our exact model is that the per-locus heritability is the same for all causal lo
 As in the other cases, the effect sizes are later rescaled to yield the desired heritability and trait variance factor.
 This is related to previous models proposed in the literature, for example [@speed_improved_2012].
 
-For simplicity here we proceed using the true kinship matrix and ancestral allele frequencies:
+This time we simulate both the true allele frequency version, "freq", and the "kinship" versioon that unbiases sample allele frequencies.
+
 ```{r}
 # store this in new matrix
-Y4 <- matrix(data = 0, nrow = n_traits, ncol = n_ind)
+Y_inv_freq <- matrix(data = 0, nrow = n_traits, ncol = n_ind)
+Y_inv_kin <- matrix(data = 0, nrow = n_traits, ncol = n_ind)
 # start loop
 for (i in 1 : n_traits) {
     obj <- sim_trait(
@@ -322,27 +332,40 @@ for (i in 1 : n_traits) {
         sigma_sq = sigma_sq,
         const_herit_loci = TRUE # only diff from orig run
     )
-    Y4[i,] <- obj$trait # store in i^th row
+    Y_inv_freq[i,] <- obj$trait # store in i^th row
+
+    obj <- sim_trait(
+        X = X,
+        m_causal = m_causal,
+        herit = herit,
+        kinship = kinship,
+        mu = mu,
+        sigma_sq = sigma_sq,
+        const_herit_loci = TRUE # only diff from orig run
+    )
+    Y_inv_kin[i,] <- obj$trait # store in i^th row
 }
 # estimate sample covariance
-V_sample4 <- cov(Y4)
+V_inv_freq <- cov(Y_inv_freq)
+V_inv_kin <- cov(Y_inv_kin)
 ```
 First let's verify the means again.
 Recall the red line marks the desired mean.
-The new sample is denoted as "Sample 4", and the other three are as in the previous sections (traits simulated from genotypes, using the true `p_anc` or with bias corrections from the kinship matrix, and the MVN traits):
-```{r, fig.width = 5, fig.align = 'center'}
+The new sample is denoted as "Inv freq", and the other three are as in the previous sections (traits simulated from genotypes, using the true `p_anc` or with bias corrections from the kinship matrix, and the MVN traits):
+```{r, fig.width = 6, fig.align = 'center'}
 par(mgp = c(2, 0.5, 0))
 # reduce margins from default
 par(mar = c(3.5, 3, 0, 0) + 0.2)
 # visualize distribution
 boxplot(
     list(
-        "Sample 1" = rowMeans(Y),
-        "Sample 2" = rowMeans(Y2),
-        "Sample 3" = rowMeans(Y3),
-        "Sample 4" = rowMeans(Y4)
+        "Rand freq" = rowMeans(Y_rand_freq),
+        "Rand kinship" = rowMeans(Y_rand_kin),
+        "MVN" = rowMeans(Y_mvn),
+        "Inv freq" = rowMeans(Y_inv_freq),
+        "Inv kinship" = rowMeans(Y_inv_kin)
     ),
-    xlab = "Simulation",
+    xlab = "Trait Type",
     ylab = 'Sample Mean'
 )
 # red line marks expected mean
@@ -352,8 +375,8 @@ abline(h = mu, col = 'red')
 Now we compare all covariance matrices:
 ```{r, fig.width = 7, fig.height = 4, fig.align = 'center'}
 plot_popkin(
-    inbr_diag( list( V, V_sample, V_sample2, V_sample3, V_sample4 ) ),
-    titles = c('Theoretical', 'Sample Est. 1', 'Sample Est. 2', 'Sample Est. 3', 'Sample Est. 4'),
+    inbr_diag( list( V, V_rand_freq, V_rand_kin, V_mvn, V_inv_freq, V_inv_kin ) ),
+    titles = c('Theoretical', 'Rand freq', 'Rand kinship', 'MVN', 'Inv freq', 'Inv kinship'),
     leg_title = 'Covariance',
     mar = c(0, 2),
     leg_width = 0.4,
@@ -361,7 +384,7 @@ plot_popkin(
 )
 ```
 
-This plot shows again good agreement between the sample covariance matrix of traits simulated under this "constant per-locus heritability" model ("Sample Est. 4") and the desired "theoretical" covariance matrix and first three simulations.
+This plot shows again good agreement between the sample covariance matrix of traits simulated under this "constant per-locus heritability" model ("Inv freq" and "Inv kinship") and the desired "theoretical" covariance matrix and first three simulations.
 
 # Model
 
