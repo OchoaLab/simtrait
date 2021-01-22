@@ -95,3 +95,7 @@
 
 * Function `sim_trait` with option `const_herit_loci = TRUE` now adds random signs (+/-) to the causal coefficients.
   * Added usage example for this option to vignette.
+
+# 2021-01-21 - simtrait 1.0.17.9000
+
+* Function `sim_trait` now requires that `p_anc` have the same length as the number of loci in `X` (stops with an error otherwise).  Previously this was not checked and could return traits that were `NA` for all individuals without clear indications that anything was wrong.

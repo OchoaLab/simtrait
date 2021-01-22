@@ -202,6 +202,10 @@ test_that("sim_trait works", {
     # first cause an error on purpose
     # (ask for more causal loci than there are loci)
     expect_error( sim_trait(X = X, m_causal = 1000, herit = herit, p_anc = p_anc) )
+    # provide p_anc too short compared to X's loci
+    expect_error( sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc[ 1 : (m/2) ] ) )
+    # test scalar p_anc in particular, that was a problem before
+    expect_error( sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc[1] ) )
     
     # test p_anc version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc)

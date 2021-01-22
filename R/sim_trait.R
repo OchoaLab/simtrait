@@ -112,6 +112,9 @@ sim_trait <- function(
     m_loci <- if (loci_on_cols) ncol(X) else nrow(X)
     if (m_causal > m_loci)
         stop('m_causal (', m_causal, ') exceeds the number of loci (', m_loci, ')!')
+    # compare to p_anc too if it was provided
+    if ( !missing( p_anc ) && length( p_anc ) != m_loci )
+        stop( '`p_anc` length (', length( p_anc ) , ') does not equal `m_loci` (', m_loci, ')' )
     
     if (herit == 0) {
         # lots of work can be avoided in this edge case
