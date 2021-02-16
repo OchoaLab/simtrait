@@ -1,20 +1,20 @@
 #' Simulate traits from a kinship matrix under the infinitesimal model
 #'
-#' Simulate matrix of trait replicates \eqn{Y} given a kinship matrix and model parameters (the desired heritability, total variance scale, and mean).
+#' Simulate matrix of trait replicates given a kinship matrix and model parameters (the desired heritability, total variance scale, and mean).
 #' Although these traits have the covariance structure of genetic traits, and have heritabilities that can be estimated, they do not have causal loci (an association test against any locus should fail).
-#' Below \eqn{n} is the number of individuals.
+#' Below `n` is the number of individuals.
 #'
 #' @param rep The number of replicate traits to simulate.
 #' Simulating all you need at once is more efficient than simulating each separately (the kinship matrix is eigendecomposed once per run, shared across replicates).
-#' @param kinship The \eqn{n \times n}{n-by-n} kinship matrix of the individuals to simulate from.
+#' @param kinship The `n`-by-`n` kinship matrix of the individuals to simulate from.
 #' @param herit The desired heritability (proportion of trait variance due to genetics).
 #' @param mu The desired parametric mean value of the trait (default zero).
-#' The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).
+#' The sample mean of the trait will not be exactly zero, but instead have an expectation of `mu` (with potentially large variance depending on the kinship matrix and the heritability).
 #' @param sigma_sq The desired parametric variance factor of the trait (default 1).
-#' This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).
+#' This factor corresponds to the variance of an outbred individual (see [cov_trait()]).
 #' @param tol Tolerance factor for an internal test of positive semi-definiteness of the trait covariance matrix.
 #' Procedure fails if any eigenvalues are smaller than `-tol` times the absolute value of the largest eigenvalue.
-#' Increase this value only if you are getting errors but you're sure your covariance matrix (the output of `\link{cov_trait}`) is positive semi-definite.
+#' Increase this value only if you are getting errors but you're sure your covariance matrix (the output of [cov_trait()]) is positive semi-definite.
 #'
 #' @return A `rep`-by-`n` matrix containing the simulated traits along the rows, individuals along the columns.
 #'

@@ -2,14 +2,14 @@
 #'
 #' This package enables simulation of complex (polygenic and continuous) traits from a simulated or real genotype matrix.
 #' The focus is on controling the mean and covariance structure of the data to yield the desired heritability under arbitrary population structures (any underlying kinship matrix).
-#' The main function is \code{\link{sim_trait}}, which returns the simulated trait and the vector of causal loci (randomly selected) and their effect sizes (randomly drawn and scaled appropriately).
-#' The function \code{\link{cov_trait}} computes the expected covariance matrix of the trait given the model parameters (namely the desired heritability and the true kinship matrix).
+#' The main function is [sim_trait()], which returns the simulated trait and the vector of causal loci (randomly selected) and their effect sizes (randomly drawn and scaled appropriately).
+#' The function [cov_trait()] computes the expected covariance matrix of the trait given the model parameters (namely the desired heritability and the true kinship matrix).
 #'
 #' The recommended inputs are simulated genotypes with known ancestral allele frequencies.
 #' The `bnpsd` package simulates genotypes for admixed individuals, resulting in a complex population structure.
 #'
 #' For real data it is necessary to estimate the kinship matrix.
-#' The `popkin` package provides high-accuracy kinship estimates.
+#' [popkin::popkin()]` provides high-accuracy kinship estimates.
 #' 
 #' @examples
 #' # construct a dummy genotype matrix

@@ -10,7 +10,7 @@ pval_srmsd(pvals, causal_indexes, detailed = FALSE)
 \item{pvals}{The vector of association p-values to analyze.
 This function assumes all p-values are provided (a mix of null and alternative tests), which is subset using the following parameter.
 \code{NA} values are allowed in input, are removed in calculating the signed RMSD.
-Non-\code{NA} values outside of [0,1] will trigger an error.}
+Non-\code{NA} values outside of [0, 1] will trigger an error.}
 
 \item{causal_indexes}{The vector of causal indexes, whose p-values will be omitted.
 Values of \code{causal_indexes} as returned by \code{sim_trait} work.
@@ -26,7 +26,7 @@ If \code{detailed} is \code{FALSE}, returns the signed RMSD between the observed
 If \code{detailed} is \code{TRUE}, returns a named list containing:
 \itemize{
 \item \code{srmsd}: The signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
-\item \code{pvals_null}: Sorted null p-values (observed order statistics).  If any input null p-values were \code{NA}, these have been removed here (removed by \code{sort}).
+\item \code{pvals_null}: Sorted null p-values (observed order statistics).  If any input null p-values were \code{NA}, these have been removed here (removed by \code{\link[=sort]{sort()}}).
 \item \code{pvals_unif}: Expected order statistics assuming uniform distribution, same length as \code{pvals_null}.
 }
 
@@ -38,7 +38,7 @@ However, if the input \code{pvals} is \code{NULL} (taken for case of singular as
 Quantifies null p-value uniformity by computing the RMSD (root mean square deviation) between the sorted observed null (truly non-causal) p-values and their expected quantiles under a uniform distribution.
 Meant as a more robust alternative to the "inflation factor" common in the GWAS literature, which compares median values only and uses all p-values (not just null p-values).
 Our signed RMSD, to correspond with the inflaction factor, includes a sign that depends on the median null p-value:
-Positive if this median is <= 0.5 (corresponds with test statistic inflation), negative otherwise (test statistic deflation).
+Positive if this median is \verb{<= 0.5} (corresponds with test statistic inflation), negative otherwise (test statistic deflation).
 Zero corresponds to uniform null p-values, which arises in expectation only if test statistics have their assumed null distribution (there is no misspecification, including inflation).
 }
 \examples{
@@ -51,7 +51,7 @@ pval_srmsd( pvals, causal_indexes )
 
 }
 \seealso{
-\verb{\link[rmsd]} for the generic root-mean-square deviation function.
+\code{\link[=rmsd]{rmsd()}} for the generic root-mean-square deviation function.
 
-\verb{\link[pval_infl]} for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
+\code{\link[=pval_infl]{pval_infl()}} for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
 }

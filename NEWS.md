@@ -99,3 +99,8 @@
 # 2021-01-21 - simtrait 1.0.17.9000
 
 * Function `sim_trait` now requires that `p_anc` have the same length as the number of loci in `X` (stops with an error otherwise).  Previously this was not checked and could return traits that were `NA` for all individuals without clear indications that anything was wrong.
+
+# 2021-02-16 - simtrait 1.0.18.9000
+
+* Documentation updates:
+  - Fixed links to functions, in many cases these were broken because of incompatible mixed Rd and markdown syntax (now markdown is used more fully).

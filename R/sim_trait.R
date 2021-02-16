@@ -7,7 +7,7 @@
 #'
 #' In order to center and scale the trait and locus effect size vector correctly to the desired parameters (mean, variance factor, and heritability), the parametric ancestral allele frequencies (`p_anc`) must be known.
 #' This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by `p_anc` and a covariance structure given by `p_anc` and the kinship matrix), so the parameters of the genotypes must be taken into account.
-#' If `p_anc` are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with `\link{cov_trait}`.
+#' If `p_anc` are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with [cov_trait()].
 #'
 #' If the desire is to simulate a trait using real genotypes, where `p_anc` is unknown, a compromise that works well in practice is possible if the `kinship` matrix is known (see package vignette).
 #' The kinship matrix can be estimated accurately using the `popkin` package!
@@ -26,7 +26,7 @@
 #' @param mu The desired parametric mean value of the trait (default zero).
 #' The sample mean of the trait will not be exactly zero, but instead have an expectation of `mu` (with potentially large variance depending on the kinship matrix and the heritability).
 #' @param sigma_sq The desired parametric variance factor of the trait (default 1).
-#' This factor corresponds to the variance of an outbred individual (see `\link{cov_trait}`).
+#' This factor corresponds to the variance of an outbred individual (see [cov_trait()]).
 #' @param maf_cut The optional minimum allele frequency threshold (default `NA`, no threshold).
 #' This prevents rare alleles from being causal in the simulation.
 #' Note that this threshold is applied to the sample allele frequencies and not their true parametric values (`p_anc`), even if these are available.

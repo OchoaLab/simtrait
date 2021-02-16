@@ -7,7 +7,7 @@
 #' Lengths of `x` and `y` must be equal.
 #' @param na.rm If `TRUE` (default), `NA` values are removed before calculating the mean square difference.
 #' If `FALSE`, any missing values in either `x` or `y` result in `NA` returned.
-#' Passed to `mean`, see that for more info.
+#' Passed to [mean()], see that for more info.
 #'
 #' @return the square root of the mean square difference between `x` and `y`, after removing `NA` comparisons.
 #'

@@ -8,7 +8,7 @@ pval_aucpr(pvals, causal_indexes, curve = FALSE)
 }
 \arguments{
 \item{pvals}{The vector of association p-values to analyze.
-\code{NA} values are allowed in input, are internally set to 1 (worst score) prior to AUC calculation (to prevent methods to get good AUCs by setting more cases to NA).
+\code{NA} values are allowed in input, are internally set to 1 (worst score) prior to AUC calculation (to prevent methods to get good AUCs by setting more cases to \code{NA}).
 Non-\code{NA} values outside of [0,1] will trigger an error.}
 
 \item{causal_indexes}{The vector of causal indexes, defining the true classes used for AUC calculation.
@@ -16,17 +16,17 @@ Values of \code{causal_indexes} as returned by \code{sim_trait} work.
 There must be at least one causal index and at least one non-causal case.}
 
 \item{curve}{If \code{FALSE} (default), only scalar AUC is returned.
-If \code{TRUE}, then \code{curve = TRUE} is passed to \code{PRROC::pr.curve} and the full object (class PRROC) is returned (see below).}
+If \code{TRUE}, then \code{curve = TRUE} is passed to \code{\link[PRROC:pr.curve]{PRROC::pr.curve()}} and the full object (class PRROC) is returned (see below).}
 }
 \value{
 If \code{curve} is \code{FALSE}, returns the PR AUC scalar value.
-If \code{curve} is \code{TRUE}, returns the PRROC object as returned by \code{PRROC::pr.curve}, which can be plotted directly, and which contains the AUC under the named value \code{auc.integral}.
+If \code{curve} is \code{TRUE}, returns the PRROC object as returned by \code{\link[PRROC:pr.curve]{PRROC::pr.curve()}}, which can be plotted directly, and which contains the AUC under the named value \code{auc.integral}.
 
 However, if the input \code{pvals} is \code{NULL} (taken for case of singular association test, which is rare but may happen), then the returned value is \code{NA}.
 }
 \description{
 Calculates the Precision-Recall (PR) Area Under the Curve (AUC) given a vector of p-values and the true classes (causal (alternative) vs non-causal (null)).
-This is a wrapper around the function \code{pr.curve} from the \code{PRROC} package, which actually calculates the AUC (see that for details).
+This is a wrapper around \code{\link[PRROC:pr.curve]{PRROC::pr.curve()}}, which actually calculates the AUC (see that for details).
 }
 \examples{
 # simulate truly null p-values, which should be uniform
@@ -38,5 +38,5 @@ pval_aucpr( pvals, causal_indexes )
 
 }
 \seealso{
-The function \code{pr.curve} from the \code{PRROC} package, which is used internally by \code{pval_aucpr}.
+\code{\link[PRROC:pr.curve]{PRROC::pr.curve()}}, which is used internally by this function.
 }

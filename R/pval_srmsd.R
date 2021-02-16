@@ -3,13 +3,13 @@
 #' Quantifies null p-value uniformity by computing the RMSD (root mean square deviation) between the sorted observed null (truly non-causal) p-values and their expected quantiles under a uniform distribution.
 #' Meant as a more robust alternative to the "inflation factor" common in the GWAS literature, which compares median values only and uses all p-values (not just null p-values).
 #' Our signed RMSD, to correspond with the inflaction factor, includes a sign that depends on the median null p-value:
-#' Positive if this median is <= 0.5 (corresponds with test statistic inflation), negative otherwise (test statistic deflation).
+#' Positive if this median is `<= 0.5` (corresponds with test statistic inflation), negative otherwise (test statistic deflation).
 #' Zero corresponds to uniform null p-values, which arises in expectation only if test statistics have their assumed null distribution (there is no misspecification, including inflation).
 #'
 #' @param pvals The vector of association p-values to analyze.
 #' This function assumes all p-values are provided (a mix of null and alternative tests), which is subset using the following parameter.
 #' `NA` values are allowed in input, are removed in calculating the signed RMSD.
-#' Non-`NA` values outside of \[0,1\] will trigger an error.
+#' Non-`NA` values outside of \[0, 1\] will trigger an error.
 #' @param causal_indexes The vector of causal indexes, whose p-values will be omitted.
 #' Values of `causal_indexes` as returned by `sim_trait` work.
 #' There must be at least one causal index.
@@ -21,7 +21,7 @@
 #'
 #' If `detailed` is `TRUE`, returns a named list containing:
 #' - `srmsd`: The signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
-#' - `pvals_null`: Sorted null p-values (observed order statistics).  If any input null p-values were `NA`, these have been removed here (removed by `sort`).
+#' - `pvals_null`: Sorted null p-values (observed order statistics).  If any input null p-values were `NA`, these have been removed here (removed by [sort()]).
 #' - `pvals_unif`: Expected order statistics assuming uniform distribution, same length as `pvals_null`.
 #'
 #' The detailed data is returned as it is useful for plots.
@@ -37,9 +37,9 @@
 #' pval_srmsd( pvals, causal_indexes )
 #'
 #' @seealso
-#' `\link[rmsd]` for the generic root-mean-square deviation function.
+#' [rmsd()] for the generic root-mean-square deviation function.
 #'
-#' `\link[pval_infl]` for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
+#' [pval_infl()] for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
 #'
 #' @export
 pval_srmsd <- function(pvals, causal_indexes, detailed = FALSE) {

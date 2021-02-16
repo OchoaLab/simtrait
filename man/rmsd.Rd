@@ -14,7 +14,7 @@ Lengths of \code{x} and \code{y} must be equal.}
 
 \item{na.rm}{If \code{TRUE} (default), \code{NA} values are removed before calculating the mean square difference.
 If \code{FALSE}, any missing values in either \code{x} or \code{y} result in \code{NA} returned.
-Passed to \code{mean}, see that for more info.}
+Passed to \code{\link[=mean]{mean()}}, see that for more info.}
 }
 \value{
 the square root of the mean square difference between \code{x} and \code{y}, after removing \code{NA} comparisons.

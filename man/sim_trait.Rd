@@ -39,7 +39,7 @@ Either this or \code{p_anc} must be specified.}
 The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).}
 
 \item{sigma_sq}{The desired parametric variance factor of the trait (default 1).
-This factor corresponds to the variance of an outbred individual (see \verb{\link{cov_trait}}).}
+This factor corresponds to the variance of an outbred individual (see \code{\link[=cov_trait]{cov_trait()}}).}
 
 \item{maf_cut}{The optional minimum allele frequency threshold (default \code{NA}, no threshold).
 This prevents rare alleles from being causal in the simulation.
@@ -74,7 +74,7 @@ Suppose there are \code{m} loci and \code{n} individuals.
 \details{
 In order to center and scale the trait and locus effect size vector correctly to the desired parameters (mean, variance factor, and heritability), the parametric ancestral allele frequencies (\code{p_anc}) must be known.
 This is necessary since in the context of Heritability the genotypes are themselves random variables (with means given by \code{p_anc} and a covariance structure given by \code{p_anc} and the kinship matrix), so the parameters of the genotypes must be taken into account.
-If \code{p_anc} are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with \verb{\link{cov_trait}}.
+If \code{p_anc} are indeed known (true for simulated genotypes), then the trait will have the specified mean and covariance matrix in agreement with \code{\link[=cov_trait]{cov_trait()}}.
 
 If the desire is to simulate a trait using real genotypes, where \code{p_anc} is unknown, a compromise that works well in practice is possible if the \code{kinship} matrix is known (see package vignette).
 The kinship matrix can be estimated accurately using the \code{popkin} package!

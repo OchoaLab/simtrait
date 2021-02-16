@@ -10,7 +10,7 @@ sim_trait_mvn(rep, kinship, herit, mu = 0, sigma_sq = 1, tol = 1e-06)
 \item{rep}{The number of replicate traits to simulate.
 Simulating all you need at once is more efficient than simulating each separately (the kinship matrix is eigendecomposed once per run, shared across replicates).}
 
-\item{kinship}{The \eqn{n \times n}{n-by-n} kinship matrix of the individuals to simulate from.}
+\item{kinship}{The \code{n}-by-\code{n} kinship matrix of the individuals to simulate from.}
 
 \item{herit}{The desired heritability (proportion of trait variance due to genetics).}
 
@@ -18,19 +18,19 @@ Simulating all you need at once is more efficient than simulating each separatel
 The sample mean of the trait will not be exactly zero, but instead have an expectation of \code{mu} (with potentially large variance depending on the kinship matrix and the heritability).}
 
 \item{sigma_sq}{The desired parametric variance factor of the trait (default 1).
-This factor corresponds to the variance of an outbred individual (see \code{\link{cov_trait}}).}
+This factor corresponds to the variance of an outbred individual (see \code{\link[=cov_trait]{cov_trait()}}).}
 
 \item{tol}{Tolerance factor for an internal test of positive semi-definiteness of the trait covariance matrix.
 Procedure fails if any eigenvalues are smaller than \code{-tol} times the absolute value of the largest eigenvalue.
-Increase this value only if you are getting errors but you're sure your covariance matrix (the output of \verb{\link{cov_trait}}) is positive semi-definite.}
+Increase this value only if you are getting errors but you're sure your covariance matrix (the output of \code{\link[=cov_trait]{cov_trait()}}) is positive semi-definite.}
 }
 \value{
 A \code{rep}-by-\code{n} matrix containing the simulated traits along the rows, individuals along the columns.
 }
 \description{
-Simulate matrix of trait replicates \eqn{Y} given a kinship matrix and model parameters (the desired heritability, total variance scale, and mean).
+Simulate matrix of trait replicates given a kinship matrix and model parameters (the desired heritability, total variance scale, and mean).
 Although these traits have the covariance structure of genetic traits, and have heritabilities that can be estimated, they do not have causal loci (an association test against any locus should fail).
-Below \eqn{n} is the number of individuals.
+Below \code{n} is the number of individuals.
 }
 \examples{
 # create a dummy kinship matrix

@@ -30,8 +30,8 @@
 #' herit_loci( p_anc, causal_coeffs )
 #'
 #' @seealso
-#' `\link{sim_trait}` generates random traits by drawing causal loci and their coefficients to fit a desired heritability.
-#' `\link{cov_trait}` determines the covariance structure of the random traits.
+#' [sim_trait()] generates random traits by drawing causal loci and their coefficients to fit a desired heritability.
+#' [cov_trait()] calculates the covariance structure of the random traits.
 #' 
 #' @export
 herit_loci <- function(

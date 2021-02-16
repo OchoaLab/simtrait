@@ -43,6 +43,6 @@ herit_loci( p_anc, causal_coeffs )
 
 }
 \seealso{
-\verb{\link{sim_trait}} generates random traits by drawing causal loci and their coefficients to fit a desired heritability.
-\verb{\link{cov_trait}} determines the covariance structure of the random traits.
+\code{\link[=sim_trait]{sim_trait()}} generates random traits by drawing causal loci and their coefficients to fit a desired heritability.
+\code{\link[=cov_trait]{cov_trait()}} calculates the covariance structure of the random traits.
 }

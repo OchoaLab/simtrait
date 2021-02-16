@@ -1,19 +1,19 @@
 #' Area under the precision-recall curve
 #'
 #' Calculates the Precision-Recall (PR) Area Under the Curve (AUC) given a vector of p-values and the true classes (causal (alternative) vs non-causal (null)).
-#' This is a wrapper around the function `pr.curve` from the `PRROC` package, which actually calculates the AUC (see that for details).
+#' This is a wrapper around [PRROC::pr.curve()], which actually calculates the AUC (see that for details).
 #'
 #' @param pvals The vector of association p-values to analyze.
-#' `NA` values are allowed in input, are internally set to 1 (worst score) prior to AUC calculation (to prevent methods to get good AUCs by setting more cases to NA).
+#' `NA` values are allowed in input, are internally set to 1 (worst score) prior to AUC calculation (to prevent methods to get good AUCs by setting more cases to `NA`).
 #' Non-`NA` values outside of \[0,1\] will trigger an error.
 #' @param causal_indexes The vector of causal indexes, defining the true classes used for AUC calculation.
 #' Values of `causal_indexes` as returned by `sim_trait` work.
 #' There must be at least one causal index and at least one non-causal case.
 #' @param curve If `FALSE` (default), only scalar AUC is returned.
-#' If `TRUE`, then `curve = TRUE` is passed to `PRROC::pr.curve` and the full object (class PRROC) is returned (see below).
+#' If `TRUE`, then `curve = TRUE` is passed to [PRROC::pr.curve()] and the full object (class PRROC) is returned (see below).
 #'
 #' @return If `curve` is `FALSE`, returns the PR AUC scalar value.
-#' If `curve` is `TRUE`, returns the PRROC object as returned by `PRROC::pr.curve`, which can be plotted directly, and which contains the AUC under the named value `auc.integral`.
+#' If `curve` is `TRUE`, returns the PRROC object as returned by [PRROC::pr.curve()], which can be plotted directly, and which contains the AUC under the named value `auc.integral`.
 #'
 #' However, if the input `pvals` is `NULL` (taken for case of singular association test, which is rare but may happen), then the returned value is `NA`.
 #'
@@ -26,7 +26,7 @@
 #' pval_aucpr( pvals, causal_indexes )
 #'
 #' @seealso
-#' The function `pr.curve` from the `PRROC` package, which is used internally by `pval_aucpr`.
+#' [PRROC::pr.curve()], which is used internally by this function.
 #' 
 #' @export
 pval_aucpr <- function(pvals, causal_indexes, curve = FALSE) {

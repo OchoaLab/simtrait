@@ -7,20 +7,23 @@
 cov_trait(kinship, herit, sigma_sq = 1)
 }
 \arguments{
-\item{kinship}{The \eqn{n \times n}{n-by-n} kinship matrix \eqn{\Phi} of the individuals.  This may be the true matrix of the genotype simulation or a good estimate of empirical data obtained via the package \code{popkin}.}
+\item{kinship}{The \code{n}-by-\code{n} kinship matrix of the individuals.
+This may be the true matrix of the genotype simulation or a good estimate from \code{\link[popkin:popkin]{popkin::popkin()}}.
+These values should be scaled such that an outbred individual has 1/2 self-kinship, the parent-child relationship is 1/4, etc (which is half the values sometimes defined for kinship).}
 
-\item{herit}{The heritability \eqn{h^2} (proportion of trait variance due to genetics).}
+\item{herit}{The heritability (proportion of trait variance due to genetics).}
 
-\item{sigma_sq}{Overall variance multiplicative factor \eqn{\sigma^2} (default 1).  This factor corresponds to the variance of an outbred individual.}
+\item{sigma_sq}{Overall variance multiplicative factor (default 1).
+This factor corresponds to the variance of an outbred individual.}
 }
 \value{
-The \eqn{n \times n}{n-by-n} trait covariance matrix equal to
-\deqn{\sigma^2 ( 2 h^2 \Phi + (1-h^2) I ),}
-where \eqn{I} is an \eqn{n \times n}{n-by-n} identity matrix.
+The \code{n}-by-\code{n} trait covariance matrix equal to
+\code{sigma_sq * ( herit * 2 * kinship + ( 1 - herit ) * I )},
+where \code{I} is the \code{n}-by-\code{n} identity matrix.
 }
 \description{
 This function returns the expected covariance matrix of a trait vector simulated via \code{sim_trait}.
-Below let there be \eqn{n} individuals.
+Below there are \code{n} individuals.
 }
 \examples{
 # create a dummy kinship matrix
