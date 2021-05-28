@@ -451,28 +451,28 @@ test_that( "pval_srmsd works", {
     # select a random few to be NA
     pvals[ sample.int( n, n * p_miss ) ] <- NA
     # pick a few random ones to be causal (to be removed inside)
-    causal_loci <- sample.int( n, n - n_null )
+    causal_indexes <- sample.int( n, n - n_null )
     
     # trigger failures on purpose
     # (missing arguments)
     expect_error( pval_srmsd( ) )
     expect_error( pval_srmsd( pvals ) )
-    expect_error( pval_srmsd( causal_loci = causal_loci ) )
+    expect_error( pval_srmsd( causal_indexes = causal_indexes ) )
     # p-values out of range cause errors
-    expect_error( pval_srmsd( c(pvals, -1), causal_loci ) )
-    expect_error( pval_srmsd( c(pvals, 10), causal_loci ) )
-    # empty causal_loci trigger a specific error
-    expect_error( pval_srmsd( pvals, c() ) )
+    expect_error( pval_srmsd( c(pvals, -1), causal_indexes ) )
+    expect_error( pval_srmsd( c(pvals, 10), causal_indexes ) )
+    # empty causal_indexes trigger a specific error
+    expect_error( pval_srmsd( pvals, numeric(0) ) ) # NOTE: c() is NULL!
     # and all loci being causal (no nulls) also triggers errors
     expect_error( pval_srmsd( pvals, 1:length(pvals) ) )
 
     # now the successful run, simple version
-    expect_silent( srmsd <- pval_srmsd( pvals, causal_loci ) )
+    expect_silent( srmsd <- pval_srmsd( pvals, causal_indexes ) )
     expect_equal( length( srmsd ), 1 )
     expect_true( !is.na( srmsd ) )
     
     # now the successful run, detailed version
-    expect_silent( data <- pval_srmsd( pvals, causal_loci, detailed = TRUE ) )
+    expect_silent( data <- pval_srmsd( pvals, causal_indexes, detailed = TRUE ) )
     expect_equal( class(data), 'list' )
     expect_equal( length(data), 3 )
     expect_equal( names(data), c('srmsd', 'pvals_null', 'pvals_unif') )
@@ -490,6 +490,11 @@ test_that( "pval_srmsd works", {
     expect_true( all( data$pvals_null >= 0 ) )
     expect_true( all( data$pvals_unif <= 1 ) )
     expect_true( all( data$pvals_null <= 1 ) )
+
+    # work with NULL version
+    expect_silent( srmsd <- pval_srmsd( pvals, causal_indexes = NULL ) )
+    expect_equal( length( srmsd ), 1 )
+    expect_true( !is.na( srmsd ) )
 })
 
 test_that( "pval_infl works", {
@@ -529,33 +534,33 @@ test_that( "pval_aucpr works", {
     # all p-values are uniform
     pvals <- runif( n )
     # pick a few random ones to be causal (to be removed inside)
-    causal_loci <- sample.int( n, n - n_null )
+    causal_indexes <- sample.int( n, n - n_null )
     # pick one of each class to be NA
-    pvals[ causal_loci ][1] <- NA
-    pvals[ -causal_loci ][1] <- NA
+    pvals[ causal_indexes ][1] <- NA
+    pvals[ -causal_indexes ][1] <- NA
     
     # trigger failures on purpose
     # (missing arguments)
     expect_error( pval_aucpr( ) )
     expect_error( pval_aucpr( pvals ) )
-    expect_error( pval_aucpr( causal_loci = causal_loci ) )
+    expect_error( pval_aucpr( causal_indexes = causal_indexes ) )
     # p-values out of range cause errors
-    expect_error( pval_aucpr( c(pvals, -1), causal_loci ) )
-    expect_error( pval_aucpr( c(pvals, 10), causal_loci ) )
-    # empty causal_loci trigger a specific error
+    expect_error( pval_aucpr( c(pvals, -1), causal_indexes ) )
+    expect_error( pval_aucpr( c(pvals, 10), causal_indexes ) )
+    # empty causal_indexes trigger a specific error
     expect_error( pval_aucpr( pvals, c() ) )
     # and all loci being causal (no nulls) also triggers errors
     expect_error( pval_aucpr( pvals, 1:length(pvals) ) )
 
     # now a successful case, simple version
-    expect_silent( auc <- pval_aucpr( pvals, causal_loci ) )
+    expect_silent( auc <- pval_aucpr( pvals, causal_indexes ) )
     expect_equal( length(auc), 1 )
     expect_true( !is.na(auc) )
     expect_true( auc >= 0 )
     expect_true( auc <= 1 )
 
     # now a successful case, curve version
-    expect_silent( obj <- pval_aucpr( pvals, causal_loci, curve = TRUE ) )
+    expect_silent( obj <- pval_aucpr( pvals, causal_indexes, curve = TRUE ) )
     expect_equal( class( obj ), 'PRROC' )
     auc <- obj$auc.integral
     expect_equal( length(auc), 1 )

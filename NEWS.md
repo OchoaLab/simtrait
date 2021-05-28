@@ -104,3 +104,7 @@
 
 * Documentation updates:
   - Fixed links to functions, in many cases these were broken because of incompatible mixed Rd and markdown syntax (now markdown is used more fully).
+
+# 2021-05-27 - simtrait 1.0.19.9000
+
+* Function `pval_srmsd` now accepts `causal_indexes = NULL` to handle cases where all p-values are null (before a `NULL` input would cause an error).

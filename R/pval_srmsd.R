@@ -12,8 +12,9 @@
 #' Non-`NA` values outside of \[0, 1\] will trigger an error.
 #' @param causal_indexes The vector of causal indexes, whose p-values will be omitted.
 #' Values of `causal_indexes` as returned by `sim_trait` work.
-#' There must be at least one causal index.
 #' This parameter is required to prevent use of this function except when the true status of every test (null vs alternative) is known.
+#' Set to `NULL` if all loci are truly null (non-causal).
+#' Otherwise, `causal_indexes` must be at least one causal index.
 #' @param detailed If `FALSE` (default) only SRMSD is returned.
 #' If `TRUE`, sorted null p-values without NAs and their expectations are returned (useful for plots).
 #'
@@ -47,8 +48,6 @@ pval_srmsd <- function(pvals, causal_indexes, detailed = FALSE) {
         stop( '`pvals` is required!' )
     if ( missing( causal_indexes ) )
         stop( '`causal_indexes` is required!' )
-    if ( length( causal_indexes ) == 0 )
-        stop( '`causal_indexes` must have at least one index!' )
     
     # in some cases there is nothing to do (LMM has singular information matrix)
     if (is.null(pvals))
@@ -62,12 +61,21 @@ pval_srmsd <- function(pvals, causal_indexes, detailed = FALSE) {
             )
         } else
             return(NA)
-    
-    # remove causal loci from vector
-    pvals_null <- pvals[ -causal_indexes ]
 
-    if ( length( pvals_null ) == 0 )
-        stop( 'No loci were null (non-causal)!  (`pvals[ -causal_indexes ]` had length 0)' )
+    if ( is.null( causal_indexes ) ) {
+        # only case where null p-values are all p-values
+        pvals_null <- pvals
+    } else {
+        # though we could handle this as the NULL case, I think it's safest to do this instead.
+        if ( length( causal_indexes ) == 0 )
+            stop( 'non-NULL `causal_indexes` must have at least one index!' )
+        
+        # remove causal loci from vector
+        pvals_null <- pvals[ -causal_indexes ]
+        
+        if ( length( pvals_null ) == 0 )
+            stop( 'No loci were null (non-causal)!  (`pvals[ -causal_indexes ]` had length 0)' )
+    }
     
     # sort p-values, which has the added benefit of removing NAs
     pvals_null <- sort( pvals_null )

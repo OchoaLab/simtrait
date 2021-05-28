@@ -14,8 +14,9 @@ Non-\code{NA} values outside of [0, 1] will trigger an error.}
 
 \item{causal_indexes}{The vector of causal indexes, whose p-values will be omitted.
 Values of \code{causal_indexes} as returned by \code{sim_trait} work.
-There must be at least one causal index.
-This parameter is required to prevent use of this function except when the true status of every test (null vs alternative) is known.}
+This parameter is required to prevent use of this function except when the true status of every test (null vs alternative) is known.
+Set to \code{NULL} if all loci are truly null (non-causal).
+Otherwise, \code{causal_indexes} must be at least one causal index.}
 
 \item{detailed}{If \code{FALSE} (default) only SRMSD is returned.
 If \code{TRUE}, sorted null p-values without NAs and their expectations are returned (useful for plots).}
