@@ -3,3 +3,5 @@
 ^doc$
 ^LICENSE\.md$
 ^scripts$
+^cran-comments\.md$
+^CRAN-RELEASE$

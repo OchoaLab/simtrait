@@ -10,10 +10,10 @@
 #' Values of `causal_indexes` as returned by `sim_trait` work.
 #' There must be at least one causal index and at least one non-causal case.
 #' @param curve If `FALSE` (default), only scalar AUC is returned.
-#' If `TRUE`, then `curve = TRUE` is passed to [PRROC::pr.curve()] and the full object (class PRROC) is returned (see below).
+#' If `TRUE`, then `curve = TRUE` is passed to [PRROC::pr.curve()] and the full object (class `PRROC`) is returned (see below).
 #'
-#' @return If `curve` is `FALSE`, returns the PR AUC scalar value.
-#' If `curve` is `TRUE`, returns the PRROC object as returned by [PRROC::pr.curve()], which can be plotted directly, and which contains the AUC under the named value `auc.integral`.
+#' @return If `curve = FALSE`, returns the PR AUC scalar value.
+#' If `curve = TRUE`, returns the `PRROC` object as returned by [PRROC::pr.curve()], which can be plotted directly, and which contains the AUC under the named value `auc.integral`.
 #'
 #' However, if the input `pvals` is `NULL` (taken for case of singular association test, which is rare but may happen), then the returned value is `NA`.
 #'

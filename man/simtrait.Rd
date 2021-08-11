@@ -4,14 +4,19 @@
 \name{simtrait}
 \alias{simtrait}
 \alias{simtrait-package}
-\title{simtrait: a package for simulating complex traits from genotypes}
+\title{simtrait: simulate complex traits from genotypes}
 \description{
 This package enables simulation of complex (polygenic and continuous) traits from a simulated or real genotype matrix.
-The focus is on controling the mean and covariance structure of the data to yield the desired heritability under arbitrary population structures (any underlying kinship matrix).
-The main function is \code{\link[=sim_trait]{sim_trait()}}, which returns the simulated trait and the vector of causal loci (randomly selected) and their effect sizes (randomly drawn and scaled appropriately).
+The focus is on constructing the mean and covariance structure of the data to yield the desired heritability.
+The main function is \code{\link[=sim_trait]{sim_trait()}}, which returns the simulated trait and the vector of causal loci (randomly selected) and their coefficients.
+The causal coefficients are constructed under two models: \emph{random coefficients} (RC) and \emph{fixed effect sizes} (FES).
 The function \code{\link[=cov_trait]{cov_trait()}} computes the expected covariance matrix of the trait given the model parameters (namely the desired heritability and the true kinship matrix).
+Infinitesimal traits (without causal loci) can also be simulated using \code{\link[=sim_trait_mvn]{sim_trait_mvn()}}.
 }
 \details{
+Package also provides some functions for evaluating genetic association approaches.
+\code{\link[=pval_srmsd]{pval_srmsd()}} and \code{\link[=pval_infl]{pval_infl()}} quantify null p-value accuracy, while \code{\link[=pval_aucpr]{pval_aucpr()}} quantifies predictive power.
+
 The recommended inputs are simulated genotypes with known ancestral allele frequencies.
 The \code{bnpsd} package simulates genotypes for admixed individuals, resulting in a complex population structure.
 
@@ -21,31 +26,75 @@ For real data it is necessary to estimate the kinship matrix.
 \examples{
 # construct a dummy genotype matrix
 X <- matrix(
-           data = c(0,1,2,1,2,1,0,0,1),
-           nrow = 3,
-           byrow = TRUE
-           )
+    data = c(
+        0, 1, 2,
+        1, 2, 1,
+        0, 0, 1
+    ),
+    nrow = 3,
+    byrow = TRUE
+)
 # made up ancestral allele frequency vector for example
 p_anc <- c(0.5, 0.6, 0.2)
 # desired heritability
 herit <- 0.8
+# create a dummy kinship matrix for example
+# make sure it is positive definite!
+kinship <- matrix(
+    data = c(
+        0.6, 0.1, 0.0,
+        0.1, 0.5, 0.0,
+        0.0, 0.0, 0.5
+    ),
+    nrow = 3
+)
+
 # create simulated trait and associated data
+# default is *random coefficients* (RC) model
 obj <- sim_trait(X = X, m_causal = 2, herit = herit, p_anc = p_anc)
 # trait vector
 obj$trait
 # randomly-picked causal locus indeces
 obj$causal_indexes
-# locus effect size vector
+# regression coefficient vector
 obj$causal_coeffs
 
-# create a dummy kinship matrix for example
-kinship <- matrix(
-             data = c(0.6,0.1,0, 0.1,0.6,0.1, 0,0.1,0.6),
-             nrow = 3,
-             byrow = TRUE
-             )
+# *fixed effect sizes* (FES) model
+obj <- sim_trait(X = X, m_causal = 2, herit = herit, p_anc = p_anc, fes = TRUE)
+
+# either model, can apply to real data by replacing `p_anc` with `kinship`
+obj <- sim_trait(X = X, m_causal = 2, herit = herit, kinship = kinship)
+
 # covariance of simulated traits
 V <- cov_trait(kinship = kinship, herit = herit)
+
+# draw simulated traits (matrix of replicates) from infinitesimal model
+traits <- sim_trait_mvn( rep = 10, kinship = kinship, herit = herit )
+traits
+
+# Metrics for genetic association approaches
+
+# simulate truly null p-values, which should be uniform
+pvals <- runif(10)
+# for toy example, take these p-value to be truly causal
+causal_indexes <- c(1, 5, 7)
+
+# calculate desired measures
+# this one quantifies p-value uniformity
+pval_srmsd( pvals, causal_indexes )
+# related, calculates inflation factors
+pval_infl( pvals )
+# this one quantifies predictive power
+pval_aucpr( pvals, causal_indexes )
+
+
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/OchoaLab/simtrait}
+  \item Report bugs at \url{https://github.com/OchoaLab/simtrait/issues}
+}
 
 }
 \author{

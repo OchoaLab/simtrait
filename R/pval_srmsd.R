@@ -2,32 +2,29 @@
 #'
 #' Quantifies null p-value uniformity by computing the RMSD (root mean square deviation) between the sorted observed null (truly non-causal) p-values and their expected quantiles under a uniform distribution.
 #' Meant as a more robust alternative to the "inflation factor" common in the GWAS literature, which compares median values only and uses all p-values (not just null p-values).
-#' Our signed RMSD, to correspond with the inflaction factor, includes a sign that depends on the median null p-value:
-#' Positive if this median is `<= 0.5` (corresponds with test statistic inflation), negative otherwise (test statistic deflation).
+#' Our signed RMSD, to correspond with the inflation factor, includes a sign that depends on the median null p-value:
+#' positive if this median is `<= 0.5` (corresponds with test statistic inflation), negative otherwise (test statistic deflation).
 #' Zero corresponds to uniform null p-values, which arises in expectation only if test statistics have their assumed null distribution (there is no misspecification, including inflation).
 #'
 #' @param pvals The vector of association p-values to analyze.
-#' This function assumes all p-values are provided (a mix of null and alternative tests), which is subset using the following parameter.
+#' This function assumes all p-values are provided (a mix of null and alternative tests), which is subset using `causal_indexes` below.
 #' `NA` values are allowed in input, are removed in calculating the signed RMSD.
 #' Non-`NA` values outside of \[0, 1\] will trigger an error.
 #' @param causal_indexes The vector of causal indexes, whose p-values will be omitted.
 #' Values of `causal_indexes` as returned by `sim_trait` work.
 #' This parameter is required to prevent use of this function except when the true status of every test (null vs alternative) is known.
 #' Set to `NULL` if all loci are truly null (non-causal).
-#' Otherwise, `causal_indexes` must be at least one causal index.
+#' Otherwise, `causal_indexes` must have at least one causal index.
 #' @param detailed If `FALSE` (default) only SRMSD is returned.
 #' If `TRUE`, sorted null p-values without NAs and their expectations are returned (useful for plots).
 #'
 #' @return If `detailed` is `FALSE`, returns the signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
-#'
-#' If `detailed` is `TRUE`, returns a named list containing:
+#' If `detailed` is `TRUE`, returns data useful for plots, a named list containing:
 #' - `srmsd`: The signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
 #' - `pvals_null`: Sorted null p-values (observed order statistics).  If any input null p-values were `NA`, these have been removed here (removed by [sort()]).
 #' - `pvals_unif`: Expected order statistics assuming uniform distribution, same length as `pvals_null`.
 #'
-#' The detailed data is returned as it is useful for plots.
-#' 
-#' However, if the input `pvals` is `NULL` (taken for case of singular association test, which is rare but may happen), then the returned value is `NA` if `detailed` was `FALSE`, or otherwise the list contains `NA`, `NULL` and `NULL` for the above three items.
+#' If the input `pvals` is `NULL` (taken for case of singular association test, which is rare but may happen), then the returned value is `NA` if `detailed` was `FALSE`, or otherwise the list contains `NA`, `NULL` and `NULL` for the above three items.
 #'
 #' @examples
 #' # simulate truly null p-values, which should be uniform

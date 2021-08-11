@@ -4,7 +4,6 @@
 #' Below there are `n` individuals.
 #'
 #' @param kinship The `n`-by-`n` kinship matrix of the individuals.
-#' This may be the true matrix of the genotype simulation or a good estimate from [popkin::popkin()].
 #' These values should be scaled such that an outbred individual has 1/2 self-kinship, the parent-child relationship is 1/4, etc (which is half the values sometimes defined for kinship).
 #' @param herit The heritability (proportion of trait variance due to genetics).
 #' @param sigma_sq Overall variance multiplicative factor (default 1).
@@ -17,10 +16,14 @@
 #' @examples
 #' # create a dummy kinship matrix
 #' kinship <- matrix(
-#'              data = c(0.6,0.1,0, 0.1,0.6,0.1, 0,0.1,0.6),
-#'              nrow = 3,
-#'              byrow = TRUE
-#'              )
+#'     data = c(
+#'         0.6, 0.1, 0.0,
+#'         0.1, 0.6, 0.1,
+#'         0.0, 0.1, 0.6
+#'     ),
+#'     nrow = 3,
+#'     byrow = TRUE
+#' )
 #' # covariance of simulated traits
 #' V <- cov_trait(kinship = kinship, herit = 0.8)
 #'
@@ -45,7 +48,9 @@ cov_trait <- function(kinship, herit, sigma_sq = 1) {
         stop('`herit` cannot be greater than 1!')
     if (sigma_sq <= 0)
         stop('`sigma_sq` must be positive!')
-
+    if ( !isSymmetric( kinship ) )
+        stop( '`kinship` must be a square, symmetric matrix!' )
+    
     # identity matrix of same dimension as kinship
     I <- diag( nrow( kinship ) )
     # desired covariance matrix (except for overall scale)

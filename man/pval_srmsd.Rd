@@ -8,7 +8,7 @@ pval_srmsd(pvals, causal_indexes, detailed = FALSE)
 }
 \arguments{
 \item{pvals}{The vector of association p-values to analyze.
-This function assumes all p-values are provided (a mix of null and alternative tests), which is subset using the following parameter.
+This function assumes all p-values are provided (a mix of null and alternative tests), which is subset using \code{causal_indexes} below.
 \code{NA} values are allowed in input, are removed in calculating the signed RMSD.
 Non-\code{NA} values outside of [0, 1] will trigger an error.}
 
@@ -16,30 +16,27 @@ Non-\code{NA} values outside of [0, 1] will trigger an error.}
 Values of \code{causal_indexes} as returned by \code{sim_trait} work.
 This parameter is required to prevent use of this function except when the true status of every test (null vs alternative) is known.
 Set to \code{NULL} if all loci are truly null (non-causal).
-Otherwise, \code{causal_indexes} must be at least one causal index.}
+Otherwise, \code{causal_indexes} must have at least one causal index.}
 
 \item{detailed}{If \code{FALSE} (default) only SRMSD is returned.
 If \code{TRUE}, sorted null p-values without NAs and their expectations are returned (useful for plots).}
 }
 \value{
 If \code{detailed} is \code{FALSE}, returns the signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
-
-If \code{detailed} is \code{TRUE}, returns a named list containing:
+If \code{detailed} is \code{TRUE}, returns data useful for plots, a named list containing:
 \itemize{
 \item \code{srmsd}: The signed RMSD between the observed p-value order statistics and their expectation under true uniformity.
 \item \code{pvals_null}: Sorted null p-values (observed order statistics).  If any input null p-values were \code{NA}, these have been removed here (removed by \code{\link[=sort]{sort()}}).
 \item \code{pvals_unif}: Expected order statistics assuming uniform distribution, same length as \code{pvals_null}.
 }
 
-The detailed data is returned as it is useful for plots.
-
-However, if the input \code{pvals} is \code{NULL} (taken for case of singular association test, which is rare but may happen), then the returned value is \code{NA} if \code{detailed} was \code{FALSE}, or otherwise the list contains \code{NA}, \code{NULL} and \code{NULL} for the above three items.
+If the input \code{pvals} is \code{NULL} (taken for case of singular association test, which is rare but may happen), then the returned value is \code{NA} if \code{detailed} was \code{FALSE}, or otherwise the list contains \code{NA}, \code{NULL} and \code{NULL} for the above three items.
 }
 \description{
 Quantifies null p-value uniformity by computing the RMSD (root mean square deviation) between the sorted observed null (truly non-causal) p-values and their expected quantiles under a uniform distribution.
 Meant as a more robust alternative to the "inflation factor" common in the GWAS literature, which compares median values only and uses all p-values (not just null p-values).
-Our signed RMSD, to correspond with the inflaction factor, includes a sign that depends on the median null p-value:
-Positive if this median is \verb{<= 0.5} (corresponds with test statistic inflation), negative otherwise (test statistic deflation).
+Our signed RMSD, to correspond with the inflation factor, includes a sign that depends on the median null p-value:
+positive if this median is \verb{<= 0.5} (corresponds with test statistic inflation), negative otherwise (test statistic deflation).
 Zero corresponds to uniform null p-values, which arises in expectation only if test statistics have their assumed null distribution (there is no misspecification, including inflation).
 }
 \examples{

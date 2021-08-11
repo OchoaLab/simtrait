@@ -6,6 +6,7 @@
 #' `beta_i` is the causal coefficient,
 #' and `sigma_sq` is the trait variance scale.
 #' These are all assumed to be true parameters (not estimated).
+#' These per-locus heritabilities equal per-locus effect sizes divided by `sigma_sq`.
 #'
 #' @param p_anc The ancestral allele frequency vector.
 #' @param causal_coeffs The vector of causal coefficients.

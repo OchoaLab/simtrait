@@ -17,10 +17,11 @@ If \code{FALSE}, any missing values in either \code{x} or \code{y} result in \co
 Passed to \code{\link[=mean]{mean()}}, see that for more info.}
 }
 \value{
-the square root of the mean square difference between \code{x} and \code{y}, after removing \code{NA} comparisons.
+the square root of the mean square difference between \code{x} and \code{y}, after removing \code{NA} comparisons (cases where either is \code{NA}).
 }
 \description{
-Calculates the standard distance between two vectors \code{x} and \code{y}, ignoring \code{NA} values by default when calculating the mean squares.
+Calculates the euclidean distance between two vectors \code{x} and \code{y} divided by the square root of the lengths of the vectors.
+\code{NA} values are ignored by default when calculating the mean squares (so the denominator is the number of non-\code{NA} differences).
 }
 \examples{
 x <- rnorm(10)

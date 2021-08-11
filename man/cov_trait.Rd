@@ -8,7 +8,6 @@ cov_trait(kinship, herit, sigma_sq = 1)
 }
 \arguments{
 \item{kinship}{The \code{n}-by-\code{n} kinship matrix of the individuals.
-This may be the true matrix of the genotype simulation or a good estimate from \code{\link[popkin:popkin]{popkin::popkin()}}.
 These values should be scaled such that an outbred individual has 1/2 self-kinship, the parent-child relationship is 1/4, etc (which is half the values sometimes defined for kinship).}
 
 \item{herit}{The heritability (proportion of trait variance due to genetics).}
@@ -28,10 +27,14 @@ Below there are \code{n} individuals.
 \examples{
 # create a dummy kinship matrix
 kinship <- matrix(
-             data = c(0.6,0.1,0, 0.1,0.6,0.1, 0,0.1,0.6),
-             nrow = 3,
-             byrow = TRUE
-             )
+    data = c(
+        0.6, 0.1, 0.0,
+        0.1, 0.6, 0.1,
+        0.0, 0.1, 0.6
+    ),
+    nrow = 3,
+    byrow = TRUE
+)
 # covariance of simulated traits
 V <- cov_trait(kinship = kinship, herit = 0.8)
 

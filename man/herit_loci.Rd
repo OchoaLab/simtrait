@@ -30,6 +30,7 @@ where \code{p_i} is the ancestral allele frequency,
 \code{beta_i} is the causal coefficient,
 and \code{sigma_sq} is the trait variance scale.
 These are all assumed to be true parameters (not estimated).
+These per-locus heritabilities equal per-locus effect sizes divided by \code{sigma_sq}.
 }
 \examples{
 # create toy random data

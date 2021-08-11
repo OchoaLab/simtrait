@@ -9,7 +9,6 @@
 #' @param kinship The `n`-by-`n` kinship matrix of the individuals to simulate from.
 #' @param herit The desired heritability (proportion of trait variance due to genetics).
 #' @param mu The desired parametric mean value of the trait (default zero).
-#' The sample mean of the trait will not be exactly zero, but instead have an expectation of `mu` (with potentially large variance depending on the kinship matrix and the heritability).
 #' @param sigma_sq The desired parametric variance factor of the trait (default 1).
 #' This factor corresponds to the variance of an outbred individual (see [cov_trait()]).
 #' @param tol Tolerance factor for an internal test of positive semi-definiteness of the trait covariance matrix.
@@ -22,12 +21,15 @@
 #' # create a dummy kinship matrix
 #' # make sure it is positive definite!
 #' kinship <- matrix(
-#'              data = c(0.6,0.1,0, 0.1,0.5,0, 0,0,0.5),
-#'              nrow = 3,
-#'              byrow = TRUE
-#'              )
+#'     data = c(
+#'         0.6, 0.1, 0.0,
+#'         0.1, 0.5, 0.0,
+#'         0.0, 0.0, 0.5
+#'     ),
+#'     nrow = 3
+#' )
 #' # draw simulated traits (matrix)
-#' traits <- sim_trait_mvn( rep = 10, kinship = kinship, herit = 0.8)
+#' traits <- sim_trait_mvn( rep = 10, kinship = kinship, herit = 0.8 )
 #' traits
 #' 
 #' @export

@@ -332,9 +332,9 @@ test_that("sim_trait works", {
         sum( herit_loci( p_anc_hat[ causal_indexes ], causal_coeffs, sigma_sq = 1 - mean(kinship) ) )
     )
 
-    # test const_herit_loci version
+    # test fes version
     # suffices to test p_anc version
-    obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, const_herit_loci = TRUE)
+    obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, fes = TRUE)
     trait <- obj$trait # trait vector
     causal_indexes <- obj$causal_indexes # causal locus indeces
     causal_coeffs <- obj$causal_coeffs # locus effect size vector

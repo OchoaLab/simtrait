@@ -11,10 +11,10 @@ allele_freqs(X, loci_on_cols = FALSE, fold = FALSE, m_chunk_max = 1000)
 Missing values are ignored in averages.}
 
 \item{loci_on_cols}{If \code{TRUE}, \code{X} has loci on columns and individuals on rows; if false (the default), loci are on rows and individuals on columns.
-If \code{X} is a BEDMatrix object, columns are averaged to yield locus allele frequencies (regardless of the value of \code{loci_on_cols}).}
+If \code{X} is a BEDMatrix object, code assumes loci on columns (\code{loci_on_cols} is ignored).}
 
 \item{fold}{If \code{TRUE}, allele frequencies are converted to minor allele frequencies.
-Default is to return allele frequencies for the alternative allele, as given in \code{X} (regardless of whether it is the minor or major allele).}
+Default is to return frequencies for the given allele counts in \code{X} (regardless of whether it is the minor or major allele).}
 
 \item{m_chunk_max}{BEDMatrix-specific, sets the maximum number of loci to process at the time.
 If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).}
@@ -24,7 +24,7 @@ The vector of allele frequencies, one per locus.
 Names are set to the locus names, if present.
 }
 \description{
-On a regular matrix, this is essentially a wrapper for colMeans or rowMeans depending on \code{loci_on_cols}.
+On a regular matrix, this is essentially a wrapper for \code{\link[=colMeans]{colMeans()}} or \code{\link[=rowMeans]{rowMeans()}} depending on \code{loci_on_cols}.
 On a BEDMatrix object, the locus allele frequencies are computed keeping memory usage low.
 }
 \examples{
