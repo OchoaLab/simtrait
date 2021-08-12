@@ -164,7 +164,7 @@ V_rc_freq <- cov(Y_rc_freq)
 First let's verify that the mean is as expected.
 Below the red line marks the desired mean.
 ```{r, fig.width = 3, fig.align = 'center'}
-par(mgp = c(2, 0.5, 0))
+par_orig <- par(mgp = c(2, 0.5, 0))
 # reduce margins from default
 par(mar = c(3.5, 3, 0, 0) + 0.2)
 # visualize distribution
@@ -177,6 +177,7 @@ boxplot(
 )
 # red line marks expected mean
 abline(h = mu, col = 'red')
+par( par_orig ) # reset `par`
 ```
 
 Now let's visualize the covariance matrices using `plot_popkin` from the `popkin` package.
@@ -225,7 +226,7 @@ First let's verify the means again.
 Recall the red line marks the desired mean.
 Below the original sample (simulated using the true `p_anc`) is shown first as "RC freq", while the new sample based on the kinship matrix is "RC kinship":
 ```{r, fig.width = 3, fig.align = 'center'}
-par(mgp = c(2, 0.5, 0))
+par_orig <- par(mgp = c(2, 0.5, 0))
 # reduce margins from default
 par(mar = c(3.5, 3, 0, 0) + 0.2)
 # visualize distribution
@@ -239,6 +240,7 @@ boxplot(
 )
 # red line marks expected mean
 abline(h = mu, col = 'red')
+par( par_orig ) # reset `par`
 ```
 
 Now we compare all three matrices:
@@ -278,7 +280,7 @@ First let's verify the means again.
 Recall the red line marks the desired mean.
 The new sample is denoted as "MVN", and the other two are as in the previous sections (traits simulated from genotypes, using the true `p_anc` or with bias corrections from the kinship matrix):
 ```{r, fig.width = 4, fig.align = 'center'}
-par(mgp = c(2, 0.5, 0))
+par_orig <- par(mgp = c(2, 0.5, 0))
 # reduce margins from default
 par(mar = c(3.5, 3, 0, 0) + 0.2)
 # visualize distribution
@@ -293,6 +295,7 @@ boxplot(
 )
 # red line marks expected mean
 abline(h = mu, col = 'red')
+par( par_orig ) # reset `par`
 ```
 
 Now we compare all four covariance matrices:
@@ -354,7 +357,7 @@ First let's verify the means again.
 Recall the red line marks the desired mean.
 The new samples are labeled as "FES freq" and "FES kinship", and the first three are as in the previous sections (traits simulated from genotypes and the *random coefficients* (RC) model, using the true `p_anc` or with bias corrections from the kinship matrix, and the MVN traits):
 ```{r, fig.width = 6, fig.align = 'center'}
-par(mgp = c(2, 0.5, 0))
+par_orig <- par(mgp = c(2, 0.5, 0))
 # reduce margins from default
 par(mar = c(3.5, 3, 0, 0) + 0.2)
 # visualize distribution
@@ -371,6 +374,7 @@ boxplot(
 )
 # red line marks expected mean
 abline(h = mu, col = 'red')
+par( par_orig ) # reset `par`
 ```
 
 Now we compare all covariance matrices:

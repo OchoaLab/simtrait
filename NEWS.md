@@ -123,3 +123,10 @@
     - Removed `LazyData: true` (to avoid a new "NOTE" on CRAN).
     - Added GitHub links (`URL` and `BugReports`)
   - Fixed spelling in documentation.
+
+# simtrait 1.0.21 (2021-08-12)
+
+- CRAN resubmission
+- Added bioRxiv paper reference to description.
+- Reset `par()` in vignette examples.
+
