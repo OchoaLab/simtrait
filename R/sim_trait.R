@@ -279,7 +279,7 @@ sim_trait <- function(
         # length of E
         n_ind <- ncol(X)
         # draw noise
-        E <- stats::rnorm(n_ind, 0, (1 - herit) * sigma_sq ) # noise has mean zero but variance ((1-herit) * sigma_sq)
+        E <- stats::rnorm(n_ind, 0, sqrt( (1 - herit) * sigma_sq ) ) # noise has mean zero but variance ((1-herit) * sigma_sq)
         # NOTE by construction:
         # Cov(E) = (1-herit) * sigma_sq * I
     }

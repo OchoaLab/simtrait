@@ -130,3 +130,14 @@
 - Added bioRxiv paper reference to description.
 - Reset `par()` in vignette examples.
 
+# simtrait 1.0.21.9000 (2022-08-15)
+
+- Function `sim_trait` fixed an important bug resulting in misspecificed heritability!
+  - The previous buggy version:
+    - Non-genetic variance was misspecified, accidentally passing to `rnorm` the desired variance `(1 - herit) * sigma_sq` where the standard deviation (its square root) was required!
+    - The resulting effective heritability was given by the requested `herit` value by `herit / ( herit + (1-herit)^2 * sigma_sq )`.  If `sigma_sq = 1` (default), the effective heritability was always larger than desired!
+- Vignette updates
+  - Added a more detailed comparison between theoretical and empirical covariance matrices from simulations, to help assess the effect of the previous `sim_trait` bug and its fix.
+  - Removed `inbr_diag` in `plot_popkin` calls, which in this case made diagonal values larger (as they were larger than 1), among other minor adjustments.
+- Updated reference DOI to newest preprint
+- README now includes CRAN installation instructions alongside GitHub version.

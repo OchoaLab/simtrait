@@ -185,15 +185,17 @@ Since both matrices have large diagonals, we shrink them somewhat using `inbr_di
 
 ```{r, fig.width = 6, fig.height = 2.8, fig.align = 'center'}
 plot_popkin(
-    inbr_diag(list(V, V_rc_freq)),
+    list(V, V_rc_freq),
     titles = c('Theoretical', 'RC freq'),
     leg_title = 'Covariance',
+    panel_letters_adj = 0,
     # set margin for title (top is non-zero)
     mar = c(0, 2)
 )
 ```
 
 This plot verifies that the empirical covariance matches the theoretical expectation!
+
 
 ## Simulated trait without ancestral allele frequencies
 
@@ -246,9 +248,10 @@ par( par_orig ) # reset `par`
 Now we compare all three matrices:
 ```{r, fig.width = 7, fig.height = 2.35, fig.align = 'center'}
 plot_popkin(
-    inbr_diag(list(V, V_rc_freq, V_rc_kin)),
+    list(V, V_rc_freq, V_rc_kin),
     titles = c('Theoretical', 'RC freq', 'RC kinship'),
     leg_title = 'Covariance',
+    panel_letters_adj = 0,
     mar = c(0, 2)
 )
 ```
@@ -301,9 +304,10 @@ par( par_orig ) # reset `par`
 Now we compare all four covariance matrices:
 ```{r, fig.width = 7, fig.height = 2, fig.align = 'center'}
 plot_popkin(
-    inbr_diag(list(V, V_rc_freq, V_rc_kin, V_mvn)),
+    list(V, V_rc_freq, V_rc_kin, V_mvn),
     titles = c('Theoretical', 'RC freq', 'RC kinship', 'MVN'),
     leg_title = 'Covariance',
+    panel_letters_adj = 0,
     mar = c(0, 2),
     leg_width = 0.4
 )
@@ -380,16 +384,50 @@ par( par_orig ) # reset `par`
 Now we compare all covariance matrices:
 ```{r, fig.width = 7, fig.height = 4, fig.align = 'center'}
 plot_popkin(
-    inbr_diag( list( V, V_rc_freq, V_rc_kin, V_mvn, V_fes_freq, V_fes_kin ) ),
+    list( V, V_rc_freq, V_rc_kin, V_mvn, V_fes_freq, V_fes_kin ),
     titles = c('Theoretical', 'RC freq', 'RC kinship', 'MVN', 'FES freq', 'FES kinship'),
     leg_title = 'Covariance',
+    panel_letters_adj = 0,
     mar = c(0, 2),
     leg_width = 0.4,
     layout_rows = 2
 )
 ```
+These plots show again good agreement between the sample covariance matrix of traits simulated under this "fixed effect sizes" model ("FES freq" and "FES kinship") and the desired "theoretical" covariance matrix and first three simulations.
 
-This plot shows again good agreement between the sample covariance matrix of traits simulated under this "fixed effect sizes" model ("FES freq" and "FES kinship") and the desired "theoretical" covariance matrix and first three simulations.
+In closing the simulation results, let's make more direct and detailed comparisons between the empirical covariances matrices and the desired theoretical one:
+```{r, fig.width = 7, fig.height = 5, fig.align = 'center'}
+par_orig <- par(mgp = c(2, 0.5, 0))
+# create multipanel figure
+par( mfrow = c(2, 3) )
+# reduce margins from default
+par(mar = c(3.5, 3, 0, 0) + 0.2)
+plot( V, V_rc_freq, xlab = 'Theoretical Cov', ylab = 'RC freq Cov' )
+abline( 0, 1, lty = 2, col = 'gray' )
+plot( V, V_rc_kin, xlab = 'Theoretical Cov', ylab = 'RC kinship Cov' )
+abline( 0, 1, lty = 2, col = 'gray' )
+plot( V, V_mvn, xlab = 'Theoretical Cov', ylab = 'MVN Cov' )
+abline( 0, 1, lty = 2, col = 'gray' )
+plot( V, V_fes_freq, xlab = 'Theoretical Cov', ylab = 'FES freq Cov' )
+abline( 0, 1, lty = 2, col = 'gray' )
+plot( V, V_fes_kin, xlab = 'Theoretical Cov', ylab = 'FES kinship Cov' )
+abline( 0, 1, lty = 2, col = 'gray' )
+barplot(
+    c(
+        rmsd( V, V_rc_freq ),
+        rmsd( V, V_rc_kin ),
+        rmsd( V, V_mvn ),
+        rmsd( V, V_fes_freq ),
+        rmsd( V, V_fes_kin )
+    ),
+    names.arg = c('RC freq', 'RC kin', 'MVN', 'FES freq', 'FES kin'),
+    ylab = 'RMSD from Theoretical',
+    las = 3
+)
+par( par_orig ) # reset `par`
+```
+Empirical covariance matrices estimate the theoretical one without bias when ancestral allele frequencies are used ("freq" versions) and with the MVN model, all of which have a comparable small mean squared error (RMSD in figure above).
+However, use of estimated allele frequencies, despite the necessary kinship bias correction ("kin" versions), still resulted in empirical covariances that are upwardly biased estimators of the desired theoretical values, which is slight for "RC kin" but severe for "FES kin".
 
 # Model
 

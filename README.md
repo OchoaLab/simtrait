@@ -11,18 +11,16 @@ See the package `popkin` for accurate kinship estimation.
 
 ## Installation
 
-<!-- 
 You can install the released version of simtrait from [CRAN](https://CRAN.R-project.org) with:
 ``` r
 install.packages("simtrait")
-``` 
--->
+```
 
 Install the latest development version from GitHub:
 ```R
 install.packages("devtools") # if needed
 library(devtools)
-install_github("OchoaLab/simtrait", build_opts = c())
+install_github("OchoaLab/simtrait", build_vignettes = TRUE)
 ```
 
 You can see the package vignette, which has more detailed documentation, by typing this into your R session:
