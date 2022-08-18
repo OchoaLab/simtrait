@@ -4,7 +4,16 @@
 \alias{sim_trait_mvn}
 \title{Simulate traits from a kinship matrix under the infinitesimal model}
 \usage{
-sim_trait_mvn(rep, kinship, herit, mu = 0, sigma_sq = 1, tol = 1e-06)
+sim_trait_mvn(
+  rep,
+  kinship,
+  herit,
+  mu = 0,
+  sigma_sq = 1,
+  labs = NULL,
+  labs_sigma_sq = NULL,
+  tol = 1e-06
+)
 }
 \arguments{
 \item{rep}{The number of replicate traits to simulate.
@@ -14,10 +23,21 @@ Simulating all you need at once is more efficient than simulating each separatel
 
 \item{herit}{The desired heritability (proportion of trait variance due to genetics).}
 
-\item{mu}{The desired parametric mean value of the trait (default zero).}
+\item{mu}{The desired parametric mean value of the trait (scalar, default 0).}
 
-\item{sigma_sq}{The desired parametric variance factor of the trait (default 1).
-This factor corresponds to the variance of an outbred individual (see \code{\link[=cov_trait]{cov_trait()}}).}
+\item{sigma_sq}{The desired parametric variance factor of the trait (scalar, default 1).
+Corresponds to the variance of an outbred individual.}
+
+\item{labs}{Optional labels assigning individuals to groups, to simulate group effects.
+If vector, length must be number of individuals.
+If matrix, individuals must be along rows, and levels along columns (for multiple levels of group effects).
+The levels are not required to be nested (as the name may falsely imply).
+Values can be numeric or strings, simply assigning the same values to individuals in the same group.
+If this is non-\code{NULL}, then \code{labs_sigma_sq} must also be given!}
+
+\item{labs_sigma_sq}{Optional vector of group effect variances, one value for each level given in \code{labs} (a scalar if \code{labs} is a vector, otherwise its length should be the number of columns of \code{labs}).
+Ignored unless \code{labs} is also given.
+As these are variance components, each value must be non-negative and \code{sum(labs_sigma_sq) + herit <= 1} is required!}
 
 \item{tol}{Tolerance factor for an internal test of positive semi-definiteness of the trait covariance matrix.
 Procedure fails if any eigenvalues are smaller than \code{-tol} times the absolute value of the largest eigenvalue.
@@ -46,4 +66,7 @@ kinship <- matrix(
 traits <- sim_trait_mvn( rep = 10, kinship = kinship, herit = 0.8 )
 traits
 
+}
+\seealso{
+\code{\link[=cov_trait]{cov_trait()}}, \code{\link[=sim_trait]{sim_trait()}}
 }

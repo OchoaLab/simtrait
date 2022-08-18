@@ -26,7 +26,16 @@
 #' Either this or `p_anc` must be specified.
 #' @param mu The desired parametric mean value of the trait (scalar, default 0).
 #' @param sigma_sq The desired parametric variance factor of the trait (scalar, default 1).
-#' Corresponds to the variance of an outbred individual (see [cov_trait()]).
+#' Corresponds to the variance of an outbred individual.
+#' @param labs Optional labels assigning individuals to groups, to simulate group effects.
+#' If vector, length must be number of individuals.
+#' If matrix, individuals must be along rows, and levels along columns (for multiple levels of group effects).
+#' The levels are not required to be nested (as the name may falsely imply).
+#' Values can be numeric or strings, simply assigning the same values to individuals in the same group.
+#' If this is non-`NULL`, then `labs_sigma_sq` must also be given!
+#' @param labs_sigma_sq Optional vector of group effect variances, one value for each level given in `labs` (a scalar if `labs` is a vector, otherwise its length should be the number of columns of `labs`).
+#' Ignored unless `labs` is also given.
+#' As these are variance components, each value must be non-negative and `sum(labs_sigma_sq) + herit <= 1` is required!
 #' @param maf_cut The optional minimum allele frequency threshold (default `NA`, no threshold).
 #' This prevents rare alleles from being causal in the simulation.
 #' Threshold is applied to the *sample* allele frequencies and not their true parametric values (`p_anc`), even if these are available.
@@ -44,6 +53,7 @@
 #' - `trait`: length-`n` vector of the simulated trait
 #' - `causal_indexes`: length-`m_causal` vector of causal locus indexes
 #' - `causal_coeffs`: length-`m_causal` vector of coefficients at the causal loci
+#' - `group_effects`: length-`n` vector of simulated group effects, or 0 (scalar) if not simulated
 #' 
 #' However, if `herit = 0` then `causal_indexes` and `causal_coeffs` will have zero length regardless of `m_causal`.
 #'
@@ -82,15 +92,20 @@
 #' # either model, can apply to real data by replacing `p_anc` with `kinship`
 #' obj <- sim_trait(X = X, m_causal = 2, herit = herit, kinship = kinship)
 #'
+#' @seealso
+#' [cov_trait()], [sim_trait_mvn()]
+#' 
 #' @export
 sim_trait <- function(
                       X,
                       m_causal,
                       herit,
-                      p_anc,
-                      kinship,
+                      p_anc = NULL,
+                      kinship = NULL,
                       mu = 0,
                       sigma_sq = 1,
+                      labs = NULL,
+                      labs_sigma_sq = NULL,
                       maf_cut = NA,
                       loci_on_cols = FALSE,
                       m_chunk_max = 1000,
@@ -103,7 +118,7 @@ sim_trait <- function(
         stop('the number of causal loci `m_causal` is required!')
     if (missing(herit))
         stop('the heritability `herit` is required!')
-    if (missing(p_anc) && missing(kinship))
+    if (is.null(p_anc) && is.null(kinship))
         stop('either the true ancestral allele frequency vector `p_anc` or `kinship` are required!')
     
     # other checks
@@ -126,12 +141,16 @@ sim_trait <- function(
 
     # get m_loci to check m_causal before more heavy computations
     m_loci <- if (loci_on_cols) ncol(X) else nrow(X)
+    n_ind <- if (loci_on_cols) nrow(X) else ncol(X)
     if (m_causal > m_loci)
         stop('m_causal (', m_causal, ') exceeds the number of loci (', m_loci, ')!')
     # compare to p_anc too if it was provided
-    if ( !missing( p_anc ) && length( p_anc ) != m_loci )
+    if ( !is.null( p_anc ) && length( p_anc ) != m_loci )
         stop( '`p_anc` length (', length( p_anc ) , ') does not equal `m_loci` (', m_loci, ')' )
-    
+
+    # check labs with this shared function
+    labs <- check_labs( labs, labs_sigma_sq, n_ind, herit )
+
     if (herit == 0) {
         # lots of work can be avoided in this edge case
         # the index and coefficients vectors are empty
@@ -173,7 +192,7 @@ sim_trait <- function(
         # subset data to consider causal loci only
         if ( !is.null( p_anc_hat ) ) # if we had this already
             p_anc_hat <- p_anc_hat[ causal_indexes ]
-        if ( !missing( p_anc ) )
+        if ( !is.null( p_anc ) )
             p_anc <- p_anc[ causal_indexes ] # subset if available
         # the subset of causal data
         # (drop = FALSE for keeping as a matrix even if m_causal == 1)
@@ -192,7 +211,7 @@ sim_trait <- function(
         # this will be faster now, if done on the subset of causal genotypes only
 
         # these are used to select loci, or to simulate from real genotypes
-        if ( missing( p_anc ) && is.null( p_anc_hat ) ) {
+        if ( is.null( p_anc ) && is.null( p_anc_hat ) ) {
             # compute marginal allele frequencies
             p_anc_hat <- allele_freqs(
                 X,
@@ -205,7 +224,7 @@ sim_trait <- function(
         ### KINSHIP ###
         ###############
         
-        if (!missing(kinship)) {
+        if (!is.null(kinship)) {
             # precompute some things when this is present
             mean_kinship <- mean(kinship)
         }
@@ -216,10 +235,10 @@ sim_trait <- function(
         
         # to scale causal_coeffs to give correct heritability, we need to estimate the pq = p(1-p) vector
         # calculate pq = p_anc * (1 - p_anc) in one of two ways
-        if ( !missing(p_anc) ) { # this takes precedence, it should be most accurate
+        if ( !is.null(p_anc) ) { # this takes precedence, it should be most accurate
             # direct calculation
             pq <- p_anc * (1 - p_anc)
-        } else if ( !missing(kinship) ) {
+        } else if ( !is.null(kinship) ) {
             # indirect, infer from genotypes and mean kinship
             # recall E[ p_anc_hat * (1 - p_anc_hat) ] = pq * (1 - mean_kinship), so we solve for pq:
             pq <- p_anc_hat * (1 - p_anc_hat) / (1 - mean_kinship)
@@ -260,7 +279,7 @@ sim_trait <- function(
         ##############
 
         # calculate the mean of the genetic effect
-        if ( !missing( p_anc ) ) {
+        if ( !is.null( p_anc ) ) {
             # parametric solution
             muXB <- 2 * drop( causal_coeffs %*% p_anc )
         } else {
@@ -276,21 +295,41 @@ sim_trait <- function(
     if (herit == 1) {
         E <- 0 # in this edge case there is no "noise", just genotype effects
     } else {
-        # length of E
-        n_ind <- ncol(X)
         # draw noise
         E <- stats::rnorm(n_ind, 0, sqrt( (1 - herit) * sigma_sq ) ) # noise has mean zero but variance ((1-herit) * sigma_sq)
         # NOTE by construction:
         # Cov(E) = (1-herit) * sigma_sq * I
     }
 
+    # group effects
+    group_effects <- 0
+    if ( !is.null( labs ) ) {
+        n_labs <- ncol( labs )
+        for ( i in 1L : n_labs ) {
+            # process level i
+            labs_i <- labs[ , i ]
+            labs_i_sigma_sq <- labs_sigma_sq[ i ]
+            # unique groups, implicitly numbered by order of appearance
+            groups_i <- unique( labs_i )
+            # map individuals to their groups by index
+            group_indexes_i <- match( labs_i, groups_i )
+            # draw their random effects
+            group_eff_i <- stats::rnorm( length( groups_i ), 0, sqrt( labs_i_sigma_sq * sigma_sq ) )
+            # distribute the effects from groups to individuals
+            group_effects_i <- group_eff_i[ group_indexes_i ]
+            # add to running sum
+            group_effects <- group_effects + group_effects_i
+        }
+    }
+    
     # lastly, here's the trait:
-    trait <- G + E
+    trait <- G + E + group_effects
 
     # return all these things
     list(
         trait = trait,
         causal_indexes = causal_indexes,
-        causal_coeffs = causal_coeffs
+        causal_coeffs = causal_coeffs,
+        group_effects = group_effects
     )
 }

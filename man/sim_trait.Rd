@@ -8,10 +8,12 @@ sim_trait(
   X,
   m_causal,
   herit,
-  p_anc,
-  kinship,
+  p_anc = NULL,
+  kinship = NULL,
   mu = 0,
   sigma_sq = 1,
+  labs = NULL,
+  labs_sigma_sq = NULL,
   maf_cut = NA,
   loci_on_cols = FALSE,
   m_chunk_max = 1000,
@@ -38,7 +40,18 @@ Either this or \code{p_anc} must be specified.}
 \item{mu}{The desired parametric mean value of the trait (scalar, default 0).}
 
 \item{sigma_sq}{The desired parametric variance factor of the trait (scalar, default 1).
-Corresponds to the variance of an outbred individual (see \code{\link[=cov_trait]{cov_trait()}}).}
+Corresponds to the variance of an outbred individual.}
+
+\item{labs}{Optional labels assigning individuals to groups, to simulate group effects.
+If vector, length must be number of individuals.
+If matrix, individuals must be along rows, and levels along columns (for multiple levels of group effects).
+The levels are not required to be nested (as the name may falsely imply).
+Values can be numeric or strings, simply assigning the same values to individuals in the same group.
+If this is non-\code{NULL}, then \code{labs_sigma_sq} must also be given!}
+
+\item{labs_sigma_sq}{Optional vector of group effect variances, one value for each level given in \code{labs} (a scalar if \code{labs} is a vector, otherwise its length should be the number of columns of \code{labs}).
+Ignored unless \code{labs} is also given.
+As these are variance components, each value must be non-negative and \code{sum(labs_sigma_sq) + herit <= 1} is required!}
 
 \item{maf_cut}{The optional minimum allele frequency threshold (default \code{NA}, no threshold).
 This prevents rare alleles from being causal in the simulation.
@@ -61,6 +74,7 @@ A named list containing:
 \item \code{trait}: length-\code{n} vector of the simulated trait
 \item \code{causal_indexes}: length-\code{m_causal} vector of causal locus indexes
 \item \code{causal_coeffs}: length-\code{m_causal} vector of coefficients at the causal loci
+\item \code{group_effects}: length-\code{n} vector of simulated group effects, or 0 (scalar) if not simulated
 }
 
 However, if \code{herit = 0} then \code{causal_indexes} and \code{causal_coeffs} will have zero length regardless of \code{m_causal}.
@@ -115,4 +129,7 @@ obj <- sim_trait(X = X, m_causal = 2, herit = herit, p_anc = p_anc, fes = TRUE)
 # either model, can apply to real data by replacing `p_anc` with `kinship`
 obj <- sim_trait(X = X, m_causal = 2, herit = herit, kinship = kinship)
 
+}
+\seealso{
+\code{\link[=cov_trait]{cov_trait()}}, \code{\link[=sim_trait_mvn]{sim_trait_mvn()}}
 }

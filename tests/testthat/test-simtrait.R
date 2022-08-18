@@ -120,6 +120,40 @@ test_that("cov_trait works", {
     expect_true( all(V <= 2) )
     # V should be symmetric (since kinship is)
     expect_equal( V, t(V) )
+
+    # repeat with group effects
+    # labels for group effects
+    labs1 <- sample( c('a', 'b', 'c'), n, replace = TRUE )
+    labs2 <- sample( c('a', 'z'), n, replace = TRUE )
+    labs <- cbind( labs1, labs2 )
+    # reduce heritability to have not tiny group variances
+    herit <- 0.3
+    labs_sigma_sq1 <- 0.3
+    labs_sigma_sq2 <- 0.2
+    labs_sigma_sq <- c( labs_sigma_sq1, labs_sigma_sq2 )
+    
+    # test single level version
+    expect_silent(
+        V <- cov_trait( kinship = kinship, herit = herit, labs = labs1, labs_sigma_sq = labs_sigma_sq1 )
+    )
+    # all values should be positive
+    expect_true( all(V >= 0) )
+    # and bounded above by 2 (due to kinship scaling)
+    expect_true( all(V <= 2) )
+    # V should be symmetric (since kinship is)
+    expect_equal( V, t(V) )
+    
+    # test multi-level version
+    expect_silent(
+        V <- cov_trait( kinship = kinship, herit = herit, labs = labs, labs_sigma_sq = labs_sigma_sq )
+    )
+    # all values should be positive
+    expect_true( all(V >= 0) )
+    # and bounded above by 2 (due to kinship scaling)
+    expect_true( all(V <= 2) )
+    # V should be symmetric (since kinship is)
+    expect_equal( V, t(V) )
+    
 })
 
 test_that( "herit_loci works", {
@@ -356,7 +390,73 @@ test_that("sim_trait works", {
         herit_loci( p_anc[ causal_indexes ], causal_coeffs ),
         rep.int( herit / m_causal, m_causal ),
     )
+
+    # labels for group effects
+    labs1 <- sample( c('a', 'b', 'c'), n, replace = TRUE )
+    labs2 <- sample( c('a', 'z'), n, replace = TRUE )
+    labs <- cbind( labs1, labs2 )
+    # reduce heritability to have not tiny group variances
+    herit <- 0.3
+    labs_sigma_sq1 <- 0.3
+    labs_sigma_sq2 <- 0.2
+    labs_sigma_sq <- c( labs_sigma_sq1, labs_sigma_sq2 )
     
+    # version with group effects
+    # for simplicity use p_anc version
+    # pass labs without their variances
+    expect_error( sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, labs = labs1 ) )
+    # variances of wrong length
+    expect_error( sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, labs = labs1, labs_sigma_sq = labs_sigma_sq ) )
+    # excessive variance value ( herit + labs_sigma_sq > 1 )
+    expect_error( sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, labs = labs1, labs_sigma_sq = 0.8 ) )
+
+    # a complete run, one level
+    expect_silent(
+        obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, labs = labs1, labs_sigma_sq = labs_sigma_sq1 )
+    )
+    trait <- obj$trait # trait vector
+    causal_indexes <- obj$causal_indexes # causal locus indeces
+    causal_coeffs <- obj$causal_coeffs # locus effect size vector
+    group_effects <- obj$group_effects # new!
+    # test trait
+    expect_equal( length(trait), n) # length as expected
+    # test causal locus indeces
+    expect_equal( length(causal_indexes), m_causal ) # length as expected
+    expect_true( all(causal_indexes <= m) ) # range as expected
+    expect_true( all(causal_indexes >= 1) ) # range as expected
+    # test effect sizes
+    expect_equal( length(causal_coeffs), m_causal) # length as expected
+    # verify heritability, exactly given when p_anc is known
+    expect_equal(
+        herit,
+        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs ) )
+    )
+    # test separate group effects
+    expect_equal( length( group_effects ), n )
+    
+    # a complete run, two levels
+    expect_silent(
+        obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, labs = labs, labs_sigma_sq = labs_sigma_sq )
+    )
+    trait <- obj$trait # trait vector
+    causal_indexes <- obj$causal_indexes # causal locus indeces
+    causal_coeffs <- obj$causal_coeffs # locus effect size vector
+    group_effects <- obj$group_effects # new!
+    # test trait
+    expect_equal( length(trait), n) # length as expected
+    # test causal locus indeces
+    expect_equal( length(causal_indexes), m_causal ) # length as expected
+    expect_true( all(causal_indexes <= m) ) # range as expected
+    expect_true( all(causal_indexes >= 1) ) # range as expected
+    # test effect sizes
+    expect_equal( length(causal_coeffs), m_causal) # length as expected
+    # verify heritability, exactly given when p_anc is known
+    expect_equal(
+        herit,
+        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs ) )
+    )
+    # test separate group effects
+    expect_equal( length( group_effects ), n )
 })
 
 test_that( "sqrt_matrix works", {
@@ -404,6 +504,46 @@ test_that("sim_trait_mvn works", {
             rep = rep,
             kinship = kinship,
             herit = herit
+        )
+    )
+    expect_true( is.matrix( traits ) )
+    expect_true( is.numeric( traits ) )
+    expect_equal( nrow( traits ), rep )
+    expect_equal( ncol( traits ), n )
+
+    # labels for group effects
+    labs1 <- sample( c('a', 'b', 'c'), n, replace = TRUE )
+    labs2 <- sample( c('a', 'z'), n, replace = TRUE )
+    labs <- cbind( labs1, labs2 )
+    # reduce heritability to have not tiny group variances
+    herit <- 0.3
+    labs_sigma_sq1 <- 0.3
+    labs_sigma_sq2 <- 0.2
+    labs_sigma_sq <- c( labs_sigma_sq1, labs_sigma_sq2 )
+
+    # test one-level version
+    expect_silent(
+        traits <- sim_trait_mvn(
+            rep = rep,
+            kinship = kinship,
+            herit = herit,
+            labs = labs1,
+            labs_sigma_sq = labs_sigma_sq1
+        )
+    )
+    expect_true( is.matrix( traits ) )
+    expect_true( is.numeric( traits ) )
+    expect_equal( nrow( traits ), rep )
+    expect_equal( ncol( traits ), n )
+
+    # test two-level version
+    expect_silent(
+        traits <- sim_trait_mvn(
+            rep = rep,
+            kinship = kinship,
+            herit = herit,
+            labs = labs,
+            labs_sigma_sq = labs_sigma_sq
         )
     )
     expect_true( is.matrix( traits ) )

@@ -4,16 +4,27 @@
 \alias{cov_trait}
 \title{The model covariance matrix of the trait}
 \usage{
-cov_trait(kinship, herit, sigma_sq = 1)
+cov_trait(kinship, herit, sigma_sq = 1, labs = NULL, labs_sigma_sq = NULL)
 }
 \arguments{
 \item{kinship}{The \code{n}-by-\code{n} kinship matrix of the individuals.
 These values should be scaled such that an outbred individual has 1/2 self-kinship, the parent-child relationship is 1/4, etc (which is half the values sometimes defined for kinship).}
 
-\item{herit}{The heritability (proportion of trait variance due to genetics).}
+\item{herit}{The desired heritability (proportion of trait variance due to genetics).}
 
-\item{sigma_sq}{Overall variance multiplicative factor (default 1).
-This factor corresponds to the variance of an outbred individual.}
+\item{sigma_sq}{The desired parametric variance factor of the trait (scalar, default 1).
+Corresponds to the variance of an outbred individual.}
+
+\item{labs}{Optional labels assigning individuals to groups, to simulate group effects.
+If vector, length must be number of individuals.
+If matrix, individuals must be along rows, and levels along columns (for multiple levels of group effects).
+The levels are not required to be nested (as the name may falsely imply).
+Values can be numeric or strings, simply assigning the same values to individuals in the same group.
+If this is non-\code{NULL}, then \code{labs_sigma_sq} must also be given!}
+
+\item{labs_sigma_sq}{Optional vector of group effect variances, one value for each level given in \code{labs} (a scalar if \code{labs} is a vector, otherwise its length should be the number of columns of \code{labs}).
+Ignored unless \code{labs} is also given.
+As these are variance components, each value must be non-negative and \code{sum(labs_sigma_sq) + herit <= 1} is required!}
 }
 \value{
 The \code{n}-by-\code{n} trait covariance matrix equal to
@@ -38,4 +49,7 @@ kinship <- matrix(
 # covariance of simulated traits
 V <- cov_trait(kinship = kinship, herit = 0.8)
 
+}
+\seealso{
+\code{\link[=sim_trait]{sim_trait()}}, \code{\link[=sim_trait_mvn]{sim_trait_mvn()}}
 }

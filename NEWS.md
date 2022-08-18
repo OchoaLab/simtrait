@@ -141,3 +141,10 @@
   - Removed `inbr_diag` in `plot_popkin` calls, which in this case made diagonal values larger (as they were larger than 1), among other minor adjustments.
 - Updated reference DOI to newest preprint
 - README now includes CRAN installation instructions alongside GitHub version.
+
+# simtrait 1.0.22.9000 (2022-08-17)
+
+- Functions `sim_trait`, `sim_trait_mvn`, and `cov_trait`: added parameters `labs` and `labs_sigma_sq` to simulate/model non-genetic group effects.
+  - Updated vignette to illustrate this new feature.
+  - Function `sim_trait` also now returns `group_effects` as one of the named elements of the return list.
+- Function `sim_trait` parameters `p_anc` and `kinship` now have default `NULL` values (used to not have default values), to facilitate scripting in cases that can be either simulated or real genotypes.
