@@ -39,4 +39,6 @@ pval_aucpr( pvals, causal_indexes )
 }
 \seealso{
 \code{\link[PRROC:pr.curve]{PRROC::pr.curve()}}, which is used internally by this function.
+
+\code{\link[=pval_power_calib]{pval_power_calib()}} for calibrated power calculations.
 }

@@ -8,8 +8,8 @@ pval_srmsd(pvals, causal_indexes, detailed = FALSE)
 }
 \arguments{
 \item{pvals}{The vector of association p-values to analyze.
-This function assumes all p-values are provided (a mix of null and alternative tests), which is subset using \code{causal_indexes} below.
-\code{NA} values are allowed in input, are removed in calculating the signed RMSD.
+This function assumes all p-values are provided (a mix of null and alternative tests).
+\code{NA} values are allowed in input and removed.
 Non-\code{NA} values outside of [0, 1] will trigger an error.}
 
 \item{causal_indexes}{The vector of causal indexes, whose p-values will be omitted.
@@ -52,4 +52,6 @@ pval_srmsd( pvals, causal_indexes )
 \code{\link[=rmsd]{rmsd()}} for the generic root-mean-square deviation function.
 
 \code{\link[=pval_infl]{pval_infl()}} for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
+
+\code{\link[=pval_type_1_err]{pval_type_1_err()}} for classical type I error rate calculations.
 }

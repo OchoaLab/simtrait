@@ -9,8 +9,8 @@ pval_infl(pvals, df = 1)
 \arguments{
 \item{pvals}{The vector of association p-values to analyze.
 This function assumes all p-values are provided (a mix of null and alternative tests).
-\code{NA} values are allowed in input, are removed in calculating the median.
-Non-\code{NA} values outside of [0,1] will trigger an error.}
+\code{NA} values are allowed in input and removed.
+Non-\code{NA} values outside of [0, 1] will trigger an error.}
 
 \item{df}{The degrees of freedom of the assumed chi-squared distribution (default 1).}
 }
@@ -31,4 +31,6 @@ pval_infl( pvals )
 }
 \seealso{
 \code{\link[=pval_srmsd]{pval_srmsd()}}, a more robust measure of null p-value accuracy, but which requires knowing the true causal loci.
+
+\code{\link[=pval_type_1_err]{pval_type_1_err()}} for classical type I error rate calculations.
 }

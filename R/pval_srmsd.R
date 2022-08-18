@@ -7,8 +7,8 @@
 #' Zero corresponds to uniform null p-values, which arises in expectation only if test statistics have their assumed null distribution (there is no misspecification, including inflation).
 #'
 #' @param pvals The vector of association p-values to analyze.
-#' This function assumes all p-values are provided (a mix of null and alternative tests), which is subset using `causal_indexes` below.
-#' `NA` values are allowed in input, are removed in calculating the signed RMSD.
+#' This function assumes all p-values are provided (a mix of null and alternative tests).
+#' `NA` values are allowed in input and removed.
 #' Non-`NA` values outside of \[0, 1\] will trigger an error.
 #' @param causal_indexes The vector of causal indexes, whose p-values will be omitted.
 #' Values of `causal_indexes` as returned by `sim_trait` work.
@@ -38,6 +38,8 @@
 #' [rmsd()] for the generic root-mean-square deviation function.
 #'
 #' [pval_infl()] for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
+#'
+#' [pval_type_1_err()] for classical type I error rate calculations.
 #'
 #' @export
 pval_srmsd <- function(pvals, causal_indexes, detailed = FALSE) {

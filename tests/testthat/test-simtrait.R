@@ -581,7 +581,7 @@ test_that( "rmsd works", {
     expect_equal( rmsd( x, y ), rmsd( y, x ) ) # transitivity
 })
 
-test_that( "pval_srmsd works", {
+test_that( "pval_srmsd, pval_type_1_err, pval_infl work", {
     # random data to test on
     n <- 10
     n_null <- 8 # must be strictly smaller than n for things to work
@@ -592,6 +592,8 @@ test_that( "pval_srmsd works", {
     pvals[ sample.int( n, n * p_miss ) ] <- NA
     # pick a few random ones to be causal (to be removed inside)
     causal_indexes <- sample.int( n, n - n_null )
+    
+    ### pval_srmsd
     
     # trigger failures on purpose
     # (missing arguments)
@@ -635,16 +637,37 @@ test_that( "pval_srmsd works", {
     expect_silent( srmsd <- pval_srmsd( pvals, causal_indexes = NULL ) )
     expect_equal( length( srmsd ), 1 )
     expect_true( !is.na( srmsd ) )
-})
 
-test_that( "pval_infl works", {
-    # random data to test on
-    n <- 10
-    p_miss <- 0.2 # add missingness too
-    # all p-values are uniform
-    pvals <- runif( n )
-    # select a random few to be NA
-    pvals[ sample.int( n, n * p_miss ) ] <- NA
+    ### pval_type_1_err
+    
+    # trigger failures on purpose
+    # (missing arguments)
+    expect_error( pval_type_1_err( ) )
+    expect_error( pval_type_1_err( pvals ) )
+    expect_error( pval_type_1_err( causal_indexes = causal_indexes ) )
+    # p-values out of range cause errors
+    expect_error( pval_type_1_err( c(pvals, -1), causal_indexes ) )
+    expect_error( pval_type_1_err( c(pvals, 10), causal_indexes ) )
+    # empty causal_indexes trigger a specific error
+    expect_error( pval_type_1_err( pvals, numeric(0) ) ) # NOTE: c() is NULL!
+    # and all loci being causal (no nulls) also triggers errors
+    expect_error( pval_type_1_err( pvals, 1:length(pvals) ) )
+
+    # now the successful run
+    expect_silent( type_1_err <- pval_type_1_err( pvals, causal_indexes ) )
+    expect_equal( length( type_1_err ), 1 )
+    expect_true( !is.na( type_1_err ) )
+    expect_true( type_1_err >= 0 )
+    expect_true( type_1_err <= 1 )
+    
+    # work with NULL version
+    expect_silent( type_1_err <- pval_type_1_err( pvals, causal_indexes = NULL ) )
+    expect_equal( length( type_1_err ), 1 )
+    expect_true( !is.na( type_1_err ) )
+    expect_true( type_1_err >= 0 )
+    expect_true( type_1_err <= 1 )
+
+    ### pval_infl
     
     # trigger failures on purpose
     # (missing arguments)
@@ -667,7 +690,7 @@ test_that( "pval_infl works", {
     expect_true( pval_infl( 0.6 ) < 1 )
 })
 
-test_that( "pval_aucpr works", {
+test_that( "pval_aucpr, pval_power_calib work", {
     # random data to test on
     n <- 10
     n_null <- 5 # must be strictly smaller than n for things to work
@@ -678,6 +701,8 @@ test_that( "pval_aucpr works", {
     # pick one of each class to be NA
     pvals[ causal_indexes ][1] <- NA
     pvals[ -causal_indexes ][1] <- NA
+
+    ### pval_aucpr
     
     # trigger failures on purpose
     # (missing arguments)
@@ -707,4 +732,27 @@ test_that( "pval_aucpr works", {
     expect_true( !is.na(auc) )
     expect_true( auc >= 0 )
     expect_true( auc <= 1 )
+
+    ### pval_power_calib
+
+    # trigger failures on purpose
+    # (missing arguments)
+    expect_error( pval_power_calib( ) )
+    expect_error( pval_power_calib( pvals ) )
+    expect_error( pval_power_calib( causal_indexes = causal_indexes ) )
+    # p-values out of range cause errors
+    expect_error( pval_power_calib( c(pvals, -1), causal_indexes ) )
+    expect_error( pval_power_calib( c(pvals, 10), causal_indexes ) )
+    # empty causal_indexes trigger a specific error
+    expect_error( pval_power_calib( pvals, c() ) )
+    # and all loci being causal (no nulls) also triggers errors
+    expect_error( pval_power_calib( pvals, 1:length(pvals) ) )
+
+    # now a successful case
+    expect_silent( power <- pval_power_calib( pvals, causal_indexes ) )
+    expect_equal( length(power), 1 )
+    expect_true( !is.na(power) )
+    expect_true( power >= 0 )
+    expect_true( power <= 1 )
+
 })

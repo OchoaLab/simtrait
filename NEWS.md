@@ -148,3 +148,7 @@
   - Updated vignette to illustrate this new feature.
   - Function `sim_trait` also now returns `group_effects` as one of the named elements of the return list.
 - Function `sim_trait` parameters `p_anc` and `kinship` now have default `NULL` values (used to not have default values), to facilitate scripting in cases that can be either simulated or real genotypes.
+
+# simtrait 1.0.23.9000 (2022-08-18)
+
+- Added functions `pval_type_1_err` and `pval_power_calib` for calculating type I error rates and calibrated power, respectively.
