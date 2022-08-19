@@ -667,6 +667,18 @@ test_that( "pval_srmsd, pval_type_1_err, pval_infl work", {
     expect_true( type_1_err >= 0 )
     expect_true( type_1_err <= 1 )
 
+    # a vector of alphas!
+    alpha <- c(1e-1, 1e-2, 1e-3)
+    expect_silent( type_1_err <- pval_type_1_err( pvals, causal_indexes, alpha = alpha ) )
+    expect_equal( length( type_1_err ), length( alpha ) )
+    expect_true( !anyNA( type_1_err ) )
+    expect_true( all( type_1_err >= 0 ) )
+    expect_true( all( type_1_err <= 1 ) )
+    # gives same answer
+    pvals_null_cum <- ecdf( pvals[ -causal_indexes ] )
+    type_1_err_ecdf <- pvals_null_cum( alpha )
+    expect_equal( type_1_err, type_1_err_ecdf )
+    
     ### pval_infl
     
     # trigger failures on purpose
@@ -755,4 +767,11 @@ test_that( "pval_aucpr, pval_power_calib work", {
     expect_true( power >= 0 )
     expect_true( power <= 1 )
 
+    # a vector of alphas!
+    alpha <- c(1e-1, 1e-2, 1e-3)
+    expect_silent( power <- pval_power_calib( pvals, causal_indexes, alpha ) )
+    expect_equal( length(power), length( alpha ) )
+    expect_true( !anyNA(power) )
+    expect_true( all( power >= 0 ) )
+    expect_true( all( power <= 1 ) )
 })

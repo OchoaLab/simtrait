@@ -18,7 +18,7 @@
 #' @seealso
 #' [pval_srmsd()], a more robust measure of null p-value accuracy, but which requires knowing the true causal loci.
 #' 
-#' [pval_type_1_err()] for classical type I error rate calculations.
+#' [pval_type_1_err()] for classical type I error rate estimates.
 #' 
 #' @export
 pval_infl <- function( pvals, df = 1 ) {

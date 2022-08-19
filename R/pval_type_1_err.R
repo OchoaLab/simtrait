@@ -1,18 +1,20 @@
-#' Calculate type I error rate
+#' Estimate type I error rate
 #'
-#' Given a significance level and p-values with known causal status, this function calculates the type I error rate, defined as the proportion of null p-values that are below or equal to the threshold.
+#' Given a significance level and p-values with known causal status, this function estimates the type I error rate, defined as the proportion of null p-values that are below or equal to the threshold.
+#' Note that these simple empirical estimates are likely to be zero unless the number of p-values is much larger than `1/alpha`.
 #'
 #' @inheritParams pval_srmsd
 #' @param alpha The desired significance level (default 0.05).
+#' May be a vector.
 #'
-#' @return The type I error rate
+#' @return The type I error rate estimates at each `alpha`
 #'
 #' @examples
 #' # simulate truly null p-values, which should be uniform
 #' pvals <- runif(10)
 #' # for toy example, take the first p-value to be truly causal (will be ignored below)
 #' causal_indexes <- 1
-#' # calculate desired measure
+#' # estimate desired measure
 #' pval_type_1_err( pvals, causal_indexes )
 #'
 #' @seealso
@@ -53,7 +55,7 @@ pval_type_1_err <- function( pvals, causal_indexes, alpha = 0.05 ) {
     }
 
     # this calculates the desired type I error rate
-    tie <- mean( pvals_null <= alpha, na.rm = TRUE )
+    tie <- sapply( alpha, function( x ) mean( pvals_null <= x, na.rm = TRUE ) )
     
     return( tie )
 }

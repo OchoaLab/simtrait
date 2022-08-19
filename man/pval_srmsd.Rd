@@ -53,5 +53,5 @@ pval_srmsd( pvals, causal_indexes )
 
 \code{\link[=pval_infl]{pval_infl()}} for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
 
-\code{\link[=pval_type_1_err]{pval_type_1_err()}} for classical type I error rate calculations.
+\code{\link[=pval_type_1_err]{pval_type_1_err()}} for classical type I error rate estimates.
 }

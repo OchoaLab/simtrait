@@ -28,7 +28,7 @@
 #' @seealso
 #' [PRROC::pr.curve()], which is used internally by this function.
 #'
-#' [pval_power_calib()] for calibrated power calculations.
+#' [pval_power_calib()] for calibrated power estimates.
 #' 
 #' @export
 pval_aucpr <- function(pvals, causal_indexes, curve = FALSE) {

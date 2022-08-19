@@ -1,21 +1,22 @@
-#' Calculate calibrated power
+#' Estimate calibrated power
 #'
-#' Given a significance level `alpha` and p-values with known causal status, this function calculates the calibrated power.
-#' First it determines the p-value threshold at which the desired type I error of `alpha` is achieved, then it uses this p-value threshold (not `alpha`) to calculate statistical power.
+#' Given a significance level `alpha` and p-values with known causal status, this function estimates the calibrated power.
+#' First it estimates the p-value threshold at which the desired type I error of `alpha` is achieved, then it uses this p-value threshold (not `alpha`) to estimate statistical power.
+#' Note that these simple empirical estimates are likely to be inaccurate unless the number of p-values is much larger than `1/alpha`.
 #'
 #' @inheritParams pval_type_1_err
-#' @param causal_indexes The vector of causal indexes, defining the true classes used for calibrated power calculation.
+#' @param causal_indexes The vector of causal indexes, defining the true classes used for calibrated power estimation.
 #' Values of `causal_indexes` as returned by `sim_trait` work.
 #' There must be at least one causal index and at least one non-causal case.
 #'
-#' @return The calibrated power
+#' @return The calibrated power estimates at each `alpha`
 #'
 #' @examples
 #' # simulate truly null p-values, which should be uniform
 #' pvals <- runif(10)
 #' # for toy example, take the first two p-values to be truly causal
 #' causal_indexes <- 1:2
-#' # calculate desired measure
+#' # estimate desired measure
 #' pval_power_calib( pvals, causal_indexes )
 #'
 #' @seealso
@@ -57,7 +58,7 @@ pval_power_calib <- function(pvals, causal_indexes, alpha = 0.05) {
     p_cut <- stats::quantile( pvals_nul, probs = alpha, na.rm = TRUE, names = FALSE )
     
     # now calculate power at that threshold
-    power <- mean( pvals_alt <= p_cut, na.rm = TRUE )
+    power <- sapply( p_cut, function( x ) mean( pvals_alt <= x, na.rm = TRUE ) )
     
     return( power )
 

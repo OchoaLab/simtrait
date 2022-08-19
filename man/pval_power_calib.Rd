@@ -2,7 +2,7 @@
 % Please edit documentation in R/pval_power_calib.R
 \name{pval_power_calib}
 \alias{pval_power_calib}
-\title{Calculate calibrated power}
+\title{Estimate calibrated power}
 \usage{
 pval_power_calib(pvals, causal_indexes, alpha = 0.05)
 }
@@ -12,25 +12,27 @@ This function assumes all p-values are provided (a mix of null and alternative t
 \code{NA} values are allowed in input and removed.
 Non-\code{NA} values outside of [0, 1] will trigger an error.}
 
-\item{causal_indexes}{The vector of causal indexes, defining the true classes used for calibrated power calculation.
+\item{causal_indexes}{The vector of causal indexes, defining the true classes used for calibrated power estimation.
 Values of \code{causal_indexes} as returned by \code{sim_trait} work.
 There must be at least one causal index and at least one non-causal case.}
 
-\item{alpha}{The desired significance level (default 0.05).}
+\item{alpha}{The desired significance level (default 0.05).
+May be a vector.}
 }
 \value{
-The calibrated power
+The calibrated power estimates at each \code{alpha}
 }
 \description{
-Given a significance level \code{alpha} and p-values with known causal status, this function calculates the calibrated power.
-First it determines the p-value threshold at which the desired type I error of \code{alpha} is achieved, then it uses this p-value threshold (not \code{alpha}) to calculate statistical power.
+Given a significance level \code{alpha} and p-values with known causal status, this function estimates the calibrated power.
+First it estimates the p-value threshold at which the desired type I error of \code{alpha} is achieved, then it uses this p-value threshold (not \code{alpha}) to estimate statistical power.
+Note that these simple empirical estimates are likely to be inaccurate unless the number of p-values is much larger than \code{1/alpha}.
 }
 \examples{
 # simulate truly null p-values, which should be uniform
 pvals <- runif(10)
 # for toy example, take the first two p-values to be truly causal
 causal_indexes <- 1:2
-# calculate desired measure
+# estimate desired measure
 pval_power_calib( pvals, causal_indexes )
 
 }

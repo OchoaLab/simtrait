@@ -152,3 +152,10 @@
 # simtrait 1.0.23.9000 (2022-08-18)
 
 - Added functions `pval_type_1_err` and `pval_power_calib` for calculating type I error rates and calibrated power, respectively.
+
+# simtrait 1.0.24.9000 (2022-08-19)
+
+- Functions `pval_type_1_err` and `pval_power_calib`:
+  - Now option `alpha` can be a vector, and return value is a vector of estimates, one for each `alpha`.
+  - Switched documentation wording from "calculate" to "estimate", and acknowledges that estimates are accurate only when the number of p-values is much larger than `1/alpha`.
+

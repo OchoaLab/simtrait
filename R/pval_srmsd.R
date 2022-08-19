@@ -39,7 +39,7 @@
 #'
 #' [pval_infl()] for the more traditional inflation factor, which focuses on the median of the full distribution (combination of causal and null cases).
 #'
-#' [pval_type_1_err()] for classical type I error rate calculations.
+#' [pval_type_1_err()] for classical type I error rate estimates.
 #'
 #' @export
 pval_srmsd <- function(pvals, causal_indexes, detailed = FALSE) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/pval_type_1_err.R
 \name{pval_type_1_err}
 \alias{pval_type_1_err}
-\title{Calculate type I error rate}
+\title{Estimate type I error rate}
 \usage{
 pval_type_1_err(pvals, causal_indexes, alpha = 0.05)
 }
@@ -18,20 +18,22 @@ This parameter is required to prevent use of this function except when the true 
 Set to \code{NULL} if all loci are truly null (non-causal).
 Otherwise, \code{causal_indexes} must have at least one causal index.}
 
-\item{alpha}{The desired significance level (default 0.05).}
+\item{alpha}{The desired significance level (default 0.05).
+May be a vector.}
 }
 \value{
-The type I error rate
+The type I error rate estimates at each \code{alpha}
 }
 \description{
-Given a significance level and p-values with known causal status, this function calculates the type I error rate, defined as the proportion of null p-values that are below or equal to the threshold.
+Given a significance level and p-values with known causal status, this function estimates the type I error rate, defined as the proportion of null p-values that are below or equal to the threshold.
+Note that these simple empirical estimates are likely to be zero unless the number of p-values is much larger than \code{1/alpha}.
 }
 \examples{
 # simulate truly null p-values, which should be uniform
 pvals <- runif(10)
 # for toy example, take the first p-value to be truly causal (will be ignored below)
 causal_indexes <- 1
-# calculate desired measure
+# estimate desired measure
 pval_type_1_err( pvals, causal_indexes )
 
 }
