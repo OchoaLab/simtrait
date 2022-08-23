@@ -132,7 +132,7 @@
 
 # simtrait 1.0.21.9000 (2022-08-15)
 
-- Function `sim_trait` fixed an important bug resulting in misspecificed heritability!
+- Function `sim_trait` fixed an important bug resulting in misspecified heritability!
   - The previous buggy version:
     - Non-genetic variance was misspecified, accidentally passing to `rnorm` the desired variance `(1 - herit) * sigma_sq` where the standard deviation (its square root) was required!
     - The resulting effective heritability was given by the requested `herit` value by `herit / ( herit + (1-herit)^2 * sigma_sq )`.  If `sigma_sq = 1` (default), the effective heritability was always larger than desired!
@@ -159,3 +159,7 @@
   - Now option `alpha` can be a vector, and return value is a vector of estimates, one for each `alpha`.
   - Switched documentation wording from "calculate" to "estimate", and acknowledges that estimates are accurate only when the number of p-values is much larger than `1/alpha`.
 
+# simtrait 1.1.0 (2022-08-22)
+
+- Corrected spelling
+- Updated CRAN comments

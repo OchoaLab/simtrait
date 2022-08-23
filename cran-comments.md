@@ -1,29 +1,18 @@
 ## Test environments
-* local R:             x86_64-redhat-linux-gnu R 4.0.5 (2021-03-31)
-* local R-devel:       x86_64-pc-linux-gnu     R Under development (unstable) (2021-07-27 r80667)
-* local R-devel-noLD:  x86_64-pc-linux-gnu     R Under development (unstable) (2021-07-27 r80667)
-* win-builder release: x86_64-w64-mingw32      R 4.1.0 (2021-05-18)
-* win-builder devel:   x86_64-w64-mingw32      R Under development (unstable) (2021-08-09 r80724)
-* rhub (macos):        x86_64-apple-darwin17.0 R 4.1.0 (2021-05-18)
-* rhub (windows):      x86_64-w64-mingw32      R 4.1.0 (2021-05-18)
-* rhub (windows):      x86_64-w64-mingw32      R Under development (unstable) (2021-07-03 r80596)
-* rhub (solaris):      i386-pc-solaris2.10     R 4.1.1 (2021-08-10)
-* rhub (debian):       x86_64-pc-linux-gnu     R Under development (unstable) (2021-06-27 r80567)
-* rhub (fedora):       x86_64-pc-linux-gnu     R Under development (unstable) (2021-06-27 r80567)
-* rhub (ubuntu):       x86_64-pc-linux-gnu     R Under development (unstable) (2021-06-27 r80567)
+* local R:             x86_64-redhat-linux-gnu R 4.1.3 (2022-03-10)
+* local R-devel:       x86_64-pc-linux-gnu     R Under development (unstable) (2022-08-22 r82736)
+* local R-devel-noLD:  x86_64-pc-linux-gnu     R Under development (unstable) (2022-08-22 r82736)
+* win-builder release: x86_64-w64-mingw32      R 4.2.1 (2022-06-23 ucrt)
+* win-builder devel:   x86_64-w64-mingw32      R Under development (unstable) (2022-08-19 r82735 ucrt)
+* rhub (macos):        x86_64-apple-darwin17.0 R 4.1.1 (2021-08-10)
+* rhub (macos M1):     aarch64-apple-darwin20  R 4.1.3 (2022-03-10)
+* rhub (windows):      x86_64-w64-mingw32      R 4.2.1 (2022-06-23 ucrt)
+* rhub (debian):       x86_64-pc-linux-gnu     R Under development (unstable) (2022-07-31 r82648)
+* rhub (fedora):       x86_64-pc-linux-gnu     R Under development (unstable) (2022-08-19 r82735)
+* rhub (ubuntu):       x86_64-pc-linux-gnu     R Under development (unstable) (2022-08-19 r82735)
 
 ## R CMD check results
-There were no ERRORs or WARNINGs. 
-
-NOTEs:
-
-- Maintainer: ‘Alejandro Ochoa <alejandro.ochoa@duke.edu>’
-  New submission
-- Possibly misspelled words in DESCRIPTION:
-  GWAS (10:567)
-  benchmarking (10:579)
-  heritability (10:101)
-  - These are all spelled correctly
+There were no NOTEs, ERRORs or WARNINGs. 
 
 ## Downstream dependencies
 There are currently no downstream dependencies for this package.
