@@ -24,6 +24,12 @@
 pval_infl <- function( pvals, df = 1 ) {
     if ( missing( pvals ) )
         stop( '`pvals` is required!' )
+    
+    # in some cases there is nothing to do (LMM has singular information matrix)
+    # NA is best value to return in that case (scalar)
+    if ( is.null( pvals ) )
+        return( NA )
+    
     # check range of data here, to complain if it was bad
     if ( any( pvals < 0, na.rm = TRUE ) )
         stop( 'Input p-values included negative values!' )

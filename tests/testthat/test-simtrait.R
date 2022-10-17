@@ -703,6 +703,8 @@ test_that( "pval_srmsd, pval_type_1_err, pval_infl work", {
     expect_true( pval_infl( 0.4 ) > 1 )
     # deflation
     expect_true( pval_infl( 0.6 ) < 1 )
+    # NULL input
+    expect_true( is.na( pval_infl( NULL ) ) )
 })
 
 test_that( "pval_aucpr, pval_power_calib work", {

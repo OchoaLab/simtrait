@@ -168,3 +168,7 @@
 
 - Functions `pval_type_1_err` and `pval_power_calib`:
   - Fixed a rare bug: if `pvals` is `NULL` and `alpha` had more than one value, these functions incorrectly returned a scalar `NA`, now they return a vector with `NA`s the length of `alpha`.
+
+# simtrait 1.1.1.9000 (2022-10-17)
+
+- Function `pval_infl` if input `pvals = NULL` now returns `NA` (used to return `numeric(0)`).
