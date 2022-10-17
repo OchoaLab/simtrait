@@ -678,6 +678,9 @@ test_that( "pval_srmsd, pval_type_1_err, pval_infl work", {
     pvals_null_cum <- ecdf( pvals[ -causal_indexes ] )
     type_1_err_ecdf <- pvals_null_cum( alpha )
     expect_equal( type_1_err, type_1_err_ecdf )
+    # if p-values are NULL, return should be a vector of NAs
+    expect_silent( type_1_err <- pval_type_1_err( NULL, causal_indexes, alpha = alpha ) )
+    expect_equal( type_1_err, rep.int( NA, length( alpha ) ) )
     
     ### pval_infl
     
@@ -774,4 +777,7 @@ test_that( "pval_aucpr, pval_power_calib work", {
     expect_true( !anyNA(power) )
     expect_true( all( power >= 0 ) )
     expect_true( all( power <= 1 ) )
+    # if p-values are NULL, return should be a vector of NAs
+    expect_silent( power <- pval_power_calib( NULL, causal_indexes, alpha = alpha ) )
+    expect_equal( power, rep.int( NA, length( alpha ) ) )
 })

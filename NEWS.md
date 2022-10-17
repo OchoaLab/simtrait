@@ -163,3 +163,8 @@
 
 - Corrected spelling
 - Updated CRAN comments
+
+# simtrait 1.1.0.9000 (2022-10-17)
+
+- Functions `pval_type_1_err` and `pval_power_calib`:
+  - Fixed a rare bug: if `pvals` is `NULL` and `alpha` had more than one value, these functions incorrectly returned a scalar `NA`, now they return a vector with `NA`s the length of `alpha`.

@@ -31,7 +31,7 @@ pval_type_1_err <- function( pvals, causal_indexes, alpha = 0.05 ) {
     
     # in some cases there is nothing to do (LMM has singular information matrix)
     if (is.null(pvals))
-        return(NA)
+        return( rep.int( NA, length( alpha ) ) )
 
     # check range of data here, to complain if it was bad
     if ( any( pvals < 0, na.rm = TRUE ) )
