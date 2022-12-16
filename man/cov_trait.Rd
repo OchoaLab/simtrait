@@ -22,17 +22,18 @@ The levels are not required to be nested (as the name may falsely imply).
 Values can be numeric or strings, simply assigning the same values to individuals in the same group.
 If this is non-\code{NULL}, then \code{labs_sigma_sq} must also be given!}
 
-\item{labs_sigma_sq}{Optional vector of group effect variances, one value for each level given in \code{labs} (a scalar if \code{labs} is a vector, otherwise its length should be the number of columns of \code{labs}).
+\item{labs_sigma_sq}{Optional vector of group effect variance proportions, one value for each level given in \code{labs} (a scalar if \code{labs} is a vector, otherwise its length should be the number of columns of \code{labs}).
 Ignored unless \code{labs} is also given.
-As these are variance components, each value must be non-negative and \code{sum(labs_sigma_sq) + herit <= 1} is required!}
+As these are variance proportions, each value must be non-negative and \code{sum(labs_sigma_sq) + herit <= 1} is required so residual variance is non-negative.}
 }
 \value{
-The \code{n}-by-\code{n} trait covariance matrix equal to
-\code{sigma_sq * ( herit * 2 * kinship + ( 1 - herit ) * I )},
-where \code{I} is the \code{n}-by-\code{n} identity matrix.
+The \code{n}-by-\code{n} trait covariance matrix, which under no environment effects equals
+\code{sigma_sq * ( herit * 2 * kinship + sigma_sq_residual * I )},
+where \code{I} is the \code{n}-by-\code{n} identity matrix and \code{sigma_sq_residual = 1 - herit}.
+If there are labels, covariance will include the specified block diagonal effects and \code{sigma_sq_residual = 1 - herit - sum(labs_sigma_sq)}.
 }
 \description{
-This function returns the expected covariance matrix of a trait vector simulated via \code{sim_trait}.
+This function returns the expected covariance matrix of trait vectors simulated via \code{\link[=sim_trait]{sim_trait()}} and \code{\link[=sim_trait_mvn]{sim_trait_mvn()}}.
 Below there are \code{n} individuals.
 }
 \examples{

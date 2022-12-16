@@ -49,9 +49,9 @@ The levels are not required to be nested (as the name may falsely imply).
 Values can be numeric or strings, simply assigning the same values to individuals in the same group.
 If this is non-\code{NULL}, then \code{labs_sigma_sq} must also be given!}
 
-\item{labs_sigma_sq}{Optional vector of group effect variances, one value for each level given in \code{labs} (a scalar if \code{labs} is a vector, otherwise its length should be the number of columns of \code{labs}).
+\item{labs_sigma_sq}{Optional vector of group effect variance proportions, one value for each level given in \code{labs} (a scalar if \code{labs} is a vector, otherwise its length should be the number of columns of \code{labs}).
 Ignored unless \code{labs} is also given.
-As these are variance components, each value must be non-negative and \code{sum(labs_sigma_sq) + herit <= 1} is required!}
+As these are variance proportions, each value must be non-negative and \code{sum(labs_sigma_sq) + herit <= 1} is required so residual variance is non-negative.}
 
 \item{maf_cut}{The optional minimum allele frequency threshold (default \code{NA}, no threshold).
 This prevents rare alleles from being causal in the simulation.
@@ -83,7 +83,7 @@ However, if \code{herit = 0} then \code{causal_indexes} and \code{causal_coeffs}
 Simulate a complex trait given a SNP genotype matrix and model parameters, which are minimally: the number of causal loci, the heritability, and either the true ancestral allele frequencies used to generate the genotypes or the mean kinship of all individuals.
 An optional minimum marginal allele frequency for the causal loci can be set.
 The output traits have by default a zero mean and unit variance (for outbred individuals), but those parameters can be modified.
-The code selects random loci to be causal, constructs coefficients for these loci (scaled appropriately) and random Normal independent non-genetic effects.
+The code selects random loci to be causal, constructs coefficients for these loci (scaled appropriately) and random Normal independent non-genetic effects and random group effects if specified.
 There are two models for constructing causal coefficients: random coefficients (RC; default) and fixed effect sizes (FES; i.e., coefficients roughly inversely proportional to allele frequency; use \code{fes = TRUE}).
 Suppose there are \code{m} loci and \code{n} individuals.
 }

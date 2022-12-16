@@ -172,3 +172,16 @@
 # simtrait 1.1.1.9000 (2022-10-17)
 
 - Function `pval_infl` if input `pvals = NULL` now returns `NA` (used to return `numeric(0)`).
+
+# simtrait 1.1.2.9000 (2022-12-16)
+
+- Functions `sim_trait`, `sim_trait_mvn`, `cov_trait`:
+  - Fixed bug that misspecified residual variance under group effects, resulting in much larger residual variance and reduced effective heritability than desired.
+    - Bug had no effect in the absence of group effects.
+	- Bug was introduced with the ability to define group effects in version 1.0.22.9000.
+  - Updated documentation for clarity (group effects were often mistakenly omitted; clarified that group variances are proportions).
+- Internal function `check_labs` renamed to `check_herit_labs` and:
+  - Changed argument order so `herit` is now first
+  - Function now calculates (corrected) residual variance, and returns a list of labels and this variance (instead of labels only)
+  - Moved `herit` checks that used to be in upstream functions into here
+  - Added tests of this function that validate residual variance calculation.

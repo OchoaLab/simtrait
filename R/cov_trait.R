@@ -1,15 +1,16 @@
 #' The model covariance matrix of the trait
 #'
-#' This function returns the expected covariance matrix of a trait vector simulated via `sim_trait`.
+#' This function returns the expected covariance matrix of trait vectors simulated via [sim_trait()] and [sim_trait_mvn()].
 #' Below there are `n` individuals.
 #'
 #' @inheritParams sim_trait
 #' @param kinship The `n`-by-`n` kinship matrix of the individuals.
 #' These values should be scaled such that an outbred individual has 1/2 self-kinship, the parent-child relationship is 1/4, etc (which is half the values sometimes defined for kinship).
 #'
-#' @return The `n`-by-`n` trait covariance matrix equal to
-#' `sigma_sq * ( herit * 2 * kinship + ( 1 - herit ) * I )`,
-#' where `I` is the `n`-by-`n` identity matrix.
+#' @return The `n`-by-`n` trait covariance matrix, which under no environment effects equals
+#' `sigma_sq * ( herit * 2 * kinship + sigma_sq_residual * I )`,
+#' where `I` is the `n`-by-`n` identity matrix and `sigma_sq_residual = 1 - herit`.
+#' If there are labels, covariance will include the specified block diagonal effects and `sigma_sq_residual = 1 - herit - sum(labs_sigma_sq)`.
 #'
 #' @examples
 #' # create a dummy kinship matrix
@@ -47,25 +48,21 @@ cov_trait <- function(
     # other checks
     if (length(sigma_sq) != 1)
         stop('`sigma_sq` must be a scalar! (input has length ', length(sigma_sq), ')')
-    if (length(herit) != 1)
-        stop('`herit` must be a scalar! (input has length ', length(herit), ')')
-    if (herit < 0)
-        stop('`herit` must be non-negative!')
-    if (herit > 1)
-        stop('`herit` cannot be greater than 1!')
     if (sigma_sq <= 0)
         stop('`sigma_sq` must be positive!')
     if ( !isSymmetric( kinship ) )
         stop( '`kinship` must be a square, symmetric matrix!' )
     
-    # if there are group effects, check those
+    # check herit, labs and calculate residual variance with this shared function
     n_ind <- nrow( kinship )
-    labs <- check_labs( labs, labs_sigma_sq, n_ind, herit )
+    obj <- check_herit_labs( herit, labs, labs_sigma_sq, n_ind )
+    labs <- obj$labs
+    sigma_sq_residual <- obj$sigma_sq_residual
     
     # identity matrix of same dimension as kinship
     I <- diag( nrow( kinship ) )
     # desired covariance matrix (except for overall scale)
-    V <- 2 * herit * kinship + (1-herit) * I
+    V <- 2 * herit * kinship + sigma_sq_residual * I
     
     # if there are group effects, add them now
     if ( !is.null( labs ) ) {

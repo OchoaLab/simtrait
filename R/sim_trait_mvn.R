@@ -1,6 +1,6 @@
 #' Simulate traits from a kinship matrix under the infinitesimal model
 #'
-#' Simulate matrix of trait replicates given a kinship matrix and model parameters (the desired heritability, total variance scale, and mean).
+#' Simulate matrix of trait replicates given a kinship matrix and model parameters (the desired heritability, group effects, total variance scale, and mean).
 #' Although these traits have the covariance structure of genetic traits, and have heritabilities that can be estimated, they do not have causal loci (an association test against any locus should fail).
 #' Below `n` is the number of individuals.
 #'
@@ -52,22 +52,9 @@ sim_trait_mvn <- function(
     # other checks
     if (length(mu) != 1)
         stop('`mu` must be a scalar! (input has length ', length(mu), ')')
-    if (length(sigma_sq) != 1)
-        stop('`sigma_sq` must be a scalar! (input has length ', length(sigma_sq), ')')
-    if (length(herit) != 1)
-        stop('`herit` must be a scalar! (input has length ', length(herit), ')')
-    if (herit < 0)
-        stop('`herit` must be non-negative!')
-    if (herit > 1)
-        stop('`herit` cannot be greater than 1!')
-    if (sigma_sq <= 0)
-        stop('`sigma_sq` must be positive!')
-
-    # check labs with this shared function
-    n_ind <- nrow( kinship )
-    labs <- check_labs( labs, labs_sigma_sq, n_ind, herit )
 
     # construct the total covariance matrix of the trait
+    # NOTE: `herit`, `sigma_sq`, and `labs` get checked inside this function, won't check beforehand
     V <- cov_trait(
         kinship = kinship,
         herit = herit,
@@ -79,14 +66,15 @@ sim_trait_mvn <- function(
     # calculate matrix square root, such that
     # V == tcrossprod( V_sqrt )
     V_sqrt <- sqrt_matrix( V, tol = tol )
-
+    
     # simulate large matrix with IID standard normal values
+    n_ind <- nrow( kinship )
     traits <- matrix(
         stats::rnorm( rep * n_ind ),
         nrow = rep,
         ncol = n_ind
     )
-
+    
     # apply the affine transformation to get desired mean and covariance structure
     traits <- mu + tcrossprod( traits, V_sqrt )
     

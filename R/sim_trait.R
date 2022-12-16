@@ -3,7 +3,7 @@
 #' Simulate a complex trait given a SNP genotype matrix and model parameters, which are minimally: the number of causal loci, the heritability, and either the true ancestral allele frequencies used to generate the genotypes or the mean kinship of all individuals.
 #' An optional minimum marginal allele frequency for the causal loci can be set.
 #' The output traits have by default a zero mean and unit variance (for outbred individuals), but those parameters can be modified.
-#' The code selects random loci to be causal, constructs coefficients for these loci (scaled appropriately) and random Normal independent non-genetic effects.
+#' The code selects random loci to be causal, constructs coefficients for these loci (scaled appropriately) and random Normal independent non-genetic effects and random group effects if specified.
 #' There are two models for constructing causal coefficients: random coefficients (RC; default) and fixed effect sizes (FES; i.e., coefficients roughly inversely proportional to allele frequency; use `fes = TRUE`).
 #' Suppose there are `m` loci and `n` individuals.
 #'
@@ -33,9 +33,9 @@
 #' The levels are not required to be nested (as the name may falsely imply).
 #' Values can be numeric or strings, simply assigning the same values to individuals in the same group.
 #' If this is non-`NULL`, then `labs_sigma_sq` must also be given!
-#' @param labs_sigma_sq Optional vector of group effect variances, one value for each level given in `labs` (a scalar if `labs` is a vector, otherwise its length should be the number of columns of `labs`).
+#' @param labs_sigma_sq Optional vector of group effect variance proportions, one value for each level given in `labs` (a scalar if `labs` is a vector, otherwise its length should be the number of columns of `labs`).
 #' Ignored unless `labs` is also given.
-#' As these are variance components, each value must be non-negative and `sum(labs_sigma_sq) + herit <= 1` is required!
+#' As these are variance proportions, each value must be non-negative and `sum(labs_sigma_sq) + herit <= 1` is required so residual variance is non-negative.
 #' @param maf_cut The optional minimum allele frequency threshold (default `NA`, no threshold).
 #' This prevents rare alleles from being causal in the simulation.
 #' Threshold is applied to the *sample* allele frequencies and not their true parametric values (`p_anc`), even if these are available.
@@ -126,12 +126,6 @@ sim_trait <- function(
         stop('`mu` must be a scalar! (input has length ', length(mu), ')')
     if (length(sigma_sq) != 1)
         stop('`sigma_sq` must be a scalar! (input has length ', length(sigma_sq), ')')
-    if (length(herit) != 1)
-        stop('`herit` must be a scalar! (input has length ', length(herit), ')')
-    if (herit < 0)
-        stop('`herit` must be non-negative!')
-    if (herit > 1)
-        stop('`herit` cannot be greater than 1!')
     if (sigma_sq <= 0)
         stop('`sigma_sq` must be positive!')
 
@@ -148,8 +142,10 @@ sim_trait <- function(
     if ( !is.null( p_anc ) && length( p_anc ) != m_loci )
         stop( '`p_anc` length (', length( p_anc ) , ') does not equal `m_loci` (', m_loci, ')' )
 
-    # check labs with this shared function
-    labs <- check_labs( labs, labs_sigma_sq, n_ind, herit )
+    # check herit, labs and calculate residual variance with this shared function
+    obj <- check_herit_labs( herit, labs, labs_sigma_sq, n_ind )
+    labs <- obj$labs
+    sigma_sq_residual <- obj$sigma_sq_residual
 
     if (herit == 0) {
         # lots of work can be avoided in this edge case
@@ -296,9 +292,9 @@ sim_trait <- function(
         E <- 0 # in this edge case there is no "noise", just genotype effects
     } else {
         # draw noise
-        E <- stats::rnorm(n_ind, 0, sqrt( (1 - herit) * sigma_sq ) ) # noise has mean zero but variance ((1-herit) * sigma_sq)
+        E <- stats::rnorm(n_ind, 0, sqrt( sigma_sq_residual * sigma_sq ) ) # noise has mean zero but variance (sigma_sq_residual * sigma_sq)
         # NOTE by construction:
-        # Cov(E) = (1-herit) * sigma_sq * I
+        # Cov(E) = sigma_sq_residual * sigma_sq * I
     }
 
     # group effects
