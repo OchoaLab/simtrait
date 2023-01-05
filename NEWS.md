@@ -185,3 +185,7 @@
   - Function now calculates (corrected) residual variance, and returns a list of labels and this variance (instead of labels only)
   - Moved `herit` checks that used to be in upstream functions into here
   - Added tests of this function that validate residual variance calculation.
+
+# simtrait 1.1.3 (2023-01-05)
+
+- Updated CRAN comments, for CRAN submission
