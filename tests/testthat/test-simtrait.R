@@ -58,6 +58,35 @@ test_that("allele_freqs works", {
         maf_cols
     )
 
+    # test subsetting
+    for ( subset_ind in 1L:3L ) {
+        # test a somewhat ridiculous case with just one individual, which also tests an edge case
+        # row means
+        expect_equal(
+            allele_freqs( X, subset_ind = subset_ind ),
+            X[ , subset_ind ] / 2
+        )
+        
+        # col means
+        expect_equal(
+            allele_freqs( X, subset_ind = subset_ind, loci_on_cols = TRUE ),
+            X[ subset_ind, ] / 2
+        )
+        
+        # now test opposite cases where one is excluded
+        # also tests negative index case
+        # row means
+        expect_equal(
+            allele_freqs( X, subset_ind = -subset_ind ),
+            rowMeans( X[ , -subset_ind ], na.rm = TRUE ) / 2
+        )
+        
+        # col means
+        expect_equal(
+            allele_freqs( X, subset_ind = -subset_ind, loci_on_cols = TRUE ),
+            colMeans( X[ -subset_ind, ], na.rm = TRUE ) / 2
+        )
+    }
 })
 
 test_that("select_loci works", {

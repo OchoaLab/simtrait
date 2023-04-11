@@ -189,3 +189,8 @@
 # simtrait 1.1.3 (2023-01-05)
 
 - Updated CRAN comments, for CRAN submission
+
+# simtrait 1.1.3.9000 (2023-04-10)
+
+- Function `allele_freqs` added option `subset_ind` to subset individuals, particularly useful for `BEDMatrix` genotype inputs.
+

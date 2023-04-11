@@ -41,7 +41,21 @@ if (suppressMessages(suppressWarnings(require(BEDMatrix)))) {
             p_anc_hat,
             allele_freqs( X, fold = TRUE, m_chunk_max = 11 )
         )
-        
+
+        # repeat with subsetting
+        # choose a random subset of a third of original (second argument is automatically truncated to int, so this is fine)
+        subset_ind <- sample.int( n, n / 3 )
+        p_anc_hat <- allele_freqs( X_R, subset_ind = subset_ind )
+        # this is kinda trivial because the whole (tiny) dataset is loaded in one go
+        expect_equal(
+            p_anc_hat,
+            allele_freqs( X, subset_ind = subset_ind )
+        )
+        # repeat setting chunk size to something smaller, for a more stringent test
+        expect_equal(
+            p_anc_hat,
+            allele_freqs( X, subset_ind = subset_ind, m_chunk_max = 11 )
+        )
     })
     
     test_that("sim_trait works with BEDMatrix", {

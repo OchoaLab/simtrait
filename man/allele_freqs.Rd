@@ -4,7 +4,13 @@
 \alias{allele_freqs}
 \title{Compute locus allele frequencies}
 \usage{
-allele_freqs(X, loci_on_cols = FALSE, fold = FALSE, m_chunk_max = 1000)
+allele_freqs(
+  X,
+  loci_on_cols = FALSE,
+  fold = FALSE,
+  m_chunk_max = 1000,
+  subset_ind = NULL
+)
 }
 \arguments{
 \item{X}{The genotype matrix (regular R matrix or BEDMatrix object).
@@ -18,6 +24,9 @@ Default is to return frequencies for the given allele counts in \code{X} (regard
 
 \item{m_chunk_max}{BEDMatrix-specific, sets the maximum number of loci to process at the time.
 If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).}
+
+\item{subset_ind}{Optionally subset individuals by providing their indexes (negative indexes to exclude) or a boolean vector (in other words, the usual ways to subset matrices).
+Most useful for BEDMatrix inputs, to subset chunks and retain low memory usage.}
 }
 \value{
 The vector of allele frequencies, one per locus.

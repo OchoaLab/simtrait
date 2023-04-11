@@ -11,6 +11,8 @@
 #' Default is to return frequencies for the given allele counts in `X` (regardless of whether it is the minor or major allele).
 #' @param m_chunk_max BEDMatrix-specific, sets the maximum number of loci to process at the time.
 #' If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).
+#' @param subset_ind Optionally subset individuals by providing their indexes (negative indexes to exclude) or a boolean vector (in other words, the usual ways to subset matrices).
+#' Most useful for BEDMatrix inputs, to subset chunks and retain low memory usage.
 #'
 #' @return The vector of allele frequencies, one per locus.
 #' Names are set to the locus names, if present.
@@ -42,7 +44,8 @@ allele_freqs <- function(
                          X,
                          loci_on_cols = FALSE,
                          fold = FALSE,
-                         m_chunk_max = 1000 # optimal value not tested directly
+                         m_chunk_max = 1000, # optimal value not tested directly
+                         subset_ind = NULL
                          ) {
     # behavior depends on class
     if ('BEDMatrix' %in% class(X)) {
@@ -66,6 +69,10 @@ allele_freqs <- function(
             # DO NOT transpose for our usual setup (this is faster)
             Xi <- X[, indexes_loci_chunk, drop = FALSE]
             
+            # apply subsetting to this chunk of matrix
+            if ( !is.null( subset_ind ) )
+                Xi <- Xi[ subset_ind, , drop = FALSE ]
+            
             # compute and store the values we want!
             # because we didn't transpose, use colMeans here istead of rowMeans! 
             p_anc_hat[ indexes_loci_chunk ] <- colMeans(Xi, na.rm = TRUE)/2
@@ -83,6 +90,9 @@ allele_freqs <- function(
         # this is done by col/rowMeans when X is not BEDMatrix below, so let's match that here
         names(p_anc_hat) <- colnames(X)
     } else if (is.matrix(X)) {
+        # apply subsetting to whole matrix in this case
+        if ( !is.null( subset_ind ) )
+            X <- if ( loci_on_cols ) X[ subset_ind, , drop = FALSE ] else X[ , subset_ind, drop = FALSE ]
         
         # compute allele frequencies directly, all at once
         if (loci_on_cols) {
