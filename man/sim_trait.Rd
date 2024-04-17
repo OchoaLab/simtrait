@@ -42,14 +42,14 @@ Either this or \code{p_anc} must be specified.}
 \item{sigma_sq}{The desired parametric variance factor of the trait (scalar, default 1).
 Corresponds to the variance of an outbred individual.}
 
-\item{labs}{Optional labels assigning individuals to groups, to simulate group effects.
-If vector, length must be number of individuals.
-If matrix, individuals must be along rows, and levels along columns (for multiple levels of group effects).
-The levels are not required to be nested (as the name may falsely imply).
+\item{labs}{Optional labels assigning individuals to groups, to simulate environment group effects.
 Values can be numeric or strings, simply assigning the same values to individuals in the same group.
+If vector (single environment), length must be number of individuals.
+If matrix (multiple environments), individuals must be along rows, and environments along columns.
+The environments are not required to be nested.
 If this is non-\code{NULL}, then \code{labs_sigma_sq} must also be given!}
 
-\item{labs_sigma_sq}{Optional vector of group effect variance proportions, one value for each level given in \code{labs} (a scalar if \code{labs} is a vector, otherwise its length should be the number of columns of \code{labs}).
+\item{labs_sigma_sq}{Optional vector of environment effect variance proportions, one value for each environment given in \code{labs} (a scalar if \code{labs} is a vector, otherwise its length should be the number of columns of \code{labs}).
 Ignored unless \code{labs} is also given.
 As these are variance proportions, each value must be non-negative and \code{sum(labs_sigma_sq) + herit <= 1} is required so residual variance is non-negative.}
 
@@ -74,7 +74,7 @@ A named list containing:
 \item \code{trait}: length-\code{n} vector of the simulated trait
 \item \code{causal_indexes}: length-\code{m_causal} vector of causal locus indexes
 \item \code{causal_coeffs}: length-\code{m_causal} vector of coefficients at the causal loci
-\item \code{group_effects}: length-\code{n} vector of simulated group effects, or 0 (scalar) if not simulated
+\item \code{group_effects}: length-\code{n} vector of simulated environment group effects, or 0 (scalar) if not simulated
 }
 
 However, if \code{herit = 0} then \code{causal_indexes} and \code{causal_coeffs} will have zero length regardless of \code{m_causal}.
@@ -83,7 +83,7 @@ However, if \code{herit = 0} then \code{causal_indexes} and \code{causal_coeffs}
 Simulate a complex trait given a SNP genotype matrix and model parameters, which are minimally: the number of causal loci, the heritability, and either the true ancestral allele frequencies used to generate the genotypes or the mean kinship of all individuals.
 An optional minimum marginal allele frequency for the causal loci can be set.
 The output traits have by default a zero mean and unit variance (for outbred individuals), but those parameters can be modified.
-The code selects random loci to be causal, constructs coefficients for these loci (scaled appropriately) and random Normal independent non-genetic effects and random group effects if specified.
+The code selects random loci to be causal, constructs coefficients for these loci (scaled appropriately) and random Normal independent non-genetic effects and random environment group effects if specified.
 There are two models for constructing causal coefficients: random coefficients (RC; default) and fixed effect sizes (FES; i.e., coefficients roughly inversely proportional to allele frequency; use \code{fes = TRUE}).
 Suppose there are \code{m} loci and \code{n} individuals.
 }

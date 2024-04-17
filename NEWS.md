@@ -194,3 +194,9 @@
 
 - Function `allele_freqs` added option `subset_ind` to subset individuals, particularly useful for `BEDMatrix` genotype inputs.
 
+# simtrait 1.1.4.9000 (2024-04-16)
+
+- Non-code updates: 
+  - Vignette: added description of environment group model to model and algorithm sections (was previously entirely omitted), and made notation more coherent with Yao and Ochoa (2023).
+  - Function documentation: updated related language in the documentation of functions `sim_trait`, `sim_trait_mvn`, and `cov_trait`.
+

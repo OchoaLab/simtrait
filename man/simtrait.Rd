@@ -2,8 +2,8 @@
 % Please edit documentation in R/simtrait.R
 \docType{package}
 \name{simtrait}
-\alias{simtrait}
 \alias{simtrait-package}
+\alias{simtrait}
 \title{simtrait: simulate complex traits from genotypes}
 \description{
 This package enables simulation of complex (polygenic and continuous) traits from a simulated or real genotype matrix.

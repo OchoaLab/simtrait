@@ -13,6 +13,7 @@ vignette: >
 <!-- Weird way to include these definitions for HTML Markdown -->
 $\DeclareMathOperator{\E}{E}$
 $\DeclareMathOperator{\Cov}{Cov}$
+$\DeclareMathOperator{\Var}{Var}$
 
 
 ```{r setup, include = FALSE}
@@ -125,7 +126,7 @@ obj$trait
 length( obj$causal_indexes )
 m_causal
 head( obj$causal_indexes ) # show partially...
-# regression coefficients vector
+# locus coefficients vector
 length( obj$causal_coeffs )
 m_causal
 head( obj$causal_coeffs ) # show partially...
@@ -318,7 +319,7 @@ This plot shows again good agreement between the sample covariance matrix of tra
 ## Simulated trait from *fixed effect sizes* (FES) model
 
 This package can also simulate traits from a model where coefficients are larger for rarer variants, which may be more realistic for disease traits where selection prevents common variants from having large coefficients, while allowing rare variants to have larger coefficients.
-The effect size of locus $i$ is its variance contribution, equal to $2 \beta^2_i p_i(1-p_i)$ for outbred individuals, where $\beta_i$ is the regression coefficient and $p_i$ is the ancestral allele frequency.
+The effect size of locus $i$ is its variance contribution, equal to $2 \beta^2_i p_i(1-p_i)$ for outbred individuals, where $\beta_i$ is the locus coefficient and $p_i$ is the ancestral allele frequency.
 The limit of strong negative and other modes of selection forces effect sizes to be equal for all loci, so the coefficient at locus $i$ is proportional to $1 / \sqrt{p_i(1-p_i)}$.
 As in the other models, the coefficients are rescaled to yield the desired heritability and variance factor.
 This is related to previous models proposed in the literature, for example [@speed_improved_2012].
@@ -429,7 +430,7 @@ par( par_orig ) # reset `par`
 Empirical covariance matrices estimate the theoretical one without bias when ancestral allele frequencies are used ("freq" versions) and with the MVN model, all of which have a comparable small mean squared error (RMSD in figure above).
 However, use of estimated allele frequencies, despite the necessary kinship bias correction ("kin" versions), still resulted in empirical covariances that are upwardly biased estimators of the desired theoretical values, which is slight for "RC kin" but severe for "FES kin".
 
-## Non-genetic group effects
+## Environment group effects
 
 We can also simulate random group effects not determined by genetics (i.e., functions of the kinship matrix), but rather a result of the environment (any categorical covariates, which may represent geography, culture, etc).
 The code can simulate several such levels of groups, each level drawing random Normal effects with mean zero and a given fixed variance parameter.
@@ -558,79 +559,97 @@ All errors are low except "FES kin" still has a noticeable upward bias and the l
 
 # Model
 
-Here is a brief summary of the trait model, which explains what this package does internally.
+Here is a summary of the trait model, which explains what this package does internally.
 
 Suppose there are $n$ individuals and $m$ (causal) loci.
-For simplicity we shall assume that every locus has a regression coefficient, although in practice many of these coefficients will be zero.
+For simplicity we shall assume that every locus has a coefficient, although in practice many of these coefficients will be zero.
 The following variables are part of the model:
 
-| Variable            | Dimensions   | Description                  |
-| ------------        | ------------ | -----------                  |
-| $\mathbf{X}$        | $n \times m$ | Genotypes                    |
-| $\mathbf{x}_i$      | $n \times 1$ | Genotype vector at locus $i$ |
-| $\mathbf{y}$        | $n \times 1$ | Trait                        |
-| $\mathbf{\beta}$    | $m \times 1$ | Regression coefficients      |
-| $\mathbf{\epsilon}$ | $n \times 1$ | Non-genetic effects          |
-| $\mathbf{p}$        | $m \times 1$ | Ancestral allele frequencies |
-| $\mathbf{\Phi}$     | $n \times n$ | Kinship matrix               |
-| $\alpha$            | $1 \times 1$ | Intercept coefficient        |
-| $\mu$               | $1 \times 1$ | Trait mean                   |
-| $h^2$               | $1 \times 1$ | Heritability                 |
-| $\sigma^2$          | $1 \times 1$ | Trait variance factor        |
-| $\mathbf{1}$        | $n \times 1$ | Vector of ones               |
-| $\mathbf{0}$        | $n \times 1$ | Vector of zeroes             |
-| $\mathbf{I}$        | $n \times n$ | Identity matrix              |
+| Variable                | Dimensions     | Description                                                  |
+|-------------------------|----------------|--------------------------------------------------------------|
+| $\mathbf{X}$            | $m \times n$   | Genotype matrix                                              |
+| $\mathbf{x}_i$          | $n \times 1$   | Genotype vector at locus $i$                                 |
+| $\mathbf{y}$            | $n \times 1$   | Trait                                                        |
+| $\boldsymbol{\beta}$    | $m \times 1$   | Locus coefficients                                           |
+| $\boldsymbol{\epsilon}$ | $n \times 1$   | Residual effects                                             |
+| $\mathbf{Z}$            | $n \times d$   | Environment effects design matrix (for all environments)     |
+| $\mathbf{Z}_e$          | $n \times G_e$ | Environment effects design matrix for environment $e$        |
+| $\boldsymbol{\eta}$     | $d \times 1$   | Environment coefficients (for all environments)              |
+| $\boldsymbol{\eta}_e$   | $G_e \times 1$ | Environment coefficients for environment $e$                 |
+| $\mathbf{p}$            | $m \times 1$   | Ancestral allele frequencies                                 |
+| $\mathbf{\Phi}$         | $n \times n$   | Kinship matrix                                               |
+| $\alpha$                | $1 \times 1$   | Intercept coefficient                                        |
+| $\mu$                   | $1 \times 1$   | Trait mean                                                   |
+| $h^2$                   | $1 \times 1$   | Heritability (variance proportion of genetic effects)        |
+| $\sigma^2_\eta$         | $1 \times 1$   | Total environment variance proportion (for all environments) |
+| $\sigma^2_{\eta e}$     | $1 \times 1$   | Variance proportion for environment $e$                      |
+| $\sigma^2_\epsilon$     | $1 \times 1$   | Variance proportion for residual effects                     |
+| $\sigma^2$              | $1 \times 1$   | Total trait variance factor                                  |
+| $\mathbf{1}_n$          | $n \times 1$   | Vector of ones                                               |
+| $\mathbf{0}_n$          | $n \times 1$   | Vector of zeroes                                             |
+| $\mathbf{I}_n$          | $n \times n$   | Identity matrix                                              |
 
 We assume the linear polygenic model for a quantitative trait:
 $$
-\mathbf{y} = \alpha \mathbf{1} + \mathbf{X} \mathbf{\beta} + \mathbf{\epsilon}.
+\mathbf{y} 
+=
+\mathbf{1}_n \alpha + \mathbf{X}' \boldsymbol{\beta} + \mathbf{Z} \boldsymbol{\eta} + \boldsymbol{\epsilon}
+.
 $$
-To analyze the covariance structure of the trait, we shall assume that $\alpha$ and $\mathbf{\beta}$ are fixed parameters, while $\mathbf{X} = (\mathbf{x}_i)$ and $\mathbf{\epsilon}$ are random with expectations and covariances of
+To analyze the covariance structure of the trait, we shall assume that $\alpha$, $\boldsymbol{\beta}$, and $\mathbf{Z} = ( \mathbf{Z}_e )$ are fixed parameters, while $\mathbf{X} = (\mathbf{x}_i')$, $\boldsymbol{\eta} = (\boldsymbol{\eta}_e)$, and $\boldsymbol{\epsilon}$ are random with expectations and covariances of
 \begin{align*}
-	\E[\mathbf{X}] &= 2 \mathbf{1} \mathbf{p}^\intercal
+	\E[\mathbf{X}] &= 2 \mathbf{p} \mathbf{1}_n'
 	, \\
 	\Cov(\mathbf{x}_i) &= 4 p_i (1-p_i) \mathbf{\Phi}
 	, \\
-	\E[\mathbf{\epsilon}] &= \mathbf{0}
+	\E[ \boldsymbol{\eta}_e] &= \mathbf{0}_{G_e}
 	, \\
-	\Cov(\mathbf{\epsilon}) &= (1-h^2) \sigma^2 \mathbf{I}
+	\Cov( \boldsymbol{\eta}_e ) &= \sigma^2_{\eta e} \sigma^2 \mathbf{I}_{G_e}
+	, \\
+	\E[\boldsymbol{\epsilon}] &= \mathbf{0}_n
+	, \\
+	\Cov(\boldsymbol{\epsilon}) &= \sigma^2_\epsilon \sigma^2 \mathbf{I}_n
 	,
 \end{align*}
-where $\mathbf{p} = (p_i)$.
+where $\mathbf{p} = (p_i)$ and $G_e$ is the number of groups of environment $e$.
+The number of columns $d$ of $\mathbf{Z}$ equals the number of groups over all environments:
+$$
+d = \sum_e G_e.
+$$
 The expectation of the trait is therefore
 \begin{align*}
 	\E[\mathbf{y}]
-	&= \alpha \mathbf{1} + \E[\mathbf{X}] \mathbf{\beta} + \E[\mathbf{\epsilon}]
+	&= \mathbf{1}_n \alpha + \E[\mathbf{X}'] \boldsymbol{\beta} + \mathbf{Z} \E[ \boldsymbol{\eta} ] + \E[\boldsymbol{\epsilon}]
 	\\
-	&= \alpha \mathbf{1} + 2 \mathbf{1} \mathbf{p}^\intercal \mathbf{\beta}
+	&= \mathbf{1}_n \alpha + 2 \mathbf{1}_n \mathbf{p}' \boldsymbol{\beta}
 	,
 \end{align*}
 which can be written as 
 \begin{align*}
 	\E[\mathbf{y}]
-	= \mu \mathbf{1}
+	= \mu \mathbf{1}_n
 	, \quad \text{where} \quad 
 	\mu 
 	=
-	\alpha + 2 \mathbf{p}^\intercal \mathbf{\beta}
+	\alpha + 2 \mathbf{p}' \boldsymbol{\beta}
 	.
 \end{align*}
 The covariance matrix of the trait is
 \begin{align*}
 	\Cov(\mathbf{y})
 	&=
-	\sum_{i=1}^m \Cov(\mathbf{x}_i) \beta_i^2 + \Cov(\mathbf{\epsilon})
+	\sum_{i=1}^m \Cov(\mathbf{x}_i) \beta_i^2 + \mathbf{Z} \Cov( \boldsymbol{\eta} ) \mathbf{Z}' + \Cov(\boldsymbol{\epsilon})
 	\\
 	&=
-	\mathbf{\Phi} \sum_{i=1}^m 4 p_i (1-p_i) \beta_i^2 + (1-h^2) \sigma^2 \mathbf{I}
+	\mathbf{\Phi} \left( \sum_{i=1}^m 4 p_i (1-p_i) \beta_i^2 \right) + \left( \sum_e \sigma^2_{\eta e} \sigma^2 \mathbf{Z}_e \mathbf{Z}_e' \right) + \sigma^2_\epsilon \sigma^2 \mathbf{I}_n
 	,
 \end{align*}
-where $\mathbf{\beta} = (\beta_i)$.
-Therefore, we can write the covariance in terms of the heritability and the overall variance scale:
+where $\boldsymbol{\beta} = (\beta_i)$.
+Therefore, we can write the covariance in terms of the heritability, the other variance components, and the overall variance scale:
 \begin{align*}
 	\Cov(\mathbf{y})
 	&=
-	\sigma^2 \left( 2 h^2 \mathbf{\Phi}  + (1-h^2) \mathbf{I} \right)
+	\sigma^2 \left( h^2 \left( 2 \mathbf{\Phi} \right) + \left( \sum_e \sigma^2_{\eta e} \mathbf{Z}_e \mathbf{Z}_e' \right) + \sigma^2_\epsilon \mathbf{I}_n \right)
 	, \quad \text{where}
 	\\
 	\sigma^2 h^2 
@@ -638,19 +657,43 @@ Therefore, we can write the covariance in terms of the heritability and the over
 	\sum_{i=1}^m 2 p_i (1-p_i) \beta_i^2
 	.
 \end{align*}
-The factor of two in front of $\mathbf{\Phi}$ is traditionally there since for an unstructured population
-$2 \mathbf{\Phi} = \mathbf{I}$, in which case the trait covariance simplifies to
-$\Cov(\mathbf{y}) = \sigma^2 \mathbf{I}$ for any value of $h^2$.
-More broadly, the variance of the trait for any outbred individual is $\sigma^2$ under this parametrization.
+
+Let's consider the diagonal of the above covariance matrices, which corresponds to the vector of variances for individuals.
+The residual effects covariance matrix is simply $\mathbf{I}_n$, whose diagonal is $\mathbf{1}_n$, as desired, so the entire contribution to the variance comes from the factors $\sigma^2_\epsilon \sigma^2$.
+The environment effect covariance matrices $\mathbf{Z}_e \mathbf{Z}_e'$ all similarly have diagonal values equal to $\mathbf{1}_n$, so again their contribution to the variance is given by the factors $\sigma^2_{\eta e} \sigma^2$.
+Lastly, the genetic covariance matrix $2 \mathbf{\Phi}$ features the kinship matrix multiplied by 2 as it is customary, since it results in diagonal values of 1 for outbred individuals, for whom the variance is given by the factor $h^2 \sigma^2$.
+In this model we want $\sigma^2$ to be the total variance (for outbred individuals), so the rest of the factors must sum to one, so they correspond to proportions of variance:
+$$
+h^2 + \sigma^2_\epsilon + \sum_e \sigma^2_{\eta e} = 1.
+$$
+Given that equation, it makes sense to define the total environment variance proportion as
+$$
+\sigma^2_\eta = \sum_e \sigma^2_{\eta e},
+$$
+which is also a variance proportion.
+Note that population structure increases the total variance averaged over individuals, because in those cases the average diagonal value of $2 \mathbf{\Phi}$ exceeds 1.
 
 # Algorithm
 
-In all cases the user sets the heritability and other parameters but not the coefficients $\mathbf{\beta}$ directly.
-To choose $\mathbf{\beta}$, the algorithm initially draws random coefficients or sets them using a formula (depending on the model) and scales them to yield the desired covariance structure.
+In all cases the user sets the heritability and other parameters but not the coefficients $\boldsymbol{\beta}$ directly.
+To choose $\boldsymbol{\beta}$, the algorithm initially draws random coefficients or sets them using a formula (depending on the model) and scales them to yield the desired covariance structure.
+The clever parts of our algorithm are entirely about how to scale $\boldsymbol{\beta}$ correctly, since the variance of genotypes is non-trivial when there is population structure, and particularly when key parameters such as ancestral allele frequencies are not known, in which case key variance factors are estimated carefuly to avoid or reduce biases.
 
 The user provides a genotype matrix and sets the number of causal loci.
 The algorithm selects random loci to be the causal ones.
 From this moment on $\mathbf{X}$ will contain only those causal loci.
+
+## Constructing environment and residual effects
+
+Simulating the residual and environment effects is straightforward.
+Since $h^2$ and every $\sigma^2_{\eta e}$ are provided, then $\sigma^2_\eta$ is calculated as above and $\sigma^2_\epsilon$ is set to
+$$
+\sigma^2_\epsilon = 1 - h^2 - \sigma^2_\eta.
+$$
+These input parameters are required to be non-negative, and so is the resulting $\sigma^2_\epsilon$.
+The user sets an environment group for each individual and each environment $e$.
+The environment design matrix $\mathbf{Z}_e$ has for each row one individual and each column one group, and the cell has a value of 1 if the individual belongs to that group, or a value of 0 otherwise.
+Lastly, the residual effects and environment coefficients ($\boldsymbol{\epsilon}$ and $\boldsymbol{\eta}_e$) are drawn independently from Normal distributions with mean zero and desired variance parameter ($\sigma^2_\epsilon \sigma^2$ and $\sigma^2_{\eta e} \sigma^2$, respectively), in agreement with the assumed moments given earlier.
 
 ## Constructing coefficients
 
@@ -684,7 +727,7 @@ $$
 We obtain the desired variance by dividing each $\beta_i$ by $\sigma_0$ (which results in a variance of 1) and then multiply by $h \sigma$ (which finally results in the desired variance of $h^2 \sigma^2$).
 Combining both steps, the update is
 $$
-\mathbf{\beta} \leftarrow \mathbf{\beta} \frac{ h \sigma }{\sigma_0}.
+\boldsymbol{\beta} \leftarrow \boldsymbol{\beta} \frac{ h \sigma }{\sigma_0}.
 $$
 
 ### Scaling using a known kinship matrix
@@ -692,14 +735,14 @@ $$
 When $\mathbf{p}$ isn't known, sample estimates $\mathbf{\hat{p}}$ are constructed from the genotype data.
 Let
 $$
-\hat{p}_i = \frac{1}{2n} \mathbf{1}^\intercal \mathbf{x}_i .
+\hat{p}_i = \frac{1}{2n} \mathbf{1}_n' \mathbf{x}_i .
 $$
 Although this estimator is unbiased ($\E[\mathbf{\hat{p}}] = \mathbf{p}$), the resulting variance estimates of interest are downwardly biased [@Ochoa083923]:
 $$
 \E \left[ \hat{p}_i \left( 1-\hat{p}_i \right) \right]
 = p_i(1-p_i) (1 - \bar{\varphi}),
 $$
-where $\bar{\varphi} = \frac{1}{n^2} \mathbf{1}^\intercal \mathbf{\Phi} \mathbf{1}$ is the mean kinship coefficient in the data.
+where $\bar{\varphi} = \frac{1}{n^2} \mathbf{1}_n' \mathbf{\Phi} \mathbf{1}_n$ is the mean kinship coefficient in the data.
 Therefore the initial genetic variance factor, estimated as
 $$
 \hat{\sigma}^2_0 = \sum_{i=1}^m 2 \hat{p}_i (1-\hat{p}_i) \beta_i^2,
@@ -710,7 +753,7 @@ $$
 $$
 Since this additional factor $(1 - \bar{\varphi})$ is known in this setting, the adjusted update
 $$
-\mathbf{\beta} \leftarrow \mathbf{\beta} \frac{ h \sigma \sqrt{1-\bar{\varphi}} }{\hat{\sigma}_0}
+\boldsymbol{\beta} \leftarrow \boldsymbol{\beta} \frac{ h \sigma \sqrt{1-\bar{\varphi}} }{\hat{\sigma}_0}
 $$
 also results in the desired variance.
 
@@ -723,7 +766,7 @@ Given our model, we obtain the desired overall trait mean $\mu$ by choosing the 
 $$
 \alpha 
 =
-\mu - 2 \mathbf{p}^\intercal \mathbf{\beta}
+\mu - 2 \mathbf{p}' \boldsymbol{\beta}
 $$
 
 ### Centering without ancestral allele frequencies
@@ -732,19 +775,18 @@ The solution that this version of the algorithm takes is to choose the intercept
 \begin{align*}
 	\alpha 
 	&=
-	\mu - 2 \hat{\bar{p}} \mathbf{1}_m^\intercal \mathbf{\beta}
+	\mu - 2 \hat{\bar{p}} \mathbf{1}_m' \boldsymbol{\beta}
 	, \quad \text{where} \\
 	\hat{\bar{p}}
 	&=
-	\frac{1}{m} \mathbf{1}_m^\intercal \mathbf{\hat{p}}
+	\frac{1}{m} \mathbf{1}_m' \mathbf{\hat{p}}
 	=
-	\frac{1}{2 m n} \mathbf{1}_m^\intercal \mathbf{X}^\intercal \mathbf{1}_n
+	\frac{1}{2 m n} \mathbf{1}_m' \mathbf{X} \mathbf{1}_n
 	=
 	\frac{1}{2} \bar{X}
-	,
+	.
 \end{align*}
-where $\mathbf{1}_m$ above are length-$m$ vectors of ones.
-This works very well in practice since $\mathbf{\beta}$ is drawn randomly, so it is uncorrelated with the true $\mathbf{p}$ (this is true in FES too since the sign of each coefficient is random).
+This works very well in practice since $\boldsymbol{\beta}$ is drawn randomly, so it is uncorrelated with the true $\mathbf{p}$ (this is true in FES too since the sign of each coefficient is random).
 In this setting it suffices to consider each coefficient $\beta_i$ as acting on the average locus, which is treated as having a random ancestral allele frequency $p_i$, and all that matters is the global mean of $p_i$ values.
 
 ### How NOT to center the trait vector
@@ -754,24 +796,24 @@ Why not use the sample allele frequencies as
 $$
 \alpha 
 =
-\mu - 2 \mathbf{\hat{p}}^\intercal \mathbf{\beta} \quad ?
+\mu - 2 \mathbf{\hat{p}}' \boldsymbol{\beta} \quad ?
 $$
 Centering the trait this way is equivalent to centering genotypes at each locus:
 $$
-\mathbf{y} = \alpha \mathbf{1} + \sum_{i=1}^m (\mathbf{x}_i - 2 \hat{p}_i \mathbf{1}) \beta_i + \mathbf{\epsilon}.
+\mathbf{y} = \mathbf{1}_n \alpha + \sum_{i=1}^m (\mathbf{x}_i - 2 \hat{p}_i \mathbf{1}_n) \beta_i + \boldsymbol{\epsilon}.
 $$
 However, this operation introduces a distortion in the covariance of the genotypes [@Ochoa083923]: 
 $$
-\Cov \left( \mathbf{x}_i - 2 \hat{p}_i \mathbf{1} \right)
+\Cov \left( \mathbf{x}_i - 2 \hat{p}_i \mathbf{1}_n \right)
 =
 p_i (1-p_i) \left( 
 \mathbf{\Phi} 
-+ \bar{\varphi} \mathbf{1}\mathbf{1}^\intercal 
-- \mathbf{\varphi} \mathbf{1}^\intercal 
-- \mathbf{1} \mathbf{\varphi}^\intercal 
++ \bar{\varphi} \mathbf{1}_n\mathbf{1}_n' 
+- \boldsymbol{\varphi} \mathbf{1}_n' 
+- \mathbf{1}_n \boldsymbol{\varphi}' 
 \right),
 $$
-where $\mathbf{\varphi} = \frac{1}{n} \mathbf{\Phi} \mathbf{1}$.
+where $\boldsymbol{\varphi} = \frac{1}{n} \mathbf{\Phi} \mathbf{1}_n$.
 These undesirable distortions propagate to the trait, which we confirmed in simulations (not shown).
 It is not clear how these distortions can be corrected for after centering the trait as shown above.
 
