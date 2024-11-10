@@ -17,14 +17,16 @@ sim_trait(
   maf_cut = NA,
   loci_on_cols = FALSE,
   m_chunk_max = 1000,
-  fes = FALSE
+  fes = FALSE,
+  causal_indexes = NULL
 )
 }
 \arguments{
 \item{X}{The \code{m}-by-\code{n} genotype matrix (if \code{loci_on_cols = FALSE}, transposed otherwise), or a BEDMatrix object.
 This is a numeric matrix consisting of reference allele counts (in \code{c(0, 1, 2, NA)} for a diploid organism).}
 
-\item{m_causal}{The desired number of causal loci.}
+\item{m_causal}{The desired number of causal loci.
+Ignored if \code{causal_loci} is provided.}
 
 \item{herit}{The desired heritability (proportion of trait variance due to genetics).}
 
@@ -55,7 +57,8 @@ As these are variance proportions, each value must be non-negative and \code{sum
 
 \item{maf_cut}{The optional minimum allele frequency threshold (default \code{NA}, no threshold).
 This prevents rare alleles from being causal in the simulation.
-Threshold is applied to the \emph{sample} allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.}
+Threshold is applied to the \emph{sample} allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.
+Ignored if \code{causal_loci} is provided.}
 
 \item{loci_on_cols}{If \code{TRUE}, \code{X} has loci on columns and individuals on rows; if \code{FALSE} (the default), loci are on rows and individuals on columns.
 If \code{X} is a BEDMatrix object, loci are always on the columns (\code{loci_on_cols} is ignored).}
@@ -67,6 +70,10 @@ If memory usage is excessive, set to a lower value than default (expected only f
 Signs (+/-) are drawn randomly with equal probability.
 If \code{FALSE} (the default), \emph{random coefficients} (RC) are drawn from a standard Normal distribution.
 In both cases coefficients are rescaled to result in the desired heritability.}
+
+\item{causal_indexes}{If provided, will use the loci at these indexes as causal loci.
+When \code{NULL} (default), causal indexes are drawn randomly.
+Thus, parameters \code{m_loci} and \code{maf_cut} are ignored and have no effect if this parameter is set.}
 }
 \value{
 A named list containing:

@@ -89,6 +89,20 @@ test_that("allele_freqs works", {
     }
 })
 
+validate_indexes <- function( causal_indexes, m_causal, m_loci, maf_cut = NA, maf = NULL ) {
+    # the length of the index vector equals desired m_causal
+    expect_equal( length( causal_indexes ), m_causal )
+    # all indexes are equal or smaller than m_loci
+    expect_true( all( causal_indexes <= m_loci ) )
+    # all indexes are equal or larger than 1
+    expect_true( all( causal_indexes >= 1 ) )
+    if ( !is.na( maf_cut ) ) {
+        # test that MAF filter works
+        expect_true( min( maf[ causal_indexes ] ) >= maf_cut ) # test bottom of range
+        expect_true( max( maf[ causal_indexes ] ) <= 1 - maf_cut ) # test top of range
+    }
+}
+
 test_that("select_loci works", {
     # cause errors with missing args
     expect_error( select_loci() )
@@ -96,13 +110,8 @@ test_that("select_loci works", {
     m_loci <- 1000
     m_causal <- 50
     # test simple version without MAF thresholds
-    indexes <- select_loci( m_causal = m_causal, m_loci = m_loci )
-    # the length of the index vector equals desired m_causal
-    expect_equal( length( indexes ), m_causal )
-    # all indexes are equal or smaller than m_loci
-    expect_true( all( indexes <= m_loci ) )
-    # all indexes are equal or larger than 1
-    expect_true( all( indexes >= 1 ) )
+    causal_indexes <- select_loci( m_causal = m_causal, m_loci = m_loci )
+    validate_indexes( causal_indexes, m_causal, m_loci )
     
     # construct some simple data for test
     maf <- ( 1 : m_loci ) / m_loci
@@ -111,16 +120,8 @@ test_that("select_loci works", {
     # (ask for more causal loci than there are loci)
     expect_error( select_loci( m_causal = 10000, maf = maf ) )
     # now a proper run
-    indexes <- select_loci( m_causal = m_causal, maf = maf, maf_cut = maf_cut )
-    # the length of the index vector equals desired m_causal
-    expect_equal( length( indexes ), m_causal )
-    # all indexes are equal or smaller than m=length(maf)
-    expect_true( all( indexes <= length( maf ) ) )
-    # all indexes are equal or larger than 1
-    expect_true( all( indexes >= 1 ) )
-    # test that MAF filter works
-    expect_true( all( maf[ indexes ] >= maf_cut ) ) # test bottom of range
-    expect_true( all( maf[ indexes ] <= 1 - maf_cut ) ) # test top of range
+    causal_indexes <- select_loci( m_causal = m_causal, maf = maf, maf_cut = maf_cut )
+    validate_indexes( causal_indexes, m_causal, m_loci, maf_cut, maf )
 })
 
 test_that("check_herit_labs works", {
@@ -303,181 +304,119 @@ test_that( "herit_loci works", {
     
 })
 
+validate_sim_trait <- function( obj, herit, n_ind, m_causal, m_loci, p_anc, sigma_sq = 1, maf_cut = NA, maf = NULL, fes = FALSE ) {
+    trait <- obj$trait # trait vector
+    causal_indexes <- obj$causal_indexes # causal locus indeces
+    causal_coeffs <- obj$causal_coeffs # locus effect size vector
+    # test trait
+    expect_equal( length( trait ), n_ind ) # length as expected
+    # test causal locus indeces
+    validate_indexes( causal_indexes, m_causal, m_loci, maf_cut, maf )
+    # test effect sizes
+    expect_equal( length( causal_coeffs ), m_causal ) # length as expected
+    # verify heritability, exactly given when p_anc is known
+    expect_equal(
+        herit,
+        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs, sigma_sq = sigma_sq ) )
+    )
+    # in this case, the per-locus heritabilities are all equal, test that further
+    if ( fes ) 
+        expect_equal(
+            herit_loci( p_anc[ causal_indexes ], obj$causal_coeffs ),
+            rep.int( herit / m_causal, m_causal )
+        )
+    # test separate group effects, if present
+    lg <- length( obj$group_effects )
+    if ( lg == 1 ) {
+        expect_equal( obj$group_effects, 0 )
+    } else {
+        expect_equal( lg, n_ind )
+    }
+}
+
 test_that("sim_trait works", {
     # in these tests maf_cut stays with default value
     # create unstructured data for test
-    n <- 10
-    m <- 100
-    mn <- n*m # product recurs
-    p_anc <- runif(m) # random ancestral allele frequencies
-    X <- matrix(data = rbinom(mn, 2, p_anc), nrow = m)
+    n_ind <- 10
+    m_loci <- 100
+    mn <- n_ind * m_loci # product recurs
+    p_anc <- runif( m_loci ) # random ancestral allele frequencies
+    X <- matrix( data = rbinom( mn , 2, p_anc ), nrow = m_loci )
+    # sample MAFs
+    p_anc_hat <- rowMeans( X ) / 2
     expect_true( all(X %in% c(0,1,2)) ) # sanity check for genotypes
     m_causal <- 5
     herit <- 0.8
     # true kinship for unstructured data
-    kinship <- diag(n) / 2
+    kinship <- diag( n_ind ) / 2
     
     # first cause an error on purpose
     # (ask for more causal loci than there are loci)
     expect_error( sim_trait(X = X, m_causal = 1000, herit = herit, p_anc = p_anc) )
     # provide p_anc too short compared to X's loci
-    expect_error( sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc[ 1 : (m/2) ] ) )
+    expect_error( sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc[ 1 : (m_loci/2) ] ) )
     # test scalar p_anc in particular, that was a problem before
     expect_error( sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc[1] ) )
     
     # test p_anc version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc)
-    trait <- obj$trait # trait vector
-    causal_indexes <- obj$causal_indexes # causal locus indeces
-    causal_coeffs <- obj$causal_coeffs # locus effect size vector
-    # test trait
-    expect_equal( length(trait), n) # length as expected
-    # test causal locus indeces
-    expect_equal( length(causal_indexes), m_causal ) # length as expected
-    expect_true( all(causal_indexes <= m) ) # range as expected
-    expect_true( all(causal_indexes >= 1) ) # range as expected
-    # test effect sizes
-    expect_equal( length(causal_coeffs), m_causal) # length as expected
-    # verify heritability, exactly given when p_anc is known
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs ) )
-    )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc )
     
     # test kinship version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, kinship = kinship)
-    trait <- obj$trait # trait vector
-    causal_indexes <- obj$causal_indexes # causal locus indeces
-    causal_coeffs <- obj$causal_coeffs # locus effect size vector
-    # test trait
-    expect_equal( length(trait), n) # length as expected
-    # test causal locus indeces
-    expect_equal( length(causal_indexes), m_causal ) # length as expected
-    expect_true( all(causal_indexes <= m) ) # range as expected
-    expect_true( all(causal_indexes >= 1) ) # range as expected
-    # test effect sizes
-    expect_equal( length(causal_coeffs), m_causal) # length as expected
-    # verify heritability, version for unknown p_anc
-    p_anc_hat <- rowMeans(X)/2
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc_hat[ causal_indexes ], causal_coeffs, sigma_sq = 1 - mean(kinship) ) )
-    )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship) )
 
     # throw in random missing values in X, repeat all tests
     missingness <- 0.01 # simulate a reasonably low proportion of missingness
-    iM <- sample(1:mn, mn * missingness) # random loci to set to NA
+    iM <- sample.int( mn, mn * missingness) # random loci to set to NA
     X[iM] <- NA # introduce random missing values
+    # recalculate sample MAFs under missingness
+    p_anc_hat <- rowMeans( X, na.rm = TRUE ) / 2
     
     # test p_anc version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc)
-    trait <- obj$trait # trait vector
-    causal_indexes <- obj$causal_indexes # causal locus indeces
-    causal_coeffs <- obj$causal_coeffs # locus effect size vector
-    # test trait
-    expect_equal( length(trait), n) # length as expected
-    # test causal locus indeces
-    expect_equal( length(causal_indexes), m_causal ) # length as expected
-    expect_true( all(causal_indexes <= m) ) # range as expected
-    expect_true( all(causal_indexes >= 1) ) # range as expected
-    # test effect sizes
-    expect_equal( length(causal_coeffs), m_causal) # length as expected
-    # verify heritability, exactly given when p_anc is known
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs ) )
-    )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc )
     
     # test kinship version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, kinship = kinship)
-    trait <- obj$trait # trait vector
-    causal_indexes <- obj$causal_indexes # causal locus indeces
-    causal_coeffs <- obj$causal_coeffs # locus effect size vector
-    # test trait
-    expect_equal( length(trait), n) # length as expected
-    # test causal locus indeces
-    expect_equal( length(causal_indexes), m_causal ) # length as expected
-    expect_true( all(causal_indexes <= m) ) # range as expected
-    expect_true( all(causal_indexes >= 1) ) # range as expected
-    # test effect sizes
-    expect_equal( length(causal_coeffs), m_causal) # length as expected
-    # verify heritability, version for unknown p_anc
-    p_anc_hat <- rowMeans( X, na.rm = TRUE ) / 2 # repeat for new data with missingness
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc_hat[ causal_indexes ], causal_coeffs, sigma_sq = 1 - mean(kinship) ) )
-    )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship) )
 
+    # test now a case with specified causal indexes
+    # just use the ones from the previous run
+    # must work without m_causal
+    # test p_anc version
+    expect_silent(
+        obj2 <- sim_trait( X = X, causal_indexes = obj$causal_indexes, herit = herit, p_anc = p_anc)
+    )
+    validate_sim_trait( obj2, herit, n_ind, m_causal, m_loci, p_anc )
+    # confirm that they stayed the same
+    expect_equal( obj2$causal_indexes, obj$causal_indexes )
+    # test kinship version
+    expect_silent(
+        obj2 <- sim_trait( X = X, causal_indexes = obj$causal_indexes, herit = herit, kinship = kinship )
+    )
+    validate_sim_trait( obj2, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship) )
+    expect_equal( obj2$causal_indexes, obj$causal_indexes )
+    
     # test with MAF threshold
     maf_cut <- 0.05
     
     # test p_anc version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, maf_cut = maf_cut)
-    trait <- obj$trait # trait vector
-    causal_indexes <- obj$causal_indexes # causal locus indeces
-    causal_coeffs <- obj$causal_coeffs # locus effect size vector
-    # test trait
-    expect_equal( length(trait), n) # length as expected
-    # test causal locus indeces
-    expect_equal( length(causal_indexes), m_causal ) # length as expected
-    expect_true( all(causal_indexes <= m) ) # range as expected
-    expect_true( all(causal_indexes >= 1) ) # range as expected
-    # test effect sizes
-    expect_equal( length(causal_coeffs), m_causal) # length as expected
-    # verify heritability, exactly given when p_anc is known
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs ) )
-    )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc, maf_cut = maf_cut, maf = p_anc_hat )
     
     # test kinship version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, kinship = kinship, maf_cut = maf_cut)
-    trait <- obj$trait # trait vector
-    causal_indexes <- obj$causal_indexes # causal locus indeces
-    causal_coeffs <- obj$causal_coeffs # locus effect size vector
-    # test trait
-    expect_equal( length(trait), n) # length as expected
-    # test causal locus indeces
-    expect_equal( length(causal_indexes), m_causal ) # length as expected
-    expect_true( all(causal_indexes <= m) ) # range as expected
-    expect_true( all(causal_indexes >= 1) ) # range as expected
-    # test effect sizes
-    expect_equal( length(causal_coeffs), m_causal) # length as expected
-    # verify heritability, version for unknown p_anc
-    p_anc_hat <- rowMeans( X, na.rm = TRUE ) / 2 # repeat for new data with missingness
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc_hat[ causal_indexes ], causal_coeffs, sigma_sq = 1 - mean(kinship) ) )
-    )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship), maf_cut = maf_cut, maf = p_anc_hat )
 
     # test fes version
     # suffices to test p_anc version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, fes = TRUE)
-    trait <- obj$trait # trait vector
-    causal_indexes <- obj$causal_indexes # causal locus indeces
-    causal_coeffs <- obj$causal_coeffs # locus effect size vector
-    # test trait
-    expect_equal( length(trait), n) # length as expected
-    # test causal locus indeces
-    expect_equal( length(causal_indexes), m_causal ) # length as expected
-    expect_true( all(causal_indexes <= m) ) # range as expected
-    expect_true( all(causal_indexes >= 1) ) # range as expected
-    # test effect sizes
-    expect_equal( length(causal_coeffs), m_causal) # length as expected
-    # verify heritability, exactly given when p_anc is known
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs ) )
-    )
-    # in this case, the per-locus heritabilities are all equal, test that further
-    expect_equal(
-        herit_loci( p_anc[ causal_indexes ], causal_coeffs ),
-        rep.int( herit / m_causal, m_causal ),
-    )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc, fes = TRUE )
 
     # labels for group effects
-    labs1 <- sample( c('a', 'b', 'c'), n, replace = TRUE )
-    labs2 <- sample( c('a', 'z'), n, replace = TRUE )
+    labs1 <- sample( c('a', 'b', 'c'), n_ind, replace = TRUE )
+    labs2 <- sample( c('a', 'z'), n_ind, replace = TRUE )
     labs <- cbind( labs1, labs2 )
     # reduce heritability to have not tiny group variances
     herit <- 0.3
@@ -498,49 +437,13 @@ test_that("sim_trait works", {
     expect_silent(
         obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, labs = labs1, labs_sigma_sq = labs_sigma_sq1 )
     )
-    trait <- obj$trait # trait vector
-    causal_indexes <- obj$causal_indexes # causal locus indeces
-    causal_coeffs <- obj$causal_coeffs # locus effect size vector
-    group_effects <- obj$group_effects # new!
-    # test trait
-    expect_equal( length(trait), n) # length as expected
-    # test causal locus indeces
-    expect_equal( length(causal_indexes), m_causal ) # length as expected
-    expect_true( all(causal_indexes <= m) ) # range as expected
-    expect_true( all(causal_indexes >= 1) ) # range as expected
-    # test effect sizes
-    expect_equal( length(causal_coeffs), m_causal) # length as expected
-    # verify heritability, exactly given when p_anc is known
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs ) )
-    )
-    # test separate group effects
-    expect_equal( length( group_effects ), n )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc )
     
     # a complete run, two levels
     expect_silent(
         obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, labs = labs, labs_sigma_sq = labs_sigma_sq )
     )
-    trait <- obj$trait # trait vector
-    causal_indexes <- obj$causal_indexes # causal locus indeces
-    causal_coeffs <- obj$causal_coeffs # locus effect size vector
-    group_effects <- obj$group_effects # new!
-    # test trait
-    expect_equal( length(trait), n) # length as expected
-    # test causal locus indeces
-    expect_equal( length(causal_indexes), m_causal ) # length as expected
-    expect_true( all(causal_indexes <= m) ) # range as expected
-    expect_true( all(causal_indexes >= 1) ) # range as expected
-    # test effect sizes
-    expect_equal( length(causal_coeffs), m_causal) # length as expected
-    # verify heritability, exactly given when p_anc is known
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs ) )
-    )
-    # test separate group effects
-    expect_equal( length( group_effects ), n )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc )
 })
 
 test_that( "sqrt_matrix works", {

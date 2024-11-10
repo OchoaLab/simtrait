@@ -1,6 +1,6 @@
 Package: simtrait
 Title: Simulate Complex Traits from Genotypes
-Version: 1.1.4.9000
+Version: 1.1.5.9000
 Authors@R: 
     person(given = "Alejandro",
 	   family = "Ochoa",
@@ -11,7 +11,7 @@ Description: Simulate complex traits given a SNP genotype matrix and model param
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports:
     PRROC
 Suggests: 

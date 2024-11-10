@@ -200,3 +200,7 @@
   - Vignette: added description of environment group model to model and algorithm sections (was previously entirely omitted), and made notation more coherent with Yao and Ochoa (2023).
   - Function documentation: updated related language in the documentation of functions `sim_trait`, `sim_trait_mvn`, and `cov_trait`.
 
+# simtrait 1.1.5.9000 (2024-11-09)
+
+- Function `sim_trait` added parameter `causal_indexes` to specify fixed choices instead of letting the algorithm pick random indexes to be causal.
+- Internal unit tests for `sim_trait` are more refactored now.

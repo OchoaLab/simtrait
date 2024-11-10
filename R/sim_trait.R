@@ -16,6 +16,7 @@
 #' @param X The `m`-by-`n` genotype matrix (if `loci_on_cols = FALSE`, transposed otherwise), or a BEDMatrix object.
 #' This is a numeric matrix consisting of reference allele counts (in `c(0, 1, 2, NA)` for a diploid organism).
 #' @param m_causal The desired number of causal loci.
+#' Ignored if `causal_loci` is provided.
 #' @param herit The desired heritability (proportion of trait variance due to genetics).
 #' @param p_anc The length-`m` vector of true ancestral allele frequencies.
 #' Optional but recommended for simulations.
@@ -39,6 +40,7 @@
 #' @param maf_cut The optional minimum allele frequency threshold (default `NA`, no threshold).
 #' This prevents rare alleles from being causal in the simulation.
 #' Threshold is applied to the *sample* allele frequencies and not their true parametric values (`p_anc`), even if these are available.
+#' Ignored if `causal_loci` is provided.
 #' @param loci_on_cols If `TRUE`, `X` has loci on columns and individuals on rows; if `FALSE` (the default), loci are on rows and individuals on columns.
 #' If `X` is a BEDMatrix object, loci are always on the columns (`loci_on_cols` is ignored).
 #' @param m_chunk_max BEDMatrix-specific, sets the maximum number of loci to process at the time.
@@ -47,6 +49,9 @@
 #' Signs (+/-) are drawn randomly with equal probability.
 #' If `FALSE` (the default), *random coefficients* (RC) are drawn from a standard Normal distribution.
 #' In both cases coefficients are rescaled to result in the desired heritability.
+#' @param causal_indexes If provided, will use the loci at these indexes as causal loci.
+#' When `NULL` (default), causal indexes are drawn randomly.
+#' Thus, parameters `m_loci` and `maf_cut` are ignored and have no effect if this parameter is set.
 #'
 #' @return A named list containing:
 #'
@@ -109,17 +114,25 @@ sim_trait <- function(
                       maf_cut = NA,
                       loci_on_cols = FALSE,
                       m_chunk_max = 1000,
-                      fes = FALSE
+                      fes = FALSE,
+                      causal_indexes = NULL
                       ) {
     # check for missing parameters
     if (missing(X))
         stop('genotype matrix `X` is required!')
-    if (missing(m_causal))
-        stop('the number of causal loci `m_causal` is required!')
     if (missing(herit))
         stop('the heritability `herit` is required!')
     if (is.null(p_anc) && is.null(kinship))
         stop('either the true ancestral allele frequency vector `p_anc` or `kinship` are required!')
+    # if we provided causal indexes...
+    if ( !is.null( causal_indexes ) ) {
+        # force to ignore this parameter if we don't need it (to avoid calculating p_anc_est)
+        maf_cut <- NA
+        # infer m_causal from this
+        m_causal <- length( causal_indexes )
+    } else if ( missing( m_causal ) )
+        # require m_causal otherwise
+        stop('the number of causal loci `m_causal` is required when `causal_indexes` is not provided!')
     
     # other checks
     if (length(mu) != 1)
@@ -150,7 +163,7 @@ sim_trait <- function(
     if (herit == 0) {
         # lots of work can be avoided in this edge case
         # the index and coefficients vectors are empty
-        causal_indexes <- c()
+        #causal_indexes <- c() # already null by default
         causal_coeffs <- c()
         G <- 0 # construct a trivial genotype effect of zero (becomes vector automatically later)
     } else {
@@ -178,13 +191,15 @@ sim_trait <- function(
         
         # select random SNPs! this performs the magic...
         # also runs additional checks
-        causal_indexes <- select_loci(
-            m_causal = m_causal,
-            m_loci = m_loci,
-            maf = p_anc_hat, # NULL if is.na( maf_cut )
-            maf_cut = maf_cut # may be NA
-        )
-
+        # NOTE: if causal_indexes are provided, they aren't overwritten!
+        if ( is.null( causal_indexes ) )
+            causal_indexes <- select_loci(
+                m_causal = m_causal,
+                m_loci = m_loci,
+                maf = p_anc_hat, # NULL if is.na( maf_cut )
+                maf_cut = maf_cut # may be NA
+            )
+        
         # subset data to consider causal loci only
         if ( !is.null( p_anc_hat ) ) # if we had this already
             p_anc_hat <- p_anc_hat[ causal_indexes ]
