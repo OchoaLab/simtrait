@@ -18,6 +18,7 @@ sim_trait(
   loci_on_cols = FALSE,
   m_chunk_max = 1000,
   fes = FALSE,
+  fes_kinship_method = c("original", "mle", "bayesian"),
   causal_indexes = NULL
 )
 }
@@ -26,7 +27,7 @@ sim_trait(
 This is a numeric matrix consisting of reference allele counts (in \code{c(0, 1, 2, NA)} for a diploid organism).}
 
 \item{m_causal}{The desired number of causal loci.
-Ignored if \code{causal_loci} is provided.}
+Ignored if \code{causal_indexes} is provided.}
 
 \item{herit}{The desired heritability (proportion of trait variance due to genetics).}
 
@@ -58,7 +59,7 @@ As these are variance proportions, each value must be non-negative and \code{sum
 \item{maf_cut}{The optional minimum allele frequency threshold (default \code{NA}, no threshold).
 This prevents rare alleles from being causal in the simulation.
 Threshold is applied to the \emph{sample} allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.
-Ignored if \code{causal_loci} is provided.}
+Ignored if \code{causal_indexes} is provided.}
 
 \item{loci_on_cols}{If \code{TRUE}, \code{X} has loci on columns and individuals on rows; if \code{FALSE} (the default), loci are on rows and individuals on columns.
 If \code{X} is a BEDMatrix object, loci are always on the columns (\code{loci_on_cols} is ignored).}
@@ -70,6 +71,11 @@ If memory usage is excessive, set to a lower value than default (expected only f
 Signs (+/-) are drawn randomly with equal probability.
 If \code{FALSE} (the default), \emph{random coefficients} (RC) are drawn from a standard Normal distribution.
 In both cases coefficients are rescaled to result in the desired heritability.}
+
+\item{fes_kinship_method}{String specifying the bias correction method for the case when \code{fes = TRUE} and \code{kinship} is provided while \code{p_anc} is absent (option is ignored otherwise).
+\code{original} corresponds to a simple formula with substantial bias.
+\code{mle} replaces sample allele frequencies with maximum likelihood estimates assuming a Beta distribution with a known variance scale given by \code{kinship} (see \code{\link[=p_anc_est_beta_mle]{p_anc_est_beta_mle()}}).
+\code{bayesian} calculates the expectation over the posterior of a desired inverse variance term, assuming the same Beta distribution as the \code{mle} option (see \code{\link[=inv_var_est_bayesian]{inv_var_est_bayesian()}}).}
 
 \item{causal_indexes}{If provided, will use the loci at these indexes as causal loci.
 When \code{NULL} (default), causal indexes are drawn randomly.

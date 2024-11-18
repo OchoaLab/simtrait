@@ -204,3 +204,8 @@
 
 - Function `sim_trait` added parameter `causal_indexes` to specify fixed choices instead of letting the algorithm pick random indexes to be causal.
 - Internal unit tests for `sim_trait` are more refactored now.
+
+# simtrait 1.1.6.9000 (2024-11-18)
+
+- Added functions `p_anc_est_beta_mle` to calculate maximum likelihood estimates of ancestral allele frequencies assuming a Beta model, and `inv_var_est_bayesian` to calculate posterior expectations of inverse variance terms under the same Beta model.  Both were adapted from originals by Grace Rhodes, who is now an author on the package.
+- Function `sim_trait` added parameter `fes_kinship_method` to apply new functions above to causal coefficient construction when `fes = TRUE` and only sample allele frequencies are available.

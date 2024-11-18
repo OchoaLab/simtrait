@@ -53,7 +53,7 @@ allele_freqs <- function(
         m_loci <- ncol(X)
         n_ind <- nrow(X)
         # allocate desired vector of allele frequencies
-        p_anc_hat <- vector('numeric', m_loci)
+        p_anc_est <- vector('numeric', m_loci)
         
         # navigate chunks
         i_chunk <- 1 # start of first chunk (needed for matrix inputs only; as opposed to function inputs)
@@ -75,12 +75,12 @@ allele_freqs <- function(
             
             # compute and store the values we want!
             # because we didn't transpose, use colMeans here istead of rowMeans! 
-            p_anc_hat[ indexes_loci_chunk ] <- colMeans(Xi, na.rm = TRUE)/2
+            p_anc_est[ indexes_loci_chunk ] <- colMeans(Xi, na.rm = TRUE)/2
 
             # fold allele frequencies if requested
             # NOTE: perform on each chunk, further preserving memory
             if ( fold ) 
-                p_anc_hat[ indexes_loci_chunk ] <- fold_allele_freqs( p_anc_hat[ indexes_loci_chunk ] )
+                p_anc_est[ indexes_loci_chunk ] <- fold_allele_freqs( p_anc_est[ indexes_loci_chunk ] )
             
             # update starting point for next chunk! (overshoots at the end, that's ok)
             i_chunk <- i_chunk + m_chunk_max
@@ -88,7 +88,7 @@ allele_freqs <- function(
 
         # set names to be SNP names
         # this is done by col/rowMeans when X is not BEDMatrix below, so let's match that here
-        names(p_anc_hat) <- colnames(X)
+        names(p_anc_est) <- colnames(X)
     } else if (is.matrix(X)) {
         # apply subsetting to whole matrix in this case
         if ( !is.null( subset_ind ) )
@@ -96,19 +96,19 @@ allele_freqs <- function(
         
         # compute allele frequencies directly, all at once
         if (loci_on_cols) {
-            p_anc_hat <- colMeans(X, na.rm = TRUE)/2
+            p_anc_est <- colMeans(X, na.rm = TRUE)/2
         } else{
-            p_anc_hat <- rowMeans(X, na.rm = TRUE)/2
+            p_anc_est <- rowMeans(X, na.rm = TRUE)/2
         }
         
         # either way, fold allele frequencies if requested
         if ( fold ) 
-            p_anc_hat <- fold_allele_freqs( p_anc_hat )
+            p_anc_est <- fold_allele_freqs( p_anc_est )
     } else
         stop('Only matrix and BEDMatrix supported!  Instead, class was: ', toString( class(X) ) )
     
     # return the vector whichever way it was computed
-    return( p_anc_hat )
+    return( p_anc_est )
 }
 
 # internal function that folds allele frequencies that have already been calculated from genotypes or otherwise

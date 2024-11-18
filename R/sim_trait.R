@@ -16,7 +16,7 @@
 #' @param X The `m`-by-`n` genotype matrix (if `loci_on_cols = FALSE`, transposed otherwise), or a BEDMatrix object.
 #' This is a numeric matrix consisting of reference allele counts (in `c(0, 1, 2, NA)` for a diploid organism).
 #' @param m_causal The desired number of causal loci.
-#' Ignored if `causal_loci` is provided.
+#' Ignored if `causal_indexes` is provided.
 #' @param herit The desired heritability (proportion of trait variance due to genetics).
 #' @param p_anc The length-`m` vector of true ancestral allele frequencies.
 #' Optional but recommended for simulations.
@@ -40,7 +40,7 @@
 #' @param maf_cut The optional minimum allele frequency threshold (default `NA`, no threshold).
 #' This prevents rare alleles from being causal in the simulation.
 #' Threshold is applied to the *sample* allele frequencies and not their true parametric values (`p_anc`), even if these are available.
-#' Ignored if `causal_loci` is provided.
+#' Ignored if `causal_indexes` is provided.
 #' @param loci_on_cols If `TRUE`, `X` has loci on columns and individuals on rows; if `FALSE` (the default), loci are on rows and individuals on columns.
 #' If `X` is a BEDMatrix object, loci are always on the columns (`loci_on_cols` is ignored).
 #' @param m_chunk_max BEDMatrix-specific, sets the maximum number of loci to process at the time.
@@ -49,6 +49,10 @@
 #' Signs (+/-) are drawn randomly with equal probability.
 #' If `FALSE` (the default), *random coefficients* (RC) are drawn from a standard Normal distribution.
 #' In both cases coefficients are rescaled to result in the desired heritability.
+#' @param fes_kinship_method String specifying the bias correction method for the case when `fes = TRUE` and `kinship` is provided while `p_anc` is absent (option is ignored otherwise).
+#' `original` corresponds to a simple formula with substantial bias.
+#' `mle` replaces sample allele frequencies with maximum likelihood estimates assuming a Beta distribution with a known variance scale given by `kinship` (see [p_anc_est_beta_mle()]).
+#' `bayesian` calculates the expectation over the posterior of a desired inverse variance term, assuming the same Beta distribution as the `mle` option (see [inv_var_est_bayesian()]).
 #' @param causal_indexes If provided, will use the loci at these indexes as causal loci.
 #' When `NULL` (default), causal indexes are drawn randomly.
 #' Thus, parameters `m_loci` and `maf_cut` are ignored and have no effect if this parameter is set.
@@ -115,6 +119,7 @@ sim_trait <- function(
                       loci_on_cols = FALSE,
                       m_chunk_max = 1000,
                       fes = FALSE,
+                      fes_kinship_method = c('original', 'mle', 'bayesian'),
                       causal_indexes = NULL
                       ) {
     # check for missing parameters
@@ -141,7 +146,8 @@ sim_trait <- function(
         stop('`sigma_sq` must be a scalar! (input has length ', length(sigma_sq), ')')
     if (sigma_sq <= 0)
         stop('`sigma_sq` must be positive!')
-
+    fes_kinship_method <- match.arg( fes_kinship_method )
+    
     # simplifies subsetting downstream
     if ('BEDMatrix' %in% class(X))
         loci_on_cols <- TRUE
@@ -173,12 +179,12 @@ sim_trait <- function(
         ###################################
 
         # may not need this
-        p_anc_hat <- NULL
+        p_anc_est <- NULL
         # these are needed here to select loci, if there's a MAF threshold
         # (they are also needed in real datasets, but if that's the only need then let's wait until we've subset the genotype matrix)
         if ( !is.na( maf_cut ) ) {
             # compute marginal allele frequencies
-            p_anc_hat <- allele_freqs(
+            p_anc_est <- allele_freqs(
                 X,
                 loci_on_cols = loci_on_cols,
                 m_chunk_max = m_chunk_max
@@ -196,13 +202,13 @@ sim_trait <- function(
             causal_indexes <- select_loci(
                 m_causal = m_causal,
                 m_loci = m_loci,
-                maf = p_anc_hat, # NULL if is.na( maf_cut )
+                maf = p_anc_est, # NULL if is.na( maf_cut )
                 maf_cut = maf_cut # may be NA
             )
         
         # subset data to consider causal loci only
-        if ( !is.null( p_anc_hat ) ) # if we had this already
-            p_anc_hat <- p_anc_hat[ causal_indexes ]
+        if ( !is.null( p_anc_est ) ) # if we had this already
+            p_anc_est <- p_anc_est[ causal_indexes ]
         if ( !is.null( p_anc ) )
             p_anc <- p_anc[ causal_indexes ] # subset if available
         # the subset of causal data
@@ -222,9 +228,9 @@ sim_trait <- function(
         # this will be faster now, if done on the subset of causal genotypes only
 
         # these are used to select loci, or to simulate from real genotypes
-        if ( is.null( p_anc ) && is.null( p_anc_hat ) ) {
+        if ( is.null( p_anc ) && is.null( p_anc_est ) ) {
             # compute marginal allele frequencies
-            p_anc_hat <- allele_freqs(
+            p_anc_est <- allele_freqs(
                 X,
 #                loci_on_cols = loci_on_cols, # now that genotypes are extracted, they are in default orientation (no need for passing this, plus passing it messes things up)
                 m_chunk_max = m_chunk_max
@@ -245,14 +251,26 @@ sim_trait <- function(
         #############
         
         # to scale causal_coeffs to give correct heritability, we need to estimate the pq = p(1-p) vector
-        # calculate pq = p_anc * (1 - p_anc) in one of two ways
-        if ( !is.null(p_anc) ) { # this takes precedence, it should be most accurate
+        # calculate pq = p_anc * (1 - p_anc) in various ways
+        if ( !is.null( p_anc ) ) { # this takes precedence, it should be most accurate
             # direct calculation
-            pq <- p_anc * (1 - p_anc)
-        } else if ( !is.null(kinship) ) {
+            pq <- p_anc * ( 1 - p_anc )
+        } else if ( !is.null( kinship ) ) {
+            # for RC this fine, and for FES this otherwise corresponds to `fes_kinship_method == 'original'`
             # indirect, infer from genotypes and mean kinship
-            # recall E[ p_anc_hat * (1 - p_anc_hat) ] = pq * (1 - mean_kinship), so we solve for pq:
-            pq <- p_anc_hat * (1 - p_anc_hat) / (1 - mean_kinship)
+            # recall E[ p_anc_est * (1 - p_anc_est) ] = pq * (1 - mean_kinship), so we solve for pq:
+            pq <- p_anc_est * ( 1 - p_anc_est ) / ( 1 - mean_kinship )
+            if ( fes && fes_kinship_method == 'mle' ) {
+                # use this other way to estimate a better value considering the variance of the estimate and assuming Beta
+                p_anc_mle <- p_anc_est_beta_mle( p_anc_est, mean_kinship )
+                # now use these values directly
+                pq <- p_anc_mle * ( 1 - p_anc_mle )
+            } else if ( fes && fes_kinship_method == 'bayesian' ) {
+                # a Bayesian version for estimating the factor we want (1/sqrt(pq))
+                inv_var_est <- inv_var_est_bayesian( p_anc_est, mean_kinship, g = 0.5 )
+                # to have the below code work, deconstruct back into the quantity we need
+                pq <- 1 / inv_var_est^2
+            }
         } else {
             # a redundant check (if this were so, it should have died earlier)
             stop('either `p_anc` or `kinship` must be specified!')
@@ -295,7 +313,7 @@ sim_trait <- function(
             muXB <- 2 * drop( causal_coeffs %*% p_anc )
         } else {
             # works very well assuming causal_coeffs and p_anc are uncorrelated!
-            muXB <- 2 * sum( causal_coeffs ) * mean( p_anc_hat )
+            muXB <- 2 * sum( causal_coeffs ) * mean( p_anc_est )
         }
         # in all cases:
         # - remove the mean from the genotypes (muXB)

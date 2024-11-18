@@ -304,7 +304,71 @@ test_that( "herit_loci works", {
     
 })
 
-validate_sim_trait <- function( obj, herit, n_ind, m_causal, m_loci, p_anc, sigma_sq = 1, maf_cut = NA, maf = NULL, fes = FALSE ) {
+test_that( 'p_anc_est_beta_mle works', {
+    kinship <- 0.1
+    # try a grid of values, including edge cases (0,1)
+    m_loci <- 7
+    p_anc_est <- 0 : (m_loci - 1) / (m_loci - 1)
+    
+    # this works on vector inputs!
+    expect_silent(
+        p_anc_mle <- p_anc_est_beta_mle( p_anc_est, kinship )
+    )
+    expect_true( is.numeric( p_anc_mle ) )
+    expect_equal( length( p_anc_mle ), m_loci )
+    expect_true( !anyNA( p_anc_mle ) )
+    expect_true( min( p_anc_mle ) >= 0 )
+    expect_true( max( p_anc_mle ) <= 1 )
+
+    # test expected symmetry (works since inputs are regular grid)
+    indexes_half <- 1L : ( m_loci / 2 )
+    expect_equal(
+        p_anc_mle[ indexes_half ],
+        1 - p_anc_mle[ m_loci + 1L - indexes_half ]
+    )
+
+    # make sure that NAs work without errors
+    # however, it won't work if all are NAs, so add a dummy and fixed value, test that too
+    # in fact all of these inputs are fixed values, confirm that
+    p_anc_est <- c( NA, 0, 0.5, 1 )
+    expect_silent(
+        p_anc_mle <- p_anc_est_beta_mle( p_anc_est, kinship )
+    )
+    expect_equal( p_anc_mle, p_anc_est )
+})
+
+test_that( 'inv_var_est_bayesian works', {
+    kinship <- 0.1
+    g <- 0.5
+    # try a grid of values, excluding for now edge cases (0,1) that result in infinities
+    m_loci <- 7
+    p_anc_est <- 1 : m_loci / ( m_loci + 1 )
+
+    # a successful example
+    expect_silent(
+        inv_var_est <- inv_var_est_bayesian( p_anc_est, kinship, g )
+    )
+    expect_true( is.numeric( inv_var_est ) )
+    expect_equal( length( inv_var_est ), m_loci )
+    expect_true( !anyNA( inv_var_est ) )
+    expect_true( min( inv_var_est ) > 0 )
+
+    # test expected symmetry (works since inputs are regular grid)
+    indexes_half <- 1L : ( m_loci / 2 )
+    expect_equal(
+        inv_var_est[ indexes_half ],
+        inv_var_est[ m_loci + 1L - indexes_half ]
+    )
+
+    # test special edge cases with known values
+    p_anc_est <- c( NA, 0, 1 )
+    expect_silent(
+        inv_var_est <- inv_var_est_bayesian( p_anc_est, kinship, g )
+    )
+    expect_equal( inv_var_est, c(NA, Inf, Inf) )
+})
+
+validate_sim_trait <- function( obj, herit, n_ind, m_causal, m_loci, p_anc, sigma_sq = 1, maf_cut = NA, maf = NULL, fes = FALSE, check_herit = TRUE ) {
     trait <- obj$trait # trait vector
     causal_indexes <- obj$causal_indexes # causal locus indeces
     causal_coeffs <- obj$causal_coeffs # locus effect size vector
@@ -314,17 +378,21 @@ validate_sim_trait <- function( obj, herit, n_ind, m_causal, m_loci, p_anc, sigm
     validate_indexes( causal_indexes, m_causal, m_loci, maf_cut, maf )
     # test effect sizes
     expect_equal( length( causal_coeffs ), m_causal ) # length as expected
-    # verify heritability, exactly given when p_anc is known
-    expect_equal(
-        herit,
-        sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs, sigma_sq = sigma_sq ) )
-    )
-    # in this case, the per-locus heritabilities are all equal, test that further
-    if ( fes ) 
+    # these checks only work if p_anc is known, or under the old unbiasing tricks
+    # (want to skip for new MLE and Bayesian strategies)
+    if ( check_herit ) {
+        # verify heritability, exactly given when p_anc is known
         expect_equal(
-            herit_loci( p_anc[ causal_indexes ], obj$causal_coeffs ),
-            rep.int( herit / m_causal, m_causal )
+            herit,
+            sum( herit_loci( p_anc[ causal_indexes ], causal_coeffs, sigma_sq = sigma_sq ) )
         )
+        # in this case, the per-locus heritabilities are all equal, test that further
+        if ( fes ) 
+            expect_equal(
+                herit_loci( p_anc[ causal_indexes ], obj$causal_coeffs, sigma_sq = sigma_sq ),
+                rep.int( herit / m_causal, m_causal )
+            )
+    }
     # test separate group effects, if present
     lg <- length( obj$group_effects )
     if ( lg == 1 ) {
@@ -410,10 +478,22 @@ test_that("sim_trait works", {
     validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship), maf_cut = maf_cut, maf = p_anc_hat )
 
     # test fes version
-    # suffices to test p_anc version
-    obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, fes = TRUE)
+    # test p_anc version
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, fes = TRUE )
     validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc, fes = TRUE )
-
+    # consider new tricks for unbiasing this case when there's no p_anc
+    # combine all of these with maf_cut because there are fixed SNPs otherwise!  (maf_cut = 0 doesn't remove anything, matching is greater or equal!)
+    maf_cut <- 1 / ( 2 * n_ind )
+    # original!
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, fes = TRUE, maf_cut = maf_cut )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship), fes = TRUE, maf_cut = maf_cut, maf = p_anc_hat )
+    # MLE!
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, fes = TRUE, maf_cut = maf_cut, fes_kinship_method = 'mle' )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, fes = TRUE, maf_cut = maf_cut, maf = p_anc_hat, check_herit = FALSE )
+    # Bayesian!
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, fes = TRUE, maf_cut = maf_cut, fes_kinship_method = 'bayesian' )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, fes = TRUE, maf_cut = maf_cut, maf = p_anc_hat, check_herit = FALSE )
+    
     # labels for group effects
     labs1 <- sample( c('a', 'b', 'c'), n_ind, replace = TRUE )
     labs2 <- sample( c('a', 'z'), n_ind, replace = TRUE )

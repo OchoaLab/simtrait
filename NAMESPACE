@@ -3,6 +3,8 @@
 export(allele_freqs)
 export(cov_trait)
 export(herit_loci)
+export(inv_var_est_bayesian)
+export(p_anc_est_beta_mle)
 export(pval_aucpr)
 export(pval_infl)
 export(pval_power_calib)
