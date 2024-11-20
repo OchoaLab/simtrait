@@ -9,7 +9,8 @@ allele_freqs(
   loci_on_cols = FALSE,
   fold = FALSE,
   m_chunk_max = 1000,
-  subset_ind = NULL
+  subset_ind = NULL,
+  want_counts = FALSE
 )
 }
 \arguments{
@@ -27,10 +28,14 @@ If memory usage is excessive, set to a lower value than default (expected only f
 
 \item{subset_ind}{Optionally subset individuals by providing their indexes (negative indexes to exclude) or a boolean vector (in other words, the usual ways to subset matrices).
 Most useful for BEDMatrix inputs, to subset chunks and retain low memory usage.}
+
+\item{want_counts}{If \code{TRUE} (default \code{FALSE}), raw allele counts are also returned.
+Note \code{fold} option has no effect on these counts.}
 }
 \value{
-The vector of allele frequencies, one per locus.
+If \code{want_counts = FALSE}, the vector of estimated ancestral allele frequencies, one per locus.
 Names are set to the locus names, if present.
+If \code{want_counts = TRUE}, a named list containing both the estimated ancestral allele frequencies \code{p_anc_est} and the allele \code{counts} matrix, with loci along the rows (also with names if present), and alleles along the columns.
 }
 \description{
 On a regular matrix, this is essentially a wrapper for \code{\link[=colMeans]{colMeans()}} or \code{\link[=rowMeans]{rowMeans()}} depending on \code{loci_on_cols}.

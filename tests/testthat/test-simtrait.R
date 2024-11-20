@@ -28,17 +28,31 @@ test_that("allele_freqs works", {
     # known values
     maf_rows <- c(1/2, 1/3, 3/4)
     maf_cols <- c(1/3, 1/4, 5/6)
+    counts_rows <- cbind( c(3, 2, 3), c(3, 4, 1) )
+    counts_cols <- cbind( c(2, 1, 5), c(4, 3, 1) )
+    obj_rows <- list( p_anc_est = maf_rows, counts = counts_rows )
+    obj_cols <- list( p_anc_est = maf_cols, counts = counts_cols )
     
     # row means
     expect_equal(
-        allele_freqs(X),
+        allele_freqs( X ),
         maf_rows
     )
     
     # col means
     expect_equal(
-        allele_freqs(X, loci_on_cols = TRUE),
+        allele_freqs( X, loci_on_cols = TRUE ),
         maf_cols
+    )
+
+    # repeat with full count matrix
+    expect_equal(
+        allele_freqs( X, want_counts = TRUE ),
+        obj_rows
+    )
+    expect_equal(
+        allele_freqs( X, want_counts = TRUE, loci_on_cols = TRUE ),
+        obj_cols
     )
 
     # repeat with folded allele frequencies option
@@ -89,18 +103,19 @@ test_that("allele_freqs works", {
     }
 })
 
-validate_indexes <- function( causal_indexes, m_causal, m_loci, maf_cut = NA, maf = NULL ) {
+validate_indexes <- function( causal_indexes, m_causal, m_loci, maf_cut = NA, maf = NULL, mac_cut = NA, mac = NULL ) {
     # the length of the index vector equals desired m_causal
     expect_equal( length( causal_indexes ), m_causal )
     # all indexes are equal or smaller than m_loci
     expect_true( all( causal_indexes <= m_loci ) )
     # all indexes are equal or larger than 1
     expect_true( all( causal_indexes >= 1 ) )
-    if ( !is.na( maf_cut ) ) {
-        # test that MAF filter works
-        expect_true( min( maf[ causal_indexes ] ) >= maf_cut ) # test bottom of range
-        expect_true( max( maf[ causal_indexes ] ) <= 1 - maf_cut ) # test top of range
-    }
+    # test that MAF and MAC filters work
+    # assumes `maf` and `mac` are already *minor*!
+    if ( !is.na( maf_cut ) )
+        expect_true( min( maf[ causal_indexes ] ) >= maf_cut )
+    if ( !is.na( mac_cut ) )
+        expect_true( min( mac[ causal_indexes ] ) >= mac_cut )
 }
 
 test_that("select_loci works", {
@@ -114,14 +129,35 @@ test_that("select_loci works", {
     validate_indexes( causal_indexes, m_causal, m_loci )
     
     # construct some simple data for test
-    maf <- ( 1 : m_loci ) / m_loci
-    maf_cut <- 0.05
+    # function needs allele counts, let's make something not too trivial
+    n_ind <- 100
+    # draw counts of first allele
+    counts1 <- rbinom( m_loci, n_ind, 0.3 )
+    # usually the second allele is the rest, but this way we allow for missingness
+    counts2 <- rbinom( m_loci, n_ind - counts1, 0.9 )
+    # input to function
+    counts <- cbind( counts1, counts2 )
+    # and actual vectors to threshold
+    mac <- pmin( counts1, counts2 )
+    n_obs <- counts1 + counts2
+    maf <- mac / n_obs
+    
     # first cause an error on purpose
     # (ask for more causal loci than there are loci)
-    expect_error( select_loci( m_causal = 10000, maf = maf ) )
-    # now a proper run
-    causal_indexes <- select_loci( m_causal = m_causal, maf = maf, maf_cut = maf_cut )
+    expect_error( select_loci( m_causal = 10000, counts = counts ) )
+    
+    # now proper runs
+    maf_cut <- 0.05
+    mac_cut <- 5
+    # MAF only
+    causal_indexes <- select_loci( m_causal = m_causal, counts = counts, maf_cut = maf_cut )
     validate_indexes( causal_indexes, m_causal, m_loci, maf_cut, maf )
+    # MAC only
+    causal_indexes <- select_loci( m_causal = m_causal, counts = counts, mac_cut = mac_cut )
+    validate_indexes( causal_indexes, m_causal, m_loci, mac_cut = mac_cut, mac = mac )
+    # both MAF and MAC, which are non-redundant under missingness
+    causal_indexes <- select_loci( m_causal = m_causal, counts = counts, maf_cut = maf_cut, mac_cut = mac_cut )
+    validate_indexes( causal_indexes, m_causal, m_loci, maf_cut, maf, mac_cut, mac )
 })
 
 test_that("check_herit_labs works", {
@@ -368,14 +404,14 @@ test_that( 'inv_var_est_bayesian works', {
     expect_equal( inv_var_est, c(NA, Inf, Inf) )
 })
 
-validate_sim_trait <- function( obj, herit, n_ind, m_causal, m_loci, p_anc, sigma_sq = 1, maf_cut = NA, maf = NULL, fes = FALSE, check_herit = TRUE ) {
+validate_sim_trait <- function( obj, herit, n_ind, m_causal, m_loci, p_anc, sigma_sq = 1, maf_cut = NA, maf = NULL, mac_cut = NA, mac = NULL, fes = FALSE, check_herit = TRUE ) {
     trait <- obj$trait # trait vector
     causal_indexes <- obj$causal_indexes # causal locus indeces
     causal_coeffs <- obj$causal_coeffs # locus effect size vector
     # test trait
     expect_equal( length( trait ), n_ind ) # length as expected
     # test causal locus indeces
-    validate_indexes( causal_indexes, m_causal, m_loci, maf_cut, maf )
+    validate_indexes( causal_indexes, m_causal, m_loci, maf_cut, maf, mac_cut, mac )
     # test effect sizes
     expect_equal( length( causal_coeffs ), m_causal ) # length as expected
     # these checks only work if p_anc is known, or under the old unbiasing tricks
@@ -440,6 +476,11 @@ test_that("sim_trait works", {
     X[iM] <- NA # introduce random missing values
     # recalculate sample MAFs under missingness
     p_anc_hat <- rowMeans( X, na.rm = TRUE ) / 2
+    # also calculate MACs and proper MAFs (*minor*)
+    counts1 <- rowSums( X, na.rm = TRUE )
+    counts2 <- rowSums( 2 - X, na.rm = TRUE )
+    mac <- pmin( counts1, counts2 )
+    maf <- mac / ( counts1 + counts2 )
     
     # test p_anc version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc)
@@ -471,28 +512,41 @@ test_that("sim_trait works", {
     
     # test p_anc version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, maf_cut = maf_cut)
-    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc, maf_cut = maf_cut, maf = p_anc_hat )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc, maf_cut = maf_cut, maf = maf )
     
     # test kinship version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, kinship = kinship, maf_cut = maf_cut)
-    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship), maf_cut = maf_cut, maf = p_anc_hat )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship), maf_cut = maf_cut, maf = maf )
+
+    # MAC threshold now
+    mac_cut <- 5
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, mac_cut = mac_cut )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc, mac_cut = mac_cut, mac = mac )
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, mac_cut = mac_cut )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship), mac_cut = mac_cut, mac = mac )
+
+    # and both MAF and MAC thresholds
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, maf_cut = maf_cut, mac_cut = mac_cut )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc, maf_cut = maf_cut, maf = maf, mac_cut = mac_cut, mac = mac )
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, maf_cut = maf_cut, mac_cut = mac_cut )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship), maf_cut = maf_cut, maf = maf, mac_cut = mac_cut, mac = mac )
 
     # test fes version
     # test p_anc version
     obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, fes = TRUE )
     validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc, fes = TRUE )
     # consider new tricks for unbiasing this case when there's no p_anc
-    # combine all of these with maf_cut because there are fixed SNPs otherwise!  (maf_cut = 0 doesn't remove anything, matching is greater or equal!)
-    maf_cut <- 1 / ( 2 * n_ind )
+    # combine all of these with mac_cut because there are fixed SNPs otherwise!  (maf_cut = 0 doesn't remove anything, matching is greater or equal!)
+    mac_cut <- 1
     # original!
-    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, fes = TRUE, maf_cut = maf_cut )
-    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship), fes = TRUE, maf_cut = maf_cut, maf = p_anc_hat )
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, fes = TRUE, mac_cut = mac_cut )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship), fes = TRUE, mac_cut = mac_cut, mac = mac )
     # MLE!
-    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, fes = TRUE, maf_cut = maf_cut, fes_kinship_method = 'mle' )
-    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, fes = TRUE, maf_cut = maf_cut, maf = p_anc_hat, check_herit = FALSE )
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, fes = TRUE, mac_cut = mac_cut, fes_kinship_method = 'mle' )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, fes = TRUE, mac_cut = mac_cut, mac = mac, check_herit = FALSE )
     # Bayesian!
-    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, fes = TRUE, maf_cut = maf_cut, fes_kinship_method = 'bayesian' )
-    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, fes = TRUE, maf_cut = maf_cut, maf = p_anc_hat, check_herit = FALSE )
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, kinship = kinship, fes = TRUE, mac_cut = mac_cut, fes_kinship_method = 'bayesian' )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, fes = TRUE, mac_cut = mac_cut, mac = mac, check_herit = FALSE )
     
     # labels for group effects
     labs1 <- sample( c('a', 'b', 'c'), n_ind, replace = TRUE )

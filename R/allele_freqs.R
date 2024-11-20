@@ -13,9 +13,12 @@
 #' If memory usage is excessive, set to a lower value than default (expected only for extremely large numbers of individuals).
 #' @param subset_ind Optionally subset individuals by providing their indexes (negative indexes to exclude) or a boolean vector (in other words, the usual ways to subset matrices).
 #' Most useful for BEDMatrix inputs, to subset chunks and retain low memory usage.
+#' @param want_counts If `TRUE` (default `FALSE`), raw allele counts are also returned.
+#' Note `fold` option has no effect on these counts.
 #'
-#' @return The vector of allele frequencies, one per locus.
+#' @return If `want_counts = FALSE`, the vector of estimated ancestral allele frequencies, one per locus.
 #' Names are set to the locus names, if present.
+#' If `want_counts = TRUE`, a named list containing both the estimated ancestral allele frequencies `p_anc_est` and the allele `counts` matrix, with loci along the rows (also with names if present), and alleles along the columns.
 #'
 #' @examples
 #' # Construct toy data
@@ -45,25 +48,31 @@ allele_freqs <- function(
                          loci_on_cols = FALSE,
                          fold = FALSE,
                          m_chunk_max = 1000, # optimal value not tested directly
-                         subset_ind = NULL
+                         subset_ind = NULL,
+                         want_counts = FALSE
                          ) {
     # behavior depends on class
-    if ('BEDMatrix' %in% class(X)) {
+    if ( 'BEDMatrix' %in% class( X ) ) {
         # extract data dimensions
-        m_loci <- ncol(X)
-        n_ind <- nrow(X)
+        m_loci <- ncol( X )
+        n_ind <- nrow( X )
         # allocate desired vector of allele frequencies
-        p_anc_est <- vector('numeric', m_loci)
+        p_anc_est <- vector( 'numeric', m_loci )
+        # and these others but only if strictly required (otherwise it's memory wasteful)
+        if ( want_counts ) {
+            counts1 <- vector( 'numeric', m_loci )
+            counts2 <- vector( 'numeric', m_loci )
+        }
         
         # navigate chunks
         i_chunk <- 1 # start of first chunk (needed for matrix inputs only; as opposed to function inputs)
-        while (TRUE) { # start an infinite loop, break inside as needed
+        while ( TRUE ) { # start an infinite loop, break inside as needed
             # this means all SNPs have been covered!
-            if (i_chunk > m_loci)
+            if ( i_chunk > m_loci )
                 break
             
             # indexes to extract loci, and also so save to FstTs and FstBs vectors
-            indexes_loci_chunk <- i_chunk : min(i_chunk + m_chunk_max - 1, m_loci) # range of SNPs to extract in this chunk
+            indexes_loci_chunk <- i_chunk : min( i_chunk + m_chunk_max - 1, m_loci ) # range of SNPs to extract in this chunk
 
             # Only loci_on_cols==TRUE cases is supported here, this is only for BEDMatrix
             # DO NOT transpose for our usual setup (this is faster)
@@ -74,9 +83,17 @@ allele_freqs <- function(
                 Xi <- Xi[ subset_ind, , drop = FALSE ]
             
             # compute and store the values we want!
-            # because we didn't transpose, use colMeans here istead of rowMeans! 
-            p_anc_est[ indexes_loci_chunk ] <- colMeans(Xi, na.rm = TRUE)/2
-
+            # because we didn't transpose, use colMeans here istead of rowMeans!
+            # get the more basic counts first
+            counts1_chunk <- colSums( Xi, na.rm = TRUE )
+            n_obs_chunk <- 2 * colSums( !is.na( Xi ) )
+            # save only what we need, nothing else
+            p_anc_est[ indexes_loci_chunk ] <- counts1_chunk / n_obs_chunk
+            if ( want_counts ) {
+                counts1[ indexes_loci_chunk ] <- counts1_chunk
+                counts2[ indexes_loci_chunk ] <- n_obs_chunk - counts1_chunk
+            }
+            
             # fold allele frequencies if requested
             # NOTE: perform on each chunk, further preserving memory
             if ( fold ) 
@@ -88,27 +105,39 @@ allele_freqs <- function(
 
         # set names to be SNP names
         # this is done by col/rowMeans when X is not BEDMatrix below, so let's match that here
-        names(p_anc_est) <- colnames(X)
-    } else if (is.matrix(X)) {
+        names( p_anc_est ) <- colnames( X )
+        if ( want_counts )
+            names( counts1 ) <- colnames( X )
+    } else if ( is.matrix( X ) ) {
         # apply subsetting to whole matrix in this case
         if ( !is.null( subset_ind ) )
             X <- if ( loci_on_cols ) X[ subset_ind, , drop = FALSE ] else X[ , subset_ind, drop = FALSE ]
         
         # compute allele frequencies directly, all at once
-        if (loci_on_cols) {
-            p_anc_est <- colMeans(X, na.rm = TRUE)/2
-        } else{
-            p_anc_est <- rowMeans(X, na.rm = TRUE)/2
+        if ( loci_on_cols ) {
+            counts1 <- colSums( X, na.rm = TRUE )
+            n_obs <- 2 * colSums( !is.na( X ) )
+        } else {
+            counts1 <- rowSums( X, na.rm = TRUE )
+            n_obs <- 2 * rowSums( !is.na( X ) )
         }
+        p_anc_est <- counts1 / n_obs
+        if ( want_counts )
+            counts2 <- n_obs - counts1
         
         # either way, fold allele frequencies if requested
         if ( fold ) 
             p_anc_est <- fold_allele_freqs( p_anc_est )
     } else
-        stop('Only matrix and BEDMatrix supported!  Instead, class was: ', toString( class(X) ) )
+        stop( 'Only matrix and BEDMatrix supported!  Instead, class was: ', toString( class( X ) ) )
     
-    # return the vector whichever way it was computed
-    return( p_anc_est )
+    # return the vector whichever way it was computed, and optionally the counts
+    if ( want_counts ) {
+        # `deparse.level = 0` ensures there's no labels on this matrix (otherwise the column names are "counts1" and "counts2")
+        counts <- cbind( counts1, counts2, deparse.level = 0 )
+        return( list( p_anc_est = p_anc_est, counts = counts ) )
+    } else 
+        return( p_anc_est )
 }
 
 # internal function that folds allele frequencies that have already been calculated from genotypes or otherwise

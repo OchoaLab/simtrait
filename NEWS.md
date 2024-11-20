@@ -209,3 +209,8 @@
 
 - Added functions `p_anc_est_beta_mle` to calculate maximum likelihood estimates of ancestral allele frequencies assuming a Beta model, and `inv_var_est_bayesian` to calculate posterior expectations of inverse variance terms under the same Beta model.  Both were adapted from originals by Grace Rhodes, who is now an author on the package.
 - Function `sim_trait` added parameter `fes_kinship_method` to apply new functions above to causal coefficient construction when `fes = TRUE` and only sample allele frequencies are available.
+
+# simtrait 1.1.7.9000 (2024-11-19)
+
+- Function `allele_freqs` added option `want_counts`, to get raw allele counts in addition to estimated allele frequencies.
+- Function `sim_trait` added option `mac_cut`, to set thresholds on minor allele counts.

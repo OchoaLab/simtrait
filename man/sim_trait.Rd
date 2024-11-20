@@ -15,6 +15,7 @@ sim_trait(
   labs = NULL,
   labs_sigma_sq = NULL,
   maf_cut = NA,
+  mac_cut = NA,
   loci_on_cols = FALSE,
   m_chunk_max = 1000,
   fes = FALSE,
@@ -59,6 +60,10 @@ As these are variance proportions, each value must be non-negative and \code{sum
 \item{maf_cut}{The optional minimum allele frequency threshold (default \code{NA}, no threshold).
 This prevents rare alleles from being causal in the simulation.
 Threshold is applied to the \emph{sample} allele frequencies and not their true parametric values (\code{p_anc}), even if these are available.
+Ignored if \code{causal_indexes} is provided.}
+
+\item{mac_cut}{The optional minimum allele count threshold (default \code{NA}, no threshold).
+If both this and \code{maf_cut} are provided, both thresholds are applied (they are not redundant under missingness).
 Ignored if \code{causal_indexes} is provided.}
 
 \item{loci_on_cols}{If \code{TRUE}, \code{X} has loci on columns and individuals on rows; if \code{FALSE} (the default), loci are on rows and individuals on columns.

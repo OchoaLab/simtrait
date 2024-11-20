@@ -41,6 +41,9 @@
 #' This prevents rare alleles from being causal in the simulation.
 #' Threshold is applied to the *sample* allele frequencies and not their true parametric values (`p_anc`), even if these are available.
 #' Ignored if `causal_indexes` is provided.
+#' @param mac_cut The optional minimum allele count threshold (default `NA`, no threshold).
+#' If both this and `maf_cut` are provided, both thresholds are applied (they are not redundant under missingness).
+#' Ignored if `causal_indexes` is provided.
 #' @param loci_on_cols If `TRUE`, `X` has loci on columns and individuals on rows; if `FALSE` (the default), loci are on rows and individuals on columns.
 #' If `X` is a BEDMatrix object, loci are always on the columns (`loci_on_cols` is ignored).
 #' @param m_chunk_max BEDMatrix-specific, sets the maximum number of loci to process at the time.
@@ -116,6 +119,7 @@ sim_trait <- function(
                       labs = NULL,
                       labs_sigma_sq = NULL,
                       maf_cut = NA,
+                      mac_cut = NA,
                       loci_on_cols = FALSE,
                       m_chunk_max = 1000,
                       fes = FALSE,
@@ -131,8 +135,9 @@ sim_trait <- function(
         stop('either the true ancestral allele frequency vector `p_anc` or `kinship` are required!')
     # if we provided causal indexes...
     if ( !is.null( causal_indexes ) ) {
-        # force to ignore this parameter if we don't need it (to avoid calculating p_anc_est)
+        # force to ignore these parameters if we don't need them (to avoid calculating counts)
         maf_cut <- NA
+        mac_cut <- NA
         # infer m_causal from this
         m_causal <- length( causal_indexes )
     } else if ( missing( m_causal ) )
@@ -180,15 +185,19 @@ sim_trait <- function(
 
         # may not need this
         p_anc_est <- NULL
+        counts <- NULL
         # these are needed here to select loci, if there's a MAF threshold
         # (they are also needed in real datasets, but if that's the only need then let's wait until we've subset the genotype matrix)
-        if ( !is.na( maf_cut ) ) {
+        if ( !is.na( maf_cut ) || !is.na( mac_cut ) ) {
             # compute marginal allele frequencies
-            p_anc_est <- allele_freqs(
+            obj <- allele_freqs(
                 X,
                 loci_on_cols = loci_on_cols,
-                m_chunk_max = m_chunk_max
+                m_chunk_max = m_chunk_max,
+                want_counts = TRUE
             )
+            p_anc_est <- obj$p_anc_est
+            counts <- obj$counts
         }
         
         ###################
@@ -202,8 +211,9 @@ sim_trait <- function(
             causal_indexes <- select_loci(
                 m_causal = m_causal,
                 m_loci = m_loci,
-                maf = p_anc_est, # NULL if is.na( maf_cut )
-                maf_cut = maf_cut # may be NA
+                counts = counts, # NULL if is.na( maf_cut ) and is.na( mac_cut )
+                maf_cut = maf_cut, # may be NA
+                mac_cut = mac_cut # may be NA
             )
         
         # subset data to consider causal loci only
@@ -228,6 +238,7 @@ sim_trait <- function(
         # this will be faster now, if done on the subset of causal genotypes only
 
         # these are used to select loci, or to simulate from real genotypes
+        # NOTE: if we needed counts, we would have calculated them already, so in this case we really don't need counts
         if ( is.null( p_anc ) && is.null( p_anc_est ) ) {
             # compute marginal allele frequencies
             p_anc_est <- allele_freqs(

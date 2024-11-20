@@ -27,6 +27,12 @@ if (suppressMessages(suppressWarnings(require(BEDMatrix)))) {
             allele_freqs( X, m_chunk_max = 11 )
         )
 
+        # repeat with counts
+        expect_equal(
+            allele_freqs( X_R, want_counts = TRUE ),
+            allele_freqs( X, want_counts = TRUE )
+        )
+
         # repeat with `fold = TRUE`
         p_anc_hat <- allele_freqs( X_R, fold = TRUE )
         
