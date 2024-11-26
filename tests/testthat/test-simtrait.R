@@ -828,6 +828,44 @@ test_that( "pval_srmsd, pval_type_1_err, pval_infl work", {
     expect_true( is.na( pval_infl( NULL ) ) )
 })
 
+test_that( "pval_gc works", {
+    # simulate some non-uniform p-values, so we know that inflation factor is not 1
+    m <- 97
+    pvals <- rbeta( m, 1, 10 )
+    # sprinkle missingness in
+    p_miss <- 0.2 # add missingness too
+    pvals[ sample.int( m, m * p_miss ) ] <- NA
+
+    # error only if input is missing
+    expect_error( pval_gc() )
+    
+    # confirm that inflation factor is not 1 (it should be much higher) the way data was simulated
+    expect_silent( 
+        lambda <- pval_infl( pvals )
+    )
+    expect_true( lambda > 1 )
+
+    # now apply GC correction
+    expect_silent( 
+        obj <- pval_gc( pvals )
+    )
+    # confirm that the inflation factor matches what we calculated before
+    expect_equal( obj$lambda, lambda )
+    # test p-values
+    expect_true( is.numeric( obj$pvals ) )
+    expect_equal( length( obj$pvals ), m )
+    expect_true( min( obj$pvals, na.rm = TRUE ) >= 0 )
+    expect_true( max( obj$pvals, na.rm = TRUE ) <= 1 )
+    # confirm that GC's inflation is actually exactly 1 now
+    expect_silent(
+        lambda_gc <- pval_infl( obj$pvals )
+    )
+    # precision here is lower than it is elsewhere
+    expect_equal( lambda_gc, 1, tolerance = 1e-2 )
+    # a more direct test, median should be 0.5
+    expect_equal( median( obj$pvals, na.rm = TRUE ), 0.5, tolerance = 1e-3 )
+})
+
 test_that( "pval_aucpr, pval_power_calib work", {
     # random data to test on
     n <- 10

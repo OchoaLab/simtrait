@@ -214,3 +214,7 @@
 
 - Function `allele_freqs` added option `want_counts`, to get raw allele counts in addition to estimated allele frequencies.
 - Function `sim_trait` added option `mac_cut`, to set thresholds on minor allele counts.
+
+# simtrait 1.1.8.9000 (2024-11-26)
+
+- Added function `pval_gc` to calculate p-values corrected using Genomic Control, to test that common procedure.

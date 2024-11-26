@@ -102,7 +102,7 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Grace Rhodes
+  \item Grace E. Rhodes \email{grace.e.rhodes@duke.edu} (\href{https://orcid.org/0000-0001-9412-5370}{ORCID})
 }
 
 }

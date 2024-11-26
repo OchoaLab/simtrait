@@ -33,4 +33,6 @@ pval_infl( pvals )
 \code{\link[=pval_srmsd]{pval_srmsd()}}, a more robust measure of null p-value accuracy, but which requires knowing the true causal loci.
 
 \code{\link[=pval_type_1_err]{pval_type_1_err()}} for classical type I error rate estimates.
+
+\code{\link[=pval_gc]{pval_gc()}} to perform genomic control correction of p-values.
 }
