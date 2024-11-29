@@ -218,3 +218,8 @@
 # simtrait 1.1.8.9000 (2024-11-26)
 
 - Added function `pval_gc` to calculate p-values corrected using Genomic Control, to test that common procedure.
+
+# simtrait 1.1.9.9000 (2024-11-29)
+
+- Function `sim_trait` added options `old_center_scale` and `old_sample_var` to simulate traits in the older, more common way from the literature, which is also more prone to biases.
+

@@ -20,7 +20,9 @@ sim_trait(
   m_chunk_max = 1000,
   fes = FALSE,
   fes_kinship_method = c("original", "mle", "bayesian"),
-  causal_indexes = NULL
+  causal_indexes = NULL,
+  old_center_scale = FALSE,
+  old_sample_var = FALSE
 )
 }
 \arguments{
@@ -85,13 +87,20 @@ In both cases coefficients are rescaled to result in the desired heritability.}
 \item{causal_indexes}{If provided, will use the loci at these indexes as causal loci.
 When \code{NULL} (default), causal indexes are drawn randomly.
 Thus, parameters \code{m_loci} and \code{maf_cut} are ignored and have no effect if this parameter is set.}
+
+\item{old_center_scale}{If \code{TRUE} (default \code{FALSE}), simulates traits as its more frequently done in the literature, namely genotypes are centered and scaled ("standardized") and coefficients are drawn from a normal distribution with mean zero and variance equal to the heritability times \code{sigma_sq} divided by the number of causal loci.
+True ancestral allele frequencies \code{p_anc} are used if available, otherwise sample estimates are used.
+This mode is for comparisons only, it is not recommended as it can result in mispecified heritabilities, particularly when true ancestral allele frequencies are not available.}
+
+\item{old_sample_var}{If \code{TRUE} (default \code{FALSE}), \code{old_center_scale = TRUE} is required, in which case sample variance estimates are used to scale the genotypes.
+Otherwise, if \code{old_sample_var = FALSE} and \code{old_center_scale = TRUE}, genotype variance is calculated using the genetics-motivated formula \code{2 * p_anc * ( 1 - p_anc )} or the sample frequency plug-in estimate if \code{p_anc} is not available.}
 }
 \value{
 A named list containing:
 \itemize{
 \item \code{trait}: length-\code{n} vector of the simulated trait
 \item \code{causal_indexes}: length-\code{m_causal} vector of causal locus indexes
-\item \code{causal_coeffs}: length-\code{m_causal} vector of coefficients at the causal loci
+\item \code{causal_coeffs}: length-\code{m_causal} vector of coefficients at the causal loci.  They are in the scale of the given genotypes except if \code{old_center_scale = TRUE}, in which case they are in the scale of standardized genotypes.
 \item \code{group_effects}: length-\code{n} vector of simulated environment group effects, or 0 (scalar) if not simulated
 }
 

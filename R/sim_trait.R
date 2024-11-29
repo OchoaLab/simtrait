@@ -59,12 +59,17 @@
 #' @param causal_indexes If provided, will use the loci at these indexes as causal loci.
 #' When `NULL` (default), causal indexes are drawn randomly.
 #' Thus, parameters `m_loci` and `maf_cut` are ignored and have no effect if this parameter is set.
+#' @param old_center_scale If `TRUE` (default `FALSE`), simulates traits as its more frequently done in the literature, namely genotypes are centered and scaled ("standardized") and coefficients are drawn from a normal distribution with mean zero and variance equal to the heritability times `sigma_sq` divided by the number of causal loci.
+#' True ancestral allele frequencies `p_anc` are used if available, otherwise sample estimates are used.
+#' This mode is for comparisons only, it is not recommended as it can result in mispecified heritabilities, particularly when true ancestral allele frequencies are not available.
+#' @param old_sample_var If `TRUE` (default `FALSE`), `old_center_scale = TRUE` is required, in which case sample variance estimates are used to scale the genotypes.
+#' Otherwise, if `old_sample_var = FALSE` and `old_center_scale = TRUE`, genotype variance is calculated using the genetics-motivated formula `2 * p_anc * ( 1 - p_anc )` or the sample frequency plug-in estimate if `p_anc` is not available.
 #'
 #' @return A named list containing:
 #'
 #' - `trait`: length-`n` vector of the simulated trait
 #' - `causal_indexes`: length-`m_causal` vector of causal locus indexes
-#' - `causal_coeffs`: length-`m_causal` vector of coefficients at the causal loci
+#' - `causal_coeffs`: length-`m_causal` vector of coefficients at the causal loci.  They are in the scale of the given genotypes except if `old_center_scale = TRUE`, in which case they are in the scale of standardized genotypes.
 #' - `group_effects`: length-`n` vector of simulated environment group effects, or 0 (scalar) if not simulated
 #' 
 #' However, if `herit = 0` then `causal_indexes` and `causal_coeffs` will have zero length regardless of `m_causal`.
@@ -124,14 +129,16 @@ sim_trait <- function(
                       m_chunk_max = 1000,
                       fes = FALSE,
                       fes_kinship_method = c('original', 'mle', 'bayesian'),
-                      causal_indexes = NULL
+                      causal_indexes = NULL,
+                      old_center_scale = FALSE,
+                      old_sample_var = FALSE
                       ) {
     # check for missing parameters
     if (missing(X))
         stop('genotype matrix `X` is required!')
     if (missing(herit))
         stop('the heritability `herit` is required!')
-    if (is.null(p_anc) && is.null(kinship))
+    if (is.null(p_anc) && is.null(kinship) && !old_center_scale)
         stop('either the true ancestral allele frequency vector `p_anc` or `kinship` are required!')
     # if we provided causal indexes...
     if ( !is.null( causal_indexes ) ) {
@@ -152,6 +159,8 @@ sim_trait <- function(
     if (sigma_sq <= 0)
         stop('`sigma_sq` must be positive!')
     fes_kinship_method <- match.arg( fes_kinship_method )
+    if ( old_sample_var && !old_center_scale )
+        stop( '`old_sample_var = TRUE` requires `old_center_scale = TRUE`' )
     
     # simplifies subsetting downstream
     if ('BEDMatrix' %in% class(X))
@@ -247,89 +256,129 @@ sim_trait <- function(
                 m_chunk_max = m_chunk_max
             )
         }
-        
-        ###############
-        ### KINSHIP ###
-        ###############
-        
-        if (!is.null(kinship)) {
-            # precompute some things when this is present
-            mean_kinship <- mean(kinship)
-        }
-        
-        #############
-        ### SCALE ###
-        #############
-        
-        # to scale causal_coeffs to give correct heritability, we need to estimate the pq = p(1-p) vector
-        # calculate pq = p_anc * (1 - p_anc) in various ways
-        if ( !is.null( p_anc ) ) { # this takes precedence, it should be most accurate
-            # direct calculation
-            pq <- p_anc * ( 1 - p_anc )
-        } else if ( !is.null( kinship ) ) {
-            # for RC this fine, and for FES this otherwise corresponds to `fes_kinship_method == 'original'`
-            # indirect, infer from genotypes and mean kinship
-            # recall E[ p_anc_est * (1 - p_anc_est) ] = pq * (1 - mean_kinship), so we solve for pq:
-            pq <- p_anc_est * ( 1 - p_anc_est ) / ( 1 - mean_kinship )
-            if ( fes && fes_kinship_method == 'mle' ) {
-                # use this other way to estimate a better value considering the variance of the estimate and assuming Beta
-                p_anc_mle <- p_anc_est_beta_mle( p_anc_est, mean_kinship )
-                # now use these values directly
-                pq <- p_anc_mle * ( 1 - p_anc_mle )
-            } else if ( fes && fes_kinship_method == 'bayesian' ) {
-                # a Bayesian version for estimating the factor we want (1/sqrt(pq))
-                inv_var_est <- inv_var_est_bayesian( p_anc_est, mean_kinship, g = 0.5 )
-                # to have the below code work, deconstruct back into the quantity we need
-                pq <- 1 / inv_var_est^2
-            }
-        } else {
-            # a redundant check (if this were so, it should have died earlier)
-            stop('either `p_anc` or `kinship` must be specified!')
-        }
-        
-        # construct SNP coefficients for selected loci
-        if ( fes ) {
-            # make them inverse to the pq
-            # in this case no scale corrections are needed, direct formula works!
-            causal_coeffs <- sqrt( herit * sigma_sq / ( 2 * pq * m_causal ) )
-            # best results are obtained when signs are random too
-            causal_coeffs <- causal_coeffs * sample( c(1, -1), m_causal, replace = TRUE )
-        } else {
-            # draw them randomly (standard normal)
-            causal_coeffs <- stats::rnorm(m_causal, 0, 1)
-            
-            # the initial genetic standard deviation is
-            sigma_0 <- sqrt( 2 * sum( pq * causal_coeffs^2 ) )
-            # adjust causal_coeffs so final variance is sigma_sq*herit as desired!
-            causal_coeffs <- causal_coeffs * sqrt( sigma_sq * herit ) / sigma_0 # scale by standard deviations
-        }
-        
-        # construct genotype signal
-        if ( anyNA( X ) ) {
-            # if any of the causal loci are missing, let's treat them as zeroes
-            # this isn't perfect but we must do something to apply this to real data
-            X[ is.na( X ) ] <- 0
-        }
-        G <- drop( causal_coeffs %*% X ) # this is a vector
-        # NOTE by construction:
-        # Cov(G) = 2 * herit * kinship
-        
-        ##############
-        ### CENTER ###
-        ##############
 
-        # calculate the mean of the genetic effect
-        if ( !is.null( p_anc ) ) {
-            # parametric solution
-            muXB <- 2 * drop( causal_coeffs %*% p_anc )
+        if ( old_center_scale ) {
+            
+            ###################
+            ### CENTERSCALE ###
+            ###################
+            
+            # center and scale the data with whatever frequencies we have
+            if ( !is.null( p_anc ) ) {
+                # exact centering and scaling
+                X <- ( X - 2 * p_anc ) / sqrt( 2 * p_anc * ( 1 - p_anc ) )
+            } else {
+                # sample centering and scaling
+                if ( old_sample_var ) {
+                    # a more empirical version using sample variance, will differ when there's population structure
+                    # let's use the standard R function, which standardizes columns, not rows which we desire, hence the double transpose
+                    # this functions handles missing data appropriately
+                    X <- t( scale( t( X ) ) )
+                } else {
+                    # the more obvious choice given the genetics model
+                    X <- ( X - 2 * p_anc_est ) / sqrt( 2 * p_anc_est * ( 1 - p_anc_est ) )
+                }
+            }
+            
+            # coefficients are IID from the usual model
+            causal_coeffs <- stats::rnorm( m_causal, 0, sqrt( herit * sigma_sq / m_causal ) )
+
+            # construct genotype signal
+            if ( anyNA( X ) ) {
+                # if any of the causal loci are missing, let's treat them as zeroes
+                # note these are center-scaled, so zero actually means mean-imputing
+                X[ is.na( X ) ] <- 0
+            }
+            G <- drop( causal_coeffs %*% X ) + mu # this is a vector
+            # NOTE by construction:
+            # Cov(G) = 2 * herit * kinship
+            
         } else {
-            # works very well assuming causal_coeffs and p_anc are uncorrelated!
-            muXB <- 2 * sum( causal_coeffs ) * mean( p_anc_est )
+            
+            ###############
+            ### KINSHIP ###
+            ###############
+            
+            if (!is.null(kinship)) {
+                # precompute some things when this is present
+                mean_kinship <- mean(kinship)
+            }
+            
+            #############
+            ### SCALE ###
+            #############
+            
+            # to scale causal_coeffs to give correct heritability, we need to estimate the pq = p(1-p) vector
+            # calculate pq = p_anc * (1 - p_anc) in various ways
+            if ( !is.null( p_anc ) ) { # this takes precedence, it should be most accurate
+                # direct calculation
+                pq <- p_anc * ( 1 - p_anc )
+            } else if ( !is.null( kinship ) ) {
+                # for RC this fine, and for FES this otherwise corresponds to `fes_kinship_method == 'original'`
+                # indirect, infer from genotypes and mean kinship
+                # recall E[ p_anc_est * (1 - p_anc_est) ] = pq * (1 - mean_kinship), so we solve for pq:
+                pq <- p_anc_est * ( 1 - p_anc_est ) / ( 1 - mean_kinship )
+                if ( fes && fes_kinship_method == 'mle' ) {
+                    # use this other way to estimate a better value considering the variance of the estimate and assuming Beta
+                    p_anc_mle <- p_anc_est_beta_mle( p_anc_est, mean_kinship )
+                    # now use these values directly
+                    pq <- p_anc_mle * ( 1 - p_anc_mle )
+                } else if ( fes && fes_kinship_method == 'bayesian' ) {
+                    # a Bayesian version for estimating the factor we want (1/sqrt(pq))
+                    inv_var_est <- inv_var_est_bayesian( p_anc_est, mean_kinship, g = 0.5 )
+                    # to have the below code work, deconstruct back into the quantity we need
+                    pq <- 1 / inv_var_est^2
+                }
+            } else {
+                # a redundant check (if this were so, it should have died earlier)
+                stop('either `p_anc` or `kinship` must be specified!')
+            }
+            
+            # construct SNP coefficients for selected loci
+            if ( fes ) {
+                # make them inverse to the pq
+                # in this case no scale corrections are needed, direct formula works!
+                causal_coeffs <- sqrt( herit * sigma_sq / ( 2 * pq * m_causal ) )
+                # best results are obtained when signs are random too
+                causal_coeffs <- causal_coeffs * sample( c(1, -1), m_causal, replace = TRUE )
+            } else {
+                # draw them randomly (standard normal)
+                causal_coeffs <- stats::rnorm(m_causal, 0, 1)
+                
+                # the initial genetic standard deviation is
+                sigma_0 <- sqrt( 2 * sum( pq * causal_coeffs^2 ) )
+                # adjust causal_coeffs so final variance is sigma_sq*herit as desired!
+                causal_coeffs <- causal_coeffs * sqrt( sigma_sq * herit ) / sigma_0 # scale by standard deviations
+            }
+            
+            # construct genotype signal
+            if ( anyNA( X ) ) {
+                # if any of the causal loci are missing, let's treat them as zeroes
+                # this isn't perfect but we must do something to apply this to real data
+                X[ is.na( X ) ] <- 0
+            }
+            G <- drop( causal_coeffs %*% X ) # this is a vector
+            # NOTE by construction:
+            # Cov(G) = 2 * herit * kinship
+            
+            ##############
+            ### CENTER ###
+            ##############
+
+            # calculate the mean of the genetic effect
+            if ( !is.null( p_anc ) ) {
+                # parametric solution
+                muXB <- 2 * drop( causal_coeffs %*% p_anc )
+            } else {
+                # works very well assuming causal_coeffs and p_anc are uncorrelated!
+                muXB <- 2 * sum( causal_coeffs ) * mean( p_anc_est )
+            }
+            # in all cases:
+            # - remove the mean from the genotypes (muXB)
+            # - add the desired mean
+            G <- G - muXB + mu
+
         }
-        # in all cases:
-        # - remove the mean from the genotypes (muXB)
-        # - add the desired mean
-        G <- G - muXB + mu
     }
 
     if (herit == 1) {

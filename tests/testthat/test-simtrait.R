@@ -490,6 +490,17 @@ test_that("sim_trait works", {
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, kinship = kinship)
     validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc_hat, sigma_sq = 1 - mean(kinship) )
 
+    # try version that centerscales the old way
+    # first version uses true p_anc
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, p_anc = p_anc, old_center_scale = TRUE )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, check_herit = FALSE )
+    # repeat without true p_anc, ought to estimate them
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, old_center_scale = TRUE )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, check_herit = FALSE )
+    # and try an alternative way to calculate the variance to standardize
+    obj <- sim_trait( X = X, m_causal = m_causal, herit = herit, old_center_scale = TRUE, old_sample_var = TRUE )
+    validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, check_herit = FALSE )
+
     # test now a case with specified causal indexes
     # just use the ones from the previous run
     # must work without m_causal
