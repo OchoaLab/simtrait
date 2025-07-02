@@ -1,6 +1,6 @@
 Package: simtrait
 Title: Simulate Complex Traits from Genotypes
-Version: 1.1.9.9000
+Version: 1.1.10.9000
 Authors@R: c(
     person(given = "Alejandro",
 	   family = "Ochoa",
@@ -19,7 +19,8 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
-    PRROC
+    PRROC,
+    stats
 Suggests: 
     popkin,
     testthat,

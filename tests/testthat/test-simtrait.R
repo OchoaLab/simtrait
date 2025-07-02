@@ -1,5 +1,100 @@
 context("test-simtrait")
 
+test_that( "sim_trait_model works", {
+    # start with some toy data, separate from `sim_trait`
+    # (it will be re-tested later through `sim_trait`)
+
+    # make the data to test with
+    m_loci <- 100
+    n_ind <- 7
+    X <- matrix( rbinom( m_loci * n_ind, 2, 0.5 ), m_loci, n_ind )
+
+    # start with a non-genetic model with zero heritability, which is supposed to work
+    model <- list(
+        sigma_sq = 1.7,
+        herit = 0,
+        sigma_sq_residual = 1,
+        alpha = -3.7
+    )
+    expect_silent( obj <- sim_trait_model( model, X ) )
+    expect_true( is.numeric( obj$trait ) )
+    expect_equal( length( obj$trait ), n_ind )
+    expect_true( !anyNA( obj$trait ) )
+    expect_equal( obj$group_effects, 0 )
+    # these subsets are just copied over
+    expect_equal( obj[ names( model ) ], model[ names( model ) ] )
+    
+    # add genetic params, make it more complicated
+    model$herit <- 0.7
+    model$sigma_sq_residual <- 1 - model$herit
+    # first expect error because we're missing causal info despite non-zero herit
+    expect_error( sim_trait_model( model, X ) )
+    # now add causal info
+    m_causal <- 11
+    model$causal_indexes <- sample.int( m_loci, m_causal )
+    model$causal_coeffs <- rnorm( m_causal )
+    # this should now be successful
+    expect_silent( obj <- sim_trait_model( model, X ) )
+    expect_true( is.numeric( obj$trait ) )
+    expect_equal( length( obj$trait ), n_ind )
+    expect_true( !anyNA( obj$trait ) )
+    expect_equal( obj$group_effects, 0 )
+    expect_equal( obj[ names( model ) ], model[ names( model ) ] )
+
+    # add missingness to genotypes
+    p_miss <- 0.01
+    X[ sample.int( length( X ), length( X ) * p_miss ) ] <- NA
+    # repeat test
+    expect_silent( obj <- sim_trait_model( model, X ) )
+    expect_true( is.numeric( obj$trait ) )
+    expect_equal( length( obj$trait ), n_ind )
+    expect_true( !anyNA( obj$trait ) )
+    expect_equal( obj$group_effects, 0 )
+    expect_equal( obj[ names( model ) ], model[ names( model ) ] )
+
+    # push the last model to have zero residual variance, another edge case
+    model2 <- model
+    model2$herit <- 1
+    model2$sigma_sq_residual <- 0
+    # repeat test
+    expect_silent( obj <- sim_trait_model( model2, X ) )
+    expect_true( is.numeric( obj$trait ) )
+    expect_equal( length( obj$trait ), n_ind )
+    expect_true( !anyNA( obj$trait ) )
+    expect_equal( obj$group_effects, 0 )
+    expect_equal( obj[ names( model2 ) ], model2[ names( model2 ) ] )
+    
+    # last tests are for group effects
+    # try single level first
+    labs <- sample( c('a', 'b', 'c'), n_ind, replace = TRUE )
+    model$labs_sigma_sq <- 0.2
+    model$sigma_sq_residual <- 1 - model$herit - sum( model$labs_sigma_sq )
+    # repeat test
+    expect_silent( obj <- sim_trait_model( model, X, labs ) )
+    expect_true( is.numeric( obj$trait ) )
+    expect_equal( length( obj$trait ), n_ind )
+    expect_true( !anyNA( obj$trait ) )
+    expect_true( is.numeric( obj$group_effects ) )
+    expect_equal( length( obj$group_effects ), n_ind )
+    expect_true( !anyNA( obj$group_effects ) )
+    expect_equal( obj[ names( model ) ], model[ names( model ) ] )
+
+    # now two levels
+    labs2 <- sample( c('x', 'y', 'z'), n_ind, replace = TRUE )
+    labs <- cbind( labs, labs2 )
+    model$labs_sigma_sq <- c( 0.1, 0.15 )
+    model$sigma_sq_residual <- 1 - model$herit - sum( model$labs_sigma_sq )
+    # repeat test
+    expect_silent( obj <- sim_trait_model( model, X, labs ) )
+    expect_true( is.numeric( obj$trait ) )
+    expect_equal( length( obj$trait ), n_ind )
+    expect_true( !anyNA( obj$trait ) )
+    expect_true( is.numeric( obj$group_effects ) )
+    expect_equal( length( obj$group_effects ), n_ind )
+    expect_true( !anyNA( obj$group_effects ) )
+    expect_equal( obj[ names( model ) ], model[ names( model ) ] )
+})
+
 test_that( "fold_allele_freqs works", {
     # dies without arguments
     expect_error( fold_allele_freqs() )

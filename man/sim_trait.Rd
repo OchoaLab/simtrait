@@ -98,10 +98,13 @@ Otherwise, if \code{old_sample_var = FALSE} and \code{old_center_scale = TRUE}, 
 \value{
 A named list containing:
 \itemize{
-\item \code{trait}: length-\code{n} vector of the simulated trait
-\item \code{causal_indexes}: length-\code{m_causal} vector of causal locus indexes
-\item \code{causal_coeffs}: length-\code{m_causal} vector of coefficients at the causal loci.  They are in the scale of the given genotypes except if \code{old_center_scale = TRUE}, in which case they are in the scale of standardized genotypes.
-\item \code{group_effects}: length-\code{n} vector of simulated environment group effects, or 0 (scalar) if not simulated
+\item \code{trait}: length-\code{n} vector of the simulated trait.
+\item \code{group_effects}: length-\code{n} vector of simulated environment group effects, or 0 (scalar) if not simulated.
+\item \code{causal_indexes}: length-\code{m_causal} vector of causal locus indexes.
+\item \code{causal_coeffs}: length-\code{m_causal} vector of coefficients at the causal loci.  They are in the scale of the given genotypes.
+\item \code{alpha}: scalar parameter used to shift genotype effect (taking away genotype mean effects and adding desired mean).
+\item \code{herit}, \code{sigma_sq}, \code{labs_sigma_sq}: same values specified in input, stored to be able to simulate the same trait from new individuals later if desired.
+\item \code{sigma_sq_residual}: residual variance proportion, equal to \code{1 - herit - sum( labs_sigma_sq )}.
 }
 
 However, if \code{herit = 0} then \code{causal_indexes} and \code{causal_coeffs} will have zero length regardless of \code{m_causal}.
@@ -158,5 +161,9 @@ obj <- sim_trait(X = X, m_causal = 2, herit = herit, kinship = kinship)
 
 }
 \seealso{
-\code{\link[=cov_trait]{cov_trait()}}, \code{\link[=sim_trait_mvn]{sim_trait_mvn()}}
+\code{\link[=sim_trait_model]{sim_trait_model()}} for simulating the same trait (with the same causal variants and other parameters) for new individuals.
+
+\code{\link[=cov_trait]{cov_trait()}} for constructing the covariance matrix matching these simulations.
+
+\code{\link[=sim_trait_mvn]{sim_trait_mvn()}} for simulating idealized infinitesimal traits with no causal variants.
 }

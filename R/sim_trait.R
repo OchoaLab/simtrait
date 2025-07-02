@@ -67,10 +67,13 @@
 #'
 #' @return A named list containing:
 #'
-#' - `trait`: length-`n` vector of the simulated trait
-#' - `causal_indexes`: length-`m_causal` vector of causal locus indexes
-#' - `causal_coeffs`: length-`m_causal` vector of coefficients at the causal loci.  They are in the scale of the given genotypes except if `old_center_scale = TRUE`, in which case they are in the scale of standardized genotypes.
-#' - `group_effects`: length-`n` vector of simulated environment group effects, or 0 (scalar) if not simulated
+#' - `trait`: length-`n` vector of the simulated trait.
+#' - `group_effects`: length-`n` vector of simulated environment group effects, or 0 (scalar) if not simulated.
+#' - `causal_indexes`: length-`m_causal` vector of causal locus indexes.
+#' - `causal_coeffs`: length-`m_causal` vector of coefficients at the causal loci.  They are in the scale of the given genotypes.
+#' - `alpha`: scalar parameter used to shift genotype effect (taking away genotype mean effects and adding desired mean).
+#' - `herit`, `sigma_sq`, `labs_sigma_sq`: same values specified in input, stored to be able to simulate the same trait from new individuals later if desired.
+#' - `sigma_sq_residual`: residual variance proportion, equal to `1 - herit - sum( labs_sigma_sq )`.
 #' 
 #' However, if `herit = 0` then `causal_indexes` and `causal_coeffs` will have zero length regardless of `m_causal`.
 #'
@@ -110,8 +113,12 @@
 #' obj <- sim_trait(X = X, m_causal = 2, herit = herit, kinship = kinship)
 #'
 #' @seealso
-#' [cov_trait()], [sim_trait_mvn()]
+#' [sim_trait_model()] for simulating the same trait (with the same causal variants and other parameters) for new individuals.
 #' 
+#' [cov_trait()] for constructing the covariance matrix matching these simulations.
+#'
+#' [sim_trait_mvn()] for simulating idealized infinitesimal traits with no causal variants.
+#'
 #' @export
 sim_trait <- function(
                       X,
@@ -185,7 +192,8 @@ sim_trait <- function(
         # the index and coefficients vectors are empty
         #causal_indexes <- c() # already null by default
         causal_coeffs <- c()
-        G <- 0 # construct a trivial genotype effect of zero (becomes vector automatically later)
+        # can still set mean even when there is no genotype effects!
+        alpha <- mu
     } else {
         
         ###################################
@@ -266,47 +274,39 @@ sim_trait <- function(
             # center and scale the data with whatever frequencies we have
             if ( !is.null( p_anc ) ) {
                 # exact centering and scaling
-                X <- ( X - 2 * p_anc ) / sqrt( 2 * p_anc * ( 1 - p_anc ) )
+                centering <- 2 * p_anc
+                scaling <- sqrt( 2 * p_anc * ( 1 - p_anc ) )
             } else {
                 # sample centering and scaling
+                centering <- 2 * p_anc_est
                 if ( old_sample_var ) {
                     # a more empirical version using sample variance, will differ when there's population structure
-                    # let's use the standard R function, which standardizes columns, not rows which we desire, hence the double transpose
-                    # this functions handles missing data appropriately
-                    X <- t( scale( t( X ) ) )
-                } else {
+                    scaling <- sqrt( apply( X, 1, stats::var ) )
+                } else
                     # the more obvious choice given the genetics model
-                    X <- ( X - 2 * p_anc_est ) / sqrt( 2 * p_anc_est * ( 1 - p_anc_est ) )
-                }
+                    scaling <- sqrt( 2 * p_anc_est * ( 1 - p_anc_est ) )
             }
             
             # coefficients are IID from the usual model
             causal_coeffs <- stats::rnorm( m_causal, 0, sqrt( herit * sigma_sq / m_causal ) )
 
-            # construct genotype signal
-            if ( anyNA( X ) ) {
-                # if any of the causal loci are missing, let's treat them as zeroes
-                # note these are center-scaled, so zero actually means mean-imputing
-                X[ is.na( X ) ] <- 0
-            }
-            G <- drop( causal_coeffs %*% X ) + mu # this is a vector
-            # NOTE by construction:
-            # Cov(G) = 2 * herit * kinship
-            
+            # this is what center-scaling does to genotypes
+            # # ( X - centering ) / scaling
+            # let's simplify the transformation by applying it to the causal coefficients
+            # # ( causal_coeffs / scaling ) %*% X - ( causal_coeffs / scaling ) %*% centering
+            causal_coeffs <- causal_coeffs / scaling
+
+            # this is the centering effect
+            muXB <- drop( causal_coeffs %*% centering )
         } else {
-            
-            ###############
-            ### KINSHIP ###
-            ###############
-            
-            if (!is.null(kinship)) {
-                # precompute some things when this is present
-                mean_kinship <- mean(kinship)
-            }
             
             #############
             ### SCALE ###
             #############
+            
+            # precompute some things when this is present
+            if ( !is.null( kinship ) )
+                mean_kinship <- mean( kinship )
             
             # to scale causal_coeffs to give correct heritability, we need to estimate the pq = p(1-p) vector
             # calculate pq = p_anc * (1 - p_anc) in various ways
@@ -351,16 +351,6 @@ sim_trait <- function(
                 causal_coeffs <- causal_coeffs * sqrt( sigma_sq * herit ) / sigma_0 # scale by standard deviations
             }
             
-            # construct genotype signal
-            if ( anyNA( X ) ) {
-                # if any of the causal loci are missing, let's treat them as zeroes
-                # this isn't perfect but we must do something to apply this to real data
-                X[ is.na( X ) ] <- 0
-            }
-            G <- drop( causal_coeffs %*% X ) # this is a vector
-            # NOTE by construction:
-            # Cov(G) = 2 * herit * kinship
-            
             ##############
             ### CENTER ###
             ##############
@@ -373,52 +363,36 @@ sim_trait <- function(
                 # works very well assuming causal_coeffs and p_anc are uncorrelated!
                 muXB <- 2 * sum( causal_coeffs ) * mean( p_anc_est )
             }
-            # in all cases:
-            # - remove the mean from the genotypes (muXB)
-            # - add the desired mean
-            G <- G - muXB + mu
-
         }
+        
+        # in all cases:
+        # - remove the mean from the genotypes (muXB)
+        # - add the desired mean
+        alpha <- mu - muXB
     }
 
-    if (herit == 1) {
-        E <- 0 # in this edge case there is no "noise", just genotype effects
-    } else {
-        # draw noise
-        E <- stats::rnorm(n_ind, 0, sqrt( sigma_sq_residual * sigma_sq ) ) # noise has mean zero but variance (sigma_sq_residual * sigma_sq)
-        # NOTE by construction:
-        # Cov(E) = sigma_sq_residual * sigma_sq * I
-    }
-
-    # environment group effects
-    group_effects <- 0
-    if ( !is.null( labs ) ) {
-        n_labs <- ncol( labs )
-        for ( i in 1L : n_labs ) {
-            # process environment i
-            labs_i <- labs[ , i ]
-            labs_i_sigma_sq <- labs_sigma_sq[ i ]
-            # unique groups, implicitly numbered by order of appearance
-            groups_i <- unique( labs_i )
-            # map individuals to their groups by index
-            group_indexes_i <- match( labs_i, groups_i )
-            # draw their random effects
-            group_eff_i <- stats::rnorm( length( groups_i ), 0, sqrt( labs_i_sigma_sq * sigma_sq ) )
-            # distribute the effects from groups to individuals
-            group_effects_i <- group_eff_i[ group_indexes_i ]
-            # add to running sum
-            group_effects <- group_effects + group_effects_i
-        }
-    }
-    
-    # lastly, here's the trait:
-    trait <- G + E + group_effects
-
-    # return all these things
-    list(
-        trait = trait,
+    # construct model object, with fixed coefficients and other variance components needed to draw trait
+    model <- list(
         causal_indexes = causal_indexes,
         causal_coeffs = causal_coeffs,
-        group_effects = group_effects
+        alpha = alpha,
+        herit = herit,
+        # non-genetic params (scalars)
+        sigma_sq = sigma_sq,
+        sigma_sq_residual = sigma_sq_residual,
+        labs_sigma_sq = labs_sigma_sq
     )
+
+    # this actually constructs the trait, return that and the model
+    sim_trait_model(
+        model = model,
+        X = X,
+        labs = labs,
+        # the X we pass is already subset and transposed as usual, so we must ask that it doesn't get transposed and subset again!
+        loci_on_cols = FALSE,
+        X_subset = TRUE #,
+        # just saves a bit more time
+#        skip_checks = TRUE
+    )
+
 }

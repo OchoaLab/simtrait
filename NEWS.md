@@ -223,3 +223,10 @@
 
 - Function `sim_trait` added options `old_center_scale` and `old_sample_var` to simulate traits in the older, more common way from the literature, which is also more prone to biases.
 
+# simtrait 1.1.10.9000 (2025-07-02)
+
+- Function `sim_trait` has the following changes:
+  - Imputation: when causal genotypes are missing, they are now always replaced by their mean value per row.  Previously this occurred only if `old_center_scale = TRUE`, otherwise missing genotypes were treated as zero.
+  - If `old_center_scale = TRUE` now returns `causal_coeffs` in the observed genotype scale (genotypes in 0, 1, 2) rather than the standardized scale (old default).  No change otherwise (`causal_coeffs` were previously in the observed genotype scale for all other cases).
+  - Function now returns a far more detailed model (added `alpha`, `sigma_sq_residual`, and copies of the input `herit`, `sigma_sq`, and `labs_sigma_sq`) that enables simulating the same trait model on new individuals later if desired.
+- Added function `sim_trait_model` that implements simulation of traits for new individuals from existing trait models (requires fixed causal variants and coefficients, among other params).  It is used by `sim_trait` internally for consistent simulations.
