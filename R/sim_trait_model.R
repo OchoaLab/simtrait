@@ -159,6 +159,12 @@ sim_trait_model <- function(
     # lastly, here's the trait:
     trait <- G + E + group_effects
 
+    # a bit of cleanup, so return object doesn't return old trait and group effect values
+    if ( !is.null( model$trait ) )
+        model$trait <- NULL
+    if ( !is.null( model$group_effects ) )
+        model$group_effects <- NULL
+    
     # return all these things
     c( 
         list(

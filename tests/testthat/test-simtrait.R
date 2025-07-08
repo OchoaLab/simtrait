@@ -17,12 +17,28 @@ test_that( "sim_trait_model works", {
         alpha = -3.7
     )
     expect_silent( obj <- sim_trait_model( model, X ) )
+    # test that no names are repeated (which R allows generally but it can result in confusion)
+    expect_true( all( table( names( obj ) ) == 1 ) )
     expect_true( is.numeric( obj$trait ) )
     expect_equal( length( obj$trait ), n_ind )
     expect_true( !anyNA( obj$trait ) )
     expect_equal( obj$group_effects, 0 )
     # these subsets are just copied over
     expect_equal( obj[ names( model ) ], model[ names( model ) ] )
+
+    # once time only, add `trait` and `group_effects` to catches old bug that they could appear more than once in output, and confirms that bugfix addresses this
+    model2 <- model
+    model2$trait <- 9
+    model2$group_effects <- 9
+    expect_silent( obj <- sim_trait_model( model2, X ) )
+    # test that no names are repeated (which R allows generally but it can result in confusion)
+    expect_true( all( table( names( obj ) ) == 1 ) )
+    # confirm that the traits are the right lenghts (the bad ones aren't)
+    expect_true( is.numeric( obj$trait ) )
+    expect_equal( length( obj$trait ), n_ind )
+    expect_true( !anyNA( obj$trait ) )
+    expect_equal( obj$group_effects, 0 )
+    # no further tests are needed in this case
     
     # add genetic params, make it more complicated
     model$herit <- 0.7
@@ -35,6 +51,7 @@ test_that( "sim_trait_model works", {
     model$causal_coeffs <- rnorm( m_causal )
     # this should now be successful
     expect_silent( obj <- sim_trait_model( model, X ) )
+    expect_true( all( table( names( obj ) ) == 1 ) )
     expect_true( is.numeric( obj$trait ) )
     expect_equal( length( obj$trait ), n_ind )
     expect_true( !anyNA( obj$trait ) )
@@ -46,6 +63,7 @@ test_that( "sim_trait_model works", {
     X[ sample.int( length( X ), length( X ) * p_miss ) ] <- NA
     # repeat test
     expect_silent( obj <- sim_trait_model( model, X ) )
+    expect_true( all( table( names( obj ) ) == 1 ) )
     expect_true( is.numeric( obj$trait ) )
     expect_equal( length( obj$trait ), n_ind )
     expect_true( !anyNA( obj$trait ) )
@@ -58,6 +76,7 @@ test_that( "sim_trait_model works", {
     model2$sigma_sq_residual <- 0
     # repeat test
     expect_silent( obj <- sim_trait_model( model2, X ) )
+    expect_true( all( table( names( obj ) ) == 1 ) )
     expect_true( is.numeric( obj$trait ) )
     expect_equal( length( obj$trait ), n_ind )
     expect_true( !anyNA( obj$trait ) )
@@ -71,6 +90,7 @@ test_that( "sim_trait_model works", {
     model$sigma_sq_residual <- 1 - model$herit - sum( model$labs_sigma_sq )
     # repeat test
     expect_silent( obj <- sim_trait_model( model, X, labs ) )
+    expect_true( all( table( names( obj ) ) == 1 ) )
     expect_true( is.numeric( obj$trait ) )
     expect_equal( length( obj$trait ), n_ind )
     expect_true( !anyNA( obj$trait ) )
@@ -86,6 +106,7 @@ test_that( "sim_trait_model works", {
     model$sigma_sq_residual <- 1 - model$herit - sum( model$labs_sigma_sq )
     # repeat test
     expect_silent( obj <- sim_trait_model( model, X, labs ) )
+    expect_true( all( table( names( obj ) ) == 1 ) )
     expect_true( is.numeric( obj$trait ) )
     expect_equal( length( obj$trait ), n_ind )
     expect_true( !anyNA( obj$trait ) )
@@ -500,6 +521,8 @@ test_that( 'inv_var_est_bayesian works', {
 })
 
 validate_sim_trait <- function( obj, herit, n_ind, m_causal, m_loci, p_anc, sigma_sq = 1, maf_cut = NA, maf = NULL, mac_cut = NA, mac = NULL, fes = FALSE, check_herit = TRUE ) {
+    # test that no names are repeated (which R allows generally but it can result in confusion)
+    expect_true( all( table( names( obj ) ) == 1 ) )
     trait <- obj$trait # trait vector
     causal_indexes <- obj$causal_indexes # causal locus indeces
     causal_coeffs <- obj$causal_coeffs # locus effect size vector
@@ -560,6 +583,11 @@ test_that("sim_trait works", {
     # test p_anc version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, p_anc = p_anc)
     validate_sim_trait( obj, herit, n_ind, m_causal, m_loci, p_anc )
+
+    # one time only, pass resulting object onto sim_trait_model to simulate new trait (in this case for the same individuals, though it's supposed to be different ones)
+    # this catches old bug that `trait` and `group_effects` could appear more than once specifically in this usage, and confirms that bugfix addresses this
+    expect_silent( obj2 <- sim_trait_model( obj, X ) )
+    validate_sim_trait( obj2, herit, n_ind, m_causal, m_loci, check_herit = FALSE )
     
     # test kinship version
     obj <- sim_trait(X = X, m_causal = m_causal, herit = herit, kinship = kinship)
